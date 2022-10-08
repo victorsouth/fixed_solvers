@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <array>
 using std::array;
@@ -75,7 +75,7 @@ inline constexpr DataType inner_prod(
     return result;
 }
 
-/// @brief Перегрузка, когда вектор обращается в скаляр
+/// @brief РџРµСЂРµРіСЂСѓР·РєР°, РєРѕРіРґР° РІРµРєС‚РѕСЂ РѕР±СЂР°С‰Р°РµС‚СЃСЏ РІ СЃРєР°Р»СЏСЂ
 inline constexpr double inner_prod(
     double v1,
     double v2)
@@ -124,11 +124,11 @@ array<DataType, Dimension> operator / (
 
 
 
-/// @brief Умножение матрицы на вектор-столбец справа
+/// @brief РЈРјРЅРѕР¶РµРЅРёРµ РјР°С‚СЂРёС†С‹ РЅР° РІРµРєС‚РѕСЂ-СЃС‚РѕР»Р±РµС† СЃРїСЂР°РІР°
 /// TODO: constexpr?
-/// @param m Матрица Row-major
-/// @param v Вектор-столбец
-/// @return Вектор-столбец
+/// @param m РњР°С‚СЂРёС†Р° Row-major
+/// @param v Р’РµРєС‚РѕСЂ-СЃС‚РѕР»Р±РµС†
+/// @return Р’РµРєС‚РѕСЂ-СЃС‚РѕР»Р±РµС†
 template <typename DataType, size_t Dimension>
 array<DataType, Dimension> operator * (
     const array<array<DataType, Dimension>, Dimension>& m, const array<DataType, Dimension>& v)

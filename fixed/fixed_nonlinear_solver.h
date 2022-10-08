@@ -1,15 +1,15 @@
-#pragma once
+п»ї#pragma once
 
 #include "line_search/golden_section.h"
 #include "line_search/divider.h"
 
 
-/// @brief Ограничения солвера
+/// @brief РћРіСЂР°РЅРёС‡РµРЅРёСЏ СЃРѕР»РІРµСЂР°
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
 
-/// @brief Ограничения солвера для переменной размерности 
-/// (пока не используется, заготовка на будущее)
+/// @brief РћРіСЂР°РЅРёС‡РµРЅРёСЏ СЃРѕР»РІРµСЂР° РґР»СЏ РїРµСЂРµРјРµРЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё 
+/// (РїРѕРєР° РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ, Р·Р°РіРѕС‚РѕРІРєР° РЅР° Р±СѓРґСѓС‰РµРµ)
 template <>
 struct fixed_solver_constraints<-1>
 {
@@ -37,16 +37,16 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, b);
     }
 
-    /// @brief Учитывает только minimum, maximum
+    /// @brief РЈС‡РёС‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints(const size_t argument_size) const
     {
-        // ограничения
+        // РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
         const auto n = argument_size;
         MatrixXd A = MatrixXd::Zero(get_constraint_count(), n);
         VectorXd B = VectorXd::Zero(get_constraint_count());
 
         size_t offset = 0;
-        // максимальное значение
+        // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
         { 
             auto [a, b] = get_inequalities_constraints_vectors(n, maximum);
 
@@ -54,7 +54,7 @@ struct fixed_solver_constraints<-1>
             B.segment(offset, b.size()) = b;
             offset += a.rows();
         }
-        // минимальное значение
+        // РјРёРЅРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
         {
             auto [a, b] = get_inequalities_constraints_vectors(n, minimum);
 
@@ -86,7 +86,7 @@ struct fixed_solver_constraints<-1>
 };
 
 
-/// @brief Ограничения солвера
+/// @brief РћРіСЂР°РЅРёС‡РµРЅРёСЏ СЃРѕР»РІРµСЂР°
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints
 {
@@ -95,7 +95,7 @@ struct fixed_solver_constraints
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
 
-    /// @brief Обрезка по минимуму для скалярного случая
+    /// @brief РћР±СЂРµР·РєР° РїРѕ РјРёРЅРёРјСѓРјСѓ РґР»СЏ СЃРєР°Р»СЏСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     void trim_min(double argument, double& increment) const
     {
         if (std::isnan(minimum))
@@ -105,7 +105,7 @@ struct fixed_solver_constraints
             increment = minimum - argument;
         }
     }
-    /// @brief Обрезка по минимуму для векторного случая
+    /// @brief РћР±СЂРµР·РєР° РїРѕ РјРёРЅРёРјСѓРјСѓ РґР»СЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     void trim_min(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
     {
@@ -126,7 +126,7 @@ struct fixed_solver_constraints
             increment = increment / factor;
         }
     }
-    /// @brief Обрезка по максимального приращению для скларяного случая
+    /// @brief РћР±СЂРµР·РєР° РїРѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ РґР»СЏ СЃРєР»Р°СЂСЏРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     void trim_relative(double& increment) const
     {
         if (std::isnan(relative_boundary))
@@ -137,7 +137,7 @@ struct fixed_solver_constraints
             increment /= factor;
         }
     }
-    /// @brief Обрезка по максимального приращению для векторного случая
+    /// @brief РћР±СЂРµР·РєР° РїРѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ РґР»СЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     void trim_relative(array<double, Dimension>& increment) const
     {
         double factor = 1;
@@ -160,19 +160,19 @@ struct fixed_solver_constraints
 };
 
 
-/// @brief Параметры алгоритма Ньютона-Рафсона
+/// @brief РџР°СЂР°РјРµС‚СЂС‹ Р°Р»РіРѕСЂРёС‚РјР° РќСЊСЋС‚РѕРЅР°-Р Р°С„СЃРѕРЅР°
 template <std::ptrdiff_t Dimension, typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
 {
-    /// @brief Границы на диапазон и единичный шаг
+    /// @brief Р“СЂР°РЅРёС†С‹ РЅР° РґРёР°РїР°Р·РѕРЅ Рё РµРґРёРЅРёС‡РЅС‹Р№ С€Р°Рі
     fixed_solver_constraints<Dimension> constraints;
-    /// @brief Параметры алгоритма регулировки шага
+    /// @brief РџР°СЂР°РјРµС‚СЂС‹ Р°Р»РіРѕСЂРёС‚РјР° СЂРµРіСѓР»РёСЂРѕРІРєРё С€Р°РіР°
     typename LineSearch::parameters_type line_search;
-    /// @brief Количество итераций
+    /// @brief РљРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№
     size_t iteration_count{ 100 };
-    /// @brief Погрешность метода по приращению аргумента
+    /// @brief РџРѕРіСЂРµС€РЅРѕСЃС‚СЊ РјРµС‚РѕРґР° РїРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ Р°СЂРіСѓРјРµРЅС‚Р°
     double argument_increment_norm{ 1e-4 };
-    /// @brief Проверять векторный шага после регулировки или перед ней
+    /// @brief РџСЂРѕРІРµСЂСЏС‚СЊ РІРµРєС‚РѕСЂРЅС‹Р№ С€Р°РіР° РїРѕСЃР»Рµ СЂРµРіСѓР»РёСЂРѕРІРєРё РёР»Рё РїРµСЂРµРґ РЅРµР№
     bool step_criteria_assuming_search_step{ false };
 };
 
@@ -182,31 +182,31 @@ enum class numerical_result_code_t
     NotConverged, NumericalNanValues, Converged
 };
 
-/// @brief Результат расчета численного метода
+/// @brief Р РµР·СѓР»СЊС‚Р°С‚ СЂР°СЃС‡РµС‚Р° С‡РёСЃР»РµРЅРЅРѕРіРѕ РјРµС‚РѕРґР°
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_result_t {
     typedef typename fixed_system_types<Dimension>::var_type var_type;
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
 
-    /// @brief Метрика приращения
+    /// @brief РњРµС‚СЂРёРєР° РїСЂРёСЂР°С‰РµРЅРёСЏ
     double argument_increment_metric{ 0 };
-    /// @brief Показывает, что достигнуто минимальное приращение спуска
+    /// @brief РџРѕРєР°Р·С‹РІР°РµС‚, С‡С‚Рѕ РґРѕСЃС‚РёРіРЅСѓС‚Рѕ РјРёРЅРёРјР°Р»СЊРЅРѕРµ РїСЂРёСЂР°С‰РµРЅРёРµ СЃРїСѓСЃРєР°
     bool argument_increment_criteria{ false };
-    /// @brief Завершение итерационной процедуры
+    /// @brief Р—Р°РІРµСЂС€РµРЅРёРµ РёС‚РµСЂР°С†РёРѕРЅРЅРѕР№ РїСЂРѕС†РµРґСѓСЂС‹
     numerical_result_code_t result_code{ numerical_result_code_t::NotConverged };
-    /// @brief Остаточная невязка по окончании численного метода
+    /// @brief РћСЃС‚Р°С‚РѕС‡РЅР°СЏ РЅРµРІСЏР·РєР° РїРѕ РѕРєРѕРЅС‡Р°РЅРёРё С‡РёСЃР»РµРЅРЅРѕРіРѕ РјРµС‚РѕРґР°
     function_type residuals;
-    /// @brief Искомый аргумент по окончании численного метода
+    /// @brief РСЃРєРѕРјС‹Р№ Р°СЂРіСѓРјРµРЅС‚ РїРѕ РѕРєРѕРЅС‡Р°РЅРёРё С‡РёСЃР»РµРЅРЅРѕРіРѕ РјРµС‚РѕРґР°
     var_type argument;
-    /// @brief Количество итераций
+    /// @brief РљРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№
     size_t iteration_count{ 0 };
 };
 
 
-/// @brief Солвер Ньютона-Рафсона для систем уравнений фиксированной размерности
-/// В том числе скалярных
-/// Ньютона-Рафсона - означает регулировку шага
-/// Реализована регулировка шага за счет дробления
+/// @brief РЎРѕР»РІРµСЂ РќСЊСЋС‚РѕРЅР°-Р Р°С„СЃРѕРЅР° РґР»СЏ СЃРёСЃС‚РµРј СѓСЂР°РІРЅРµРЅРёР№ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё
+/// Р’ С‚РѕРј С‡РёСЃР»Рµ СЃРєР°Р»СЏСЂРЅС‹С…
+/// РќСЊСЋС‚РѕРЅР°-Р Р°С„СЃРѕРЅР° - РѕР·РЅР°С‡Р°РµС‚ СЂРµРіСѓР»РёСЂРѕРІРєСѓ С€Р°РіР°
+/// Р РµР°Р»РёР·РѕРІР°РЅР° СЂРµРіСѓР»РёСЂРѕРІРєР° С€Р°РіР° Р·Р° СЃС‡РµС‚ РґСЂРѕР±Р»РµРЅРёСЏ
 template <size_t Dimension>
 class fixed_newton_raphson {
 public:
@@ -235,14 +235,14 @@ private:
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
 private:
-    /// @brief Проведение процедуры линейного поиска по заданному алгоритму
-    /// @tparam LineSearch Алгоритм линейного поиска
-    /// @param line_search_parameters параметры линейного поиска
-    /// @param residuals Невязки
-    /// @param argument Текущий аргумент, относительного которого делается приращение
-    /// @param r Текущая невязка в системе уравнений для быстрого расчета ц.ф.
-    /// @param p Приращение аргумента
-    /// @return Величина шага. По соглашению если алгоритм линейного поиска не сошелся, будет NaN
+    /// @brief РџСЂРѕРІРµРґРµРЅРёРµ РїСЂРѕС†РµРґСѓСЂС‹ Р»РёРЅРµР№РЅРѕРіРѕ РїРѕРёСЃРєР° РїРѕ Р·Р°РґР°РЅРЅРѕРјСѓ Р°Р»РіРѕСЂРёС‚РјСѓ
+    /// @tparam LineSearch РђР»РіРѕСЂРёС‚Рј Р»РёРЅРµР№РЅРѕРіРѕ РїРѕРёСЃРєР°
+    /// @param line_search_parameters РїР°СЂР°РјРµС‚СЂС‹ Р»РёРЅРµР№РЅРѕРіРѕ РїРѕРёСЃРєР°
+    /// @param residuals РќРµРІСЏР·РєРё
+    /// @param argument РўРµРєСѓС‰РёР№ Р°СЂРіСѓРјРµРЅС‚, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРіРѕ РєРѕС‚РѕСЂРѕРіРѕ РґРµР»Р°РµС‚СЃСЏ РїСЂРёСЂР°С‰РµРЅРёРµ
+    /// @param r РўРµРєСѓС‰Р°СЏ РЅРµРІСЏР·РєР° РІ СЃРёСЃС‚РµРјРµ СѓСЂР°РІРЅРµРЅРёР№ РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ СЂР°СЃС‡РµС‚Р° С†.С„.
+    /// @param p РџСЂРёСЂР°С‰РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р°
+    /// @return Р’РµР»РёС‡РёРЅР° С€Р°РіР°. РџРѕ СЃРѕРіР»Р°С€РµРЅРёСЋ РµСЃР»Рё Р°Р»РіРѕСЂРёС‚Рј Р»РёРЅРµР№РЅРѕРіРѕ РїРѕРёСЃРєР° РЅРµ СЃРѕС€РµР»СЃСЏ, Р±СѓРґРµС‚ NaN
     template <typename LineSearch>
     static double perform_line_search(
         const typename LineSearch::parameters_type& line_search_parameters,
@@ -253,10 +253,10 @@ private:
             return residuals(argument + step * p);
         };
 
-        // Диапазон поиска, значения функции на границах диапазона
+        // Р”РёР°РїР°Р·РѕРЅ РїРѕРёСЃРєР°, Р·РЅР°С‡РµРЅРёСЏ С„СѓРЅРєС†РёРё РЅР° РіСЂР°РЅРёС†Р°С… РґРёР°РїР°Р·РѕРЅР°
         double a = 0;
         double b = line_search_parameters.maximum_step;
-        double function_a = residuals.objective_function(r); // уже есть рассчитанные невязки, по ним считаем ц.ф.
+        double function_a = residuals.objective_function(r); // СѓР¶Рµ РµСЃС‚СЊ СЂР°СЃСЃС‡РёС‚Р°РЅРЅС‹Рµ РЅРµРІСЏР·РєРё, РїРѕ РЅРёРј СЃС‡РёС‚Р°РµРј С†.С„.
         double function_b = directed_function(b); 
 
         auto [search_step, elapsed_iterations] = LineSearch::search(
@@ -266,17 +266,17 @@ private:
     }
 
 public:
-    /// @brief Запуск численного метода
-    /// @tparam LineSearch Алгоритм регулировки шага поиска
-    /// @param residuals Функция невязок
-    /// @param initial_argument Начальное приближение
-    /// @param solver_parameters Настройки поиска
-    /// @param result Результаты расчета
+    /// @brief Р—Р°РїСѓСЃРє С‡РёСЃР»РµРЅРЅРѕРіРѕ РјРµС‚РѕРґР°
+    /// @tparam LineSearch РђР»РіРѕСЂРёС‚Рј СЂРµРіСѓР»РёСЂРѕРІРєРё С€Р°РіР° РїРѕРёСЃРєР°
+    /// @param residuals Р¤СѓРЅРєС†РёСЏ РЅРµРІСЏР·РѕРє
+    /// @param initial_argument РќР°С‡Р°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
+    /// @param solver_parameters РќР°СЃС‚СЂРѕР№РєРё РїРѕРёСЃРєР°
+    /// @param result Р РµР·СѓР»СЊС‚Р°С‚С‹ СЂР°СЃС‡РµС‚Р°
     template <typename LineSearch = divider_search>
     static void solve_dense(
         fixed_system_t<Dimension>& residuals,
         const var_type& initial_argument,
-        const fixed_solver_parameters_t<Dimension, typename LineSearch>& solver_parameters,
+        const fixed_solver_parameters_t<Dimension, LineSearch>& solver_parameters,
         fixed_solver_result_t<Dimension>* result
     )
     {
@@ -292,7 +292,7 @@ public:
 
         r = residuals.residuals(argument);
         if (has_not_finite(r)) {
-            r = residuals.residuals(argument); // для отладки
+            r = residuals.residuals(argument); // РґР»СЏ РѕС‚Р»Р°РґРєРё
             result->result_code = numerical_result_code_t::NumericalNanValues;
             return;
         }
@@ -304,8 +304,8 @@ public:
         {
             auto J = residuals.jacobian_dense(argument);
 
-            p = -solve_linear_system(J, r); // здесь должен быть обработчик ошибки
-            // todo: обработчик ошибки решения СЛАУ
+            p = -solve_linear_system(J, r); // Р·РґРµСЃСЊ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС€РёР±РєРё
+            // todo: РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС€РёР±РєРё СЂРµС€РµРЅРёСЏ РЎР›РђРЈ
 
             if (solver_parameters.step_criteria_assuming_search_step == false)
             {
@@ -320,7 +320,7 @@ public:
 
             solver_parameters.constraints.trim_min(argument, p);
             if constexpr (std::is_same<LineSearch, divider_search>()) {
-                // Для ЗС trim делать не надо
+                // Р”Р»СЏ Р—РЎ trim РґРµР»Р°С‚СЊ РЅРµ РЅР°РґРѕ
                 solver_parameters.constraints.trim_relative(p);
             }
 
@@ -336,7 +336,7 @@ public:
 
             r = residuals.residuals(argument);
             if (has_not_finite(r)) {
-                r = residuals.residuals(argument); // для отладки
+                r = residuals.residuals(argument); // РґР»СЏ РѕС‚Р»Р°РґРєРё
                 result->result_code = numerical_result_code_t::NumericalNanValues;
                 break;
             }

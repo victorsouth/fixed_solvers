@@ -1,15 +1,15 @@
-#pragma once
+п»ї#pragma once
 
 
-/// @brief Настройки поиска дробления шага
+/// @brief РќР°СЃС‚СЂРѕР№РєРё РїРѕРёСЃРєР° РґСЂРѕР±Р»РµРЅРёСЏ С€Р°РіР°
 struct divider_search_parameters {
-    /// @brief полезно уменьшать <1, чтобы не было зацикливания
+    /// @brief РїРѕР»РµР·РЅРѕ СѓРјРµРЅСЊС€Р°С‚СЊ <1, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ Р·Р°С†РёРєР»РёРІР°РЅРёСЏ
     double maximum_step{ 1 };
     double minimum_step{ 0.05 };
     double step_divider{ 1.5 };
 };
 
-/// @brief Линейный поиск методом дробления шага
+/// @brief Р›РёРЅРµР№РЅС‹Р№ РїРѕРёСЃРє РјРµС‚РѕРґРѕРј РґСЂРѕР±Р»РµРЅРёСЏ С€Р°РіР°
 class divider_search {
 public:
     typedef divider_search_parameters parameters_type;
@@ -30,7 +30,7 @@ public:
         double alpha_prev, alpha_curr;
         double function_prev, function_current;
 
-        // найти максимальное значение alpha, при котором расчет не разваливается
+        // РЅР°Р№С‚Рё РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ alpha, РїСЂРё РєРѕС‚РѕСЂРѕРј СЂР°СЃС‡РµС‚ РЅРµ СЂР°Р·РІР°Р»РёРІР°РµС‚СЃСЏ
         alpha_curr = b;// parameters.maximum_step;
         function_current = f_b;
 
@@ -47,7 +47,7 @@ public:
                 found_better_than_initial = true;
 
             if (found_better_than_initial) {
-                // ждем, когда ц.ф. начнет расти
+                // Р¶РґРµРј, РєРѕРіРґР° С†.С„. РЅР°С‡РЅРµС‚ СЂР°СЃС‚Рё
                 if (function_current > function_prev) {
                     return { alpha_prev, index };
                 }

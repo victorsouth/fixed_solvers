@@ -1,6 +1,6 @@
-#pragma once
+п»ї#pragma once
 
-/// @brief Решение линейного уравнения
+/// @brief Р РµС€РµРЅРёРµ Р»РёРЅРµР№РЅРѕРіРѕ СѓСЂР°РІРЅРµРЅРёСЏ
 /// ax = b
 inline double solve_linear_system(
     const double& a, const double& b)
@@ -12,7 +12,7 @@ inline double solve_linear_system(
     return result;
 }
 
-/// @brief Решение линейного уравнения
+/// @brief Р РµС€РµРЅРёРµ Р»РёРЅРµР№РЅРѕРіРѕ СѓСЂР°РІРЅРµРЅРёСЏ
 /// ax = b
 /// @param equation a = first, b = second
 inline double solve_linear_system(
@@ -23,7 +23,7 @@ inline double solve_linear_system(
 
 
 
-/// @brief Решение СЛАУ 2х2 методом Крамера
+/// @brief Р РµС€РµРЅРёРµ РЎР›РђРЈ 2С…2 РјРµС‚РѕРґРѕРј РљСЂР°РјРµСЂР°
 /// Ax = b
 /// https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%9A%D1%80%D0%B0%D0%BC%D0%B5%D1%80%D0%B0
 inline array<double, 2> solve_linear_system(

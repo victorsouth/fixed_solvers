@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -8,11 +8,11 @@ using Eigen::MatrixXd;
 using Eigen::SparseMatrix;
 typedef Eigen::Triplet<double> triplet_t;
 
-/// @brief Типы данных для системы уравнений
+/// @brief РўРёРїС‹ РґР°РЅРЅС‹С… РґР»СЏ СЃРёСЃС‚РµРјС‹ СѓСЂР°РІРЅРµРЅРёР№
 template <std::ptrdiff_t Dimension>
 struct fixed_system_types;
 
-/// @brief Специализация вырожденного случая системы уравнений - одного уравнения, скалярный случай
+/// @brief РЎРїРµС†РёР°Р»РёР·Р°С†РёСЏ РІС‹СЂРѕР¶РґРµРЅРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ СЃРёСЃС‚РµРјС‹ СѓСЂР°РІРЅРµРЅРёР№ - РѕРґРЅРѕРіРѕ СѓСЂР°РІРЅРµРЅРёСЏ, СЃРєР°Р»СЏСЂРЅС‹Р№ СЃР»СѓС‡Р°Р№
 template <>
 struct fixed_system_types<1> {
     typedef double var_type;
@@ -43,7 +43,7 @@ struct fixed_system_types<-1> {
     }
 };
 
-/// @brief Общий случай системы уравнений фиксированной размерности
+/// @brief РћР±С‰РёР№ СЃР»СѓС‡Р°Р№ СЃРёСЃС‚РµРјС‹ СѓСЂР°РІРЅРµРЅРёР№ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё
 template <std::ptrdiff_t Dimension>
 struct fixed_system_types {
     typedef array<double, Dimension> var_type;
@@ -60,28 +60,28 @@ struct fixed_system_types {
 };
 
 
-/// @brief Система алгебраических уравнений - базовый класс
+/// @brief РЎРёСЃС‚РµРјР° Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№ - Р±Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ
 template <std::ptrdiff_t Dimension>
 class fixed_system_t {
 protected:
-    /// @brief Относительное (!) приращение для расчета производных
+    /// @brief РћС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРµ (!) РїСЂРёСЂР°С‰РµРЅРёРµ РґР»СЏ СЂР°СЃС‡РµС‚Р° РїСЂРѕРёР·РІРѕРґРЅС‹С…
     double epsilon{ 1e-6 };
 public:
     typedef typename fixed_system_types<Dimension>::var_type var_type;
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
 public:
-    /// @brief Расчет целевой функции по невязкам
+    /// @brief Р Р°СЃС‡РµС‚ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё РїРѕ РЅРµРІСЏР·РєР°Рј
     static double objective_function(const var_type& r);
 
-    /// @brief Расчет целевой функции по аргументу
+    /// @brief Р Р°СЃС‡РµС‚ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё РїРѕ Р°СЂРіСѓРјРµРЅС‚Сѓ
     double operator()(const var_type& x) {
         auto r = residuals(x);
         return objective_function(r);
     }
-    /// @brief Невязки системы уравнений
+    /// @brief РќРµРІСЏР·РєРё СЃРёСЃС‚РµРјС‹ СѓСЂР°РІРЅРµРЅРёР№
     virtual function_type residuals(const var_type& x) = 0;
-    /// @brief Якобиан системы уравнений
+    /// @brief РЇРєРѕР±РёР°РЅ СЃРёСЃС‚РµРјС‹ СѓСЂР°РІРЅРµРЅРёР№
     virtual matrix_value jacobian_dense(const var_type& x);
 };
 
@@ -135,8 +135,8 @@ inline double fixed_system_t<Dimension>::objective_function(const var_type& r)
     return result;
 }
 
-/// @brief Реализация residuals и jacobian для лямбда-функций
-/// @tparam Lambda Лямба-функция
+/// @brief Р РµР°Р»РёР·Р°С†РёСЏ residuals Рё jacobian РґР»СЏ Р»СЏРјР±РґР°-С„СѓРЅРєС†РёР№
+/// @tparam Lambda Р›СЏРјР±Р°-С„СѓРЅРєС†РёСЏ
 template <typename Lambda>
 class fixed_scalar_wrapper_t : public fixed_system_t<1>
 {

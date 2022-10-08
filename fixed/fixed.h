@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "fixed/array_ext.h"
 #include "fixed/fixed_system.h"
