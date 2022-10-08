@@ -1,19 +1,15 @@
 #pragma once
 
-struct linear_search_parameters {
-    /// @brief полезно уменьшать <1, чтобы не было зацикливания
-    double maximum_step{ 1 };
-    double minimum_step{ 0.05 };
-    double step_divider{ 1.5 };
-};
-
+#include "line_search/golden_section.h"
+#include "line_search/divider.h"
 
 
 /// @brief Ограничения солвера
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
 
-/// @brief Ограничения солвера
+/// @brief Ограничения солвера для переменной размерности 
+/// (пока не используется, заготовка на будущее)
 template <>
 struct fixed_solver_constraints<-1>
 {
@@ -99,6 +95,38 @@ struct fixed_solver_constraints
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
 
+    /// @brief Обрезка по минимуму для скалярного случая
+    void trim_min(double argument, double& increment) const
+    {
+        if (std::isnan(minimum))
+            return;
+
+        if (argument + increment < minimum) {
+            increment = minimum - argument;
+        }
+    }
+    /// @brief Обрезка по минимуму для векторного случая
+    void trim_min(const array<double, Dimension>& argument,
+        array<double, Dimension>& increment) const
+    {
+        double factor = 1;
+
+        for (size_t index = 0; index < increment.size(); ++index) {
+            if (std::isnan(minimum[index])) {
+                continue;
+            }
+
+            if (argument[index] + increment[index] < minimum[index]) {
+                double allowed_increment = minimum[index] - argument[index];
+                factor = std::max(factor, increment[index] / allowed_increment);
+            }
+        }
+        if (factor > 1)
+        {
+            increment = increment / factor;
+        }
+    }
+    /// @brief Обрезка по максимального приращению для скларяного случая
     void trim_relative(double& increment) const
     {
         if (std::isnan(relative_boundary))
@@ -109,7 +137,7 @@ struct fixed_solver_constraints
             increment /= factor;
         }
     }
-
+    /// @brief Обрезка по максимального приращению для векторного случая
     void trim_relative(array<double, Dimension>& increment) const
     {
         double factor = 1;
@@ -132,15 +160,20 @@ struct fixed_solver_constraints
 };
 
 
-/// @brief Параметры алгоритма 
-template <std::ptrdiff_t Dimension>
+/// @brief Параметры алгоритма Ньютона-Рафсона
+template <std::ptrdiff_t Dimension, typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
 {
+    /// @brief Границы на диапазон и единичный шаг
     fixed_solver_constraints<Dimension> constraints;
-    linear_search_parameters line_search;
-    bool step_criteria_assuming_search_step{ false };
-    double argument_increment_norm{ 1e-4 };
+    /// @brief Параметры алгоритма регулировки шага
+    typename LineSearch::parameters_type line_search;
+    /// @brief Количество итераций
     size_t iteration_count{ 100 };
+    /// @brief Погрешность метода по приращению аргумента
+    double argument_increment_norm{ 1e-4 };
+    /// @brief Проверять векторный шага после регулировки или перед ней
+    bool step_criteria_assuming_search_step{ false };
 };
 
 enum class numerical_result_code_t
@@ -180,7 +213,7 @@ public:
     typedef typename fixed_system_types<Dimension>::var_type var_type;
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
-public:
+private:
     static inline bool has_not_finite(const double value)
     {
         if (!std::isfinite(value)) {
@@ -198,61 +231,52 @@ public:
         }
         return false;
     }
-
-public:
-    template <typename Function>
-    static inline double line_search(Function& function,
-        const linear_search_parameters& parameters)
-    {
-
-        //double function_initial = function(alpha_prev);
-        bool found_better_than_initial = false;
-
-        double function_initial = function(0);
-
-        double alpha_prev, alpha_curr;
-        double function_prev, function_current;
-
-        // найти максимальное значение alpha, при котором расчет не разваливается
-        alpha_curr = parameters.maximum_step;
-        function_current = function(alpha_curr);
-
-        while (alpha_curr >= parameters.minimum_step)
-        {
-            alpha_prev = alpha_curr;
-            alpha_curr /= parameters.step_divider;
-            function_prev = function_current;
-            function_current = function(alpha_curr);
-
-            if (function_current < function_initial)
-                found_better_than_initial = true;
-
-            if (found_better_than_initial) {
-                // ждем, когда ц.ф. начнет расти
-                if (function_current > function_prev) {
-                    return alpha_prev;
-                }
-                else
-                    continue;
-            }
-        }
-
-        return std::numeric_limits<double>::quiet_NaN();
-    }
-
+private:
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
+private:
+    /// @brief Проведение процедуры линейного поиска по заданному алгоритму
+    /// @tparam LineSearch Алгоритм линейного поиска
+    /// @param line_search_parameters параметры линейного поиска
+    /// @param residuals Невязки
+    /// @param argument Текущий аргумент, относительного которого делается приращение
+    /// @param r Текущая невязка в системе уравнений для быстрого расчета ц.ф.
+    /// @param p Приращение аргумента
+    /// @return Величина шага. По соглашению если алгоритм линейного поиска не сошелся, будет NaN
+    template <typename LineSearch>
+    static double perform_line_search(
+        const typename LineSearch::parameters_type& line_search_parameters,
+        fixed_system_t<Dimension>& residuals, 
+        const var_type& argument, const var_type& r, const var_type& p) 
+    {
+        auto directed_function = [&](double step) {
+            return residuals(argument + step * p);
+        };
 
+        // Диапазон поиска, значения функции на границах диапазона
+        double a = 0;
+        double b = line_search_parameters.maximum_step;
+        double function_a = residuals.objective_function(r); // уже есть рассчитанные невязки, по ним считаем ц.ф.
+        double function_b = directed_function(b); 
 
-    /// @brief Численное решение систем уравнений методом Гаусса-Ньютона
+        auto [search_step, elapsed_iterations] = LineSearch::search(
+            line_search_parameters,
+            directed_function, a, b, function_a, function_b);
+        return search_step;
+    }
+
+public:
+    /// @brief Запуск численного метода
+    /// @tparam LineSearch Алгоритм регулировки шага поиска
     /// @param residuals Функция невязок
     /// @param initial_argument Начальное приближение
-    /// @param solver_parameters Параметры расчета
+    /// @param solver_parameters Настройки поиска
     /// @param result Результаты расчета
+    template <typename LineSearch = divider_search>
     static void solve_dense(
         fixed_system_t<Dimension>& residuals,
         const var_type& initial_argument,
-        const fixed_solver_parameters_t<Dimension>& solver_parameters,
+        const fixed_solver_parameters_t<Dimension, typename LineSearch>& solver_parameters,
         fixed_solver_result_t<Dimension>* result
     )
     {
@@ -260,7 +284,7 @@ public:
         function_type& argument = result->argument;
         double& argument_increment_metric = result->argument_increment_metric;
         bool& argument_increment_criteria = result->argument_increment_criteria;
-        
+
 
         argument = initial_argument;
         var_type argument_increment;
@@ -281,8 +305,7 @@ public:
             auto J = residuals.jacobian_dense(argument);
 
             p = -solve_linear_system(J, r); // здесь должен быть обработчик ошибки
-
-            // todo: обработчик ошибки
+            // todo: обработчик ошибки решения СЛАУ
 
             if (solver_parameters.step_criteria_assuming_search_step == false)
             {
@@ -295,20 +318,20 @@ public:
                 }
             }
 
-            solver_parameters.constraints.trim_relative(p);
+            solver_parameters.constraints.trim_min(argument, p);
+            if constexpr (std::is_same<LineSearch, divider_search>()) {
+                // Для ЗС trim делать не надо
+                solver_parameters.constraints.trim_relative(p);
+            }
 
-            auto directed_function = [&](double step) {
-                return residuals(argument + step * p);
-            };
-
-            double search_step = line_search(directed_function, solver_parameters.line_search);
+            double search_step = perform_line_search<LineSearch>(
+                solver_parameters.line_search, residuals, argument, r, p);
             if (std::isnan(search_step)) {
                 result->result_code = numerical_result_code_t::NotConverged;
                 break;
             }
 
             argument_increment = search_step * p;
-
             argument += argument_increment;
 
             r = residuals.residuals(argument);
@@ -323,7 +346,7 @@ public:
                 : argument_increment_factor(argument, p);
             argument_increment_criteria =
                 argument_increment_metric < solver_parameters.argument_increment_norm;
-            bool custom_criteria = false; 
+            bool custom_criteria = false;
             if (custom_criteria || argument_increment_criteria) {
                 result->result_code = numerical_result_code_t::Converged;
                 break;

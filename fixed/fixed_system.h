@@ -71,8 +71,14 @@ public:
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
 public:
-    /// @brief Сумма квадратов
-    double operator()(const var_type& x);
+    /// @brief Расчет целевой функции по невязкам
+    static double objective_function(const var_type& r);
+
+    /// @brief Расчет целевой функции по аргументу
+    double operator()(const var_type& x) {
+        auto r = residuals(x);
+        return objective_function(r);
+    }
     /// @brief Невязки системы уравнений
     virtual function_type residuals(const var_type& x) = 0;
     /// @brief Якобиан системы уравнений
@@ -114,18 +120,17 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
 }
 
 template <>
-inline double fixed_system_t<1>::operator()(const double& x)
+inline double fixed_system_t<1>::objective_function(const double& r)
 {
-    double r = residuals(x);
     return r * r;
 }
 
 template <std::ptrdiff_t Dimension>
-inline double fixed_system_t<Dimension>::operator()(const var_type& x)
+inline double fixed_system_t<Dimension>::objective_function(const var_type& r)
 {
-    auto r = residuals(x);
     double result = std::accumulate(
-        r.begin(), r.end(), 0.0, [](double accum, double value) { return accum + value * value; });
+        r.begin(), r.end(), 0.0, 
+        [](double accum, double value) { return accum + value * value; });
 
     return result;
 }
