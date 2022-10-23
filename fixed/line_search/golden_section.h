@@ -62,8 +62,8 @@ public:
 
         // Инициализируем текущий рекорд
         auto [x_min, f_min] = f_b < f_a
-            ? make_pair(b, f_b)
-            : make_pair(a, f_a);
+            ? std::make_pair(b, f_b)
+            : std::make_pair(a, f_a);
         // Если снижение сразу достаточно, выходим
         if (check_convergence(f_min, f_0)) {
             // трактуем, что вообще не понадобилось итераций
@@ -77,9 +77,20 @@ public:
         double beta = get_beta(a, b);
         double f_beta = function(beta);
 
+        // функция проверят наличие экстремума-максимума в четрыем известных точках: {a, alpha, beta, b}
+        // что противоречит унимодальности функции
+        auto check_local_max = [&]() {
+            if (f_alpha > f_a && f_alpha > f_beta) {
+                throw std::logic_error("non-unimodal function detected, f_alpha is max");
+            }
+            if (f_beta > f_alpha && f_beta > f_b) {
+                throw std::logic_error("non-unimodal function detected, f_beta is max");
+            }
+        };
+        //check_local_max(); // отключим, поскольку шум
+
         // функция обновляет рекорд x_min, f_min по известным значениям a, alpha, beta, b
-        auto update_minimum = [&]() {
-            // Выбор текущего рекорда по минимуму
+        auto update_minimum = [&x_min = x_min, &f_min = f_min, &f_alpha, &f_beta, &a, &b, &f_a, &f_b, &alpha, &beta]() {            // Выбор текущего рекорда по минимуму
             if (f_alpha < f_beta) {
                 // 1. исходя из унимодальности, минимум лежит в диапазоне [a, beta]
                 // 2. из этого диапазона рассчитаны значения f(a), f(alpha), f(beta)
@@ -87,8 +98,8 @@ public:
                 // 3. при этом уже проверили, что f(alpha) < f(beta)
                 // остается найти min(f(alpha), f(a))
                 std::tie(x_min, f_min) = f_alpha < f_a
-                    ? make_pair(alpha, f_alpha)
-                    : make_pair(a, f_a);
+                    ? std::make_pair(alpha, f_alpha)
+                    : std::make_pair(a, f_a);
             }
             else {
                 // 1. минимум в диапазоне [alpha, b]
@@ -96,8 +107,8 @@ public:
                 // 3. при этом уже проверили, что f(alpha) > f(beta)
                 // остается найти min(f(b), f(beta))
                 std::tie(x_min, f_min) = f_b < f_beta
-                    ? make_pair(b, f_b)
-                    : make_pair(beta, f_beta);
+                    ? std::make_pair(b, f_b)
+                    : std::make_pair(beta, f_beta);
             }
         };
         update_minimum();

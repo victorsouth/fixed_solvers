@@ -126,6 +126,39 @@ struct fixed_solver_constraints
             increment = increment / factor;
         }
     }
+
+    /// @brief Обрезка по минимуму для скалярного случая
+    void trim_max(double argument, double& increment) const
+    {
+        if (std::isnan(maximum))
+            return;
+
+        if (argument + increment > maximum) {
+            increment = maximum - argument;
+        }
+    }
+
+    void trim_max(const array<double, Dimension>& argument,
+        array<double, Dimension>& increment) const
+    {
+        double factor = 1;
+
+        for (size_t index = 0; index < increment.size(); ++index) {
+            if (std::isnan(minimum[index])) {
+                continue;
+            }
+
+            if (argument[index] + increment[index] > maximum[index]) {
+                double allowed_increment = maximum[index] - argument[index];
+                factor = std::max(factor, increment[index] / allowed_increment);
+            }
+        }
+        if (factor > 1)
+        {
+            increment = increment / factor;
+        }
+    }
+
     /// @brief Обрезка по максимального приращению для скларяного случая
     void trim_relative(double& increment) const
     {
@@ -318,6 +351,7 @@ public:
                 }
             }
 
+            solver_parameters.constraints.trim_max(argument, p);
             solver_parameters.constraints.trim_min(argument, p);
             if constexpr (std::is_same<LineSearch, divider_search>()) {
                 // Для ЗС trim делать не надо

@@ -26,6 +26,7 @@ struct fixed_system_types<1> {
     }
 };
 
+/// @brief Специализация случая переменной размерности
 template <>
 struct fixed_system_types<-1> {
     typedef VectorXd var_type;
@@ -96,6 +97,16 @@ inline double fixed_system_t<1>::jacobian_dense(const double& x)
 
 }
 
+
+template <>
+inline fixed_system_t<-1>::matrix_value 
+    fixed_system_t<-1>::jacobian_dense(const fixed_system_t<-1>::var_type& x)
+{
+    throw std::logic_error("var system must have");
+
+}
+
+
 template <std::ptrdiff_t Dimension>
 inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension>::jacobian_dense(const var_type& x)
 {
@@ -112,7 +123,7 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
         arg[component] = x[component];
 
         function_type Jcol = (f_plus - f_minus) / (2 * e);
-        for (size_t row = 0; row < x.size(); ++row) {
+        for (size_t row = 0; row < static_cast<size_t>(x.size()); ++row) {
             J[row][component] = Jcol[row];
         }
     }
