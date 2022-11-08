@@ -207,12 +207,15 @@ struct fixed_solver_parameters_t
     double argument_increment_norm{ 1e-4 };
     /// @brief Проверять векторный шага после регулировки или перед ней
     bool step_criteria_assuming_search_step{ false };
+    /// @brief Считать невозможность улучшить ц.ф. при линейном поиске как лучшее решений
+    /// Т.е. считать, что причина этого в наличии шума уравнений и ц.ф.
+    bool treat_line_search_fail_as_convergence{ false };
 };
 
 enum class numerical_result_code_t
 {
     NoNumericalError, IllConditionedMatrix, LargeConditionNumber,
-    NotConverged, NumericalNanValues, Converged
+    NotConverged, NumericalNanValues, LineSearchFailed, Converged
 };
 
 /// @brief Результат расчета численного метода
@@ -313,6 +316,9 @@ public:
         fixed_solver_result_t<Dimension>* result
     )
     {
+        //static int dummy = 1;
+        //dummy++;
+
         var_type& r = result->residuals;
         function_type& argument = result->argument;
         double& argument_increment_metric = result->argument_increment_metric;
@@ -336,8 +342,7 @@ public:
         for (iteration = 0; iteration < solver_parameters.iteration_count; ++iteration)
         {
             auto J = residuals.jacobian_dense(argument);
-
-            p = -solve_linear_system(J, r); // здесь должен быть обработчик ошибки
+            p = -solve_linear_system(J, r);
             // todo: обработчик ошибки решения СЛАУ
 
             if (solver_parameters.step_criteria_assuming_search_step == false)
@@ -361,7 +366,12 @@ public:
             double search_step = perform_line_search<LineSearch>(
                 solver_parameters.line_search, residuals, argument, r, p);
             if (std::isnan(search_step)) {
-                result->result_code = numerical_result_code_t::NotConverged;
+                if (solver_parameters.treat_line_search_fail_as_convergence) {
+                    result->result_code = numerical_result_code_t::Converged;
+                }
+                else {
+                    result->result_code = numerical_result_code_t::LineSearchFailed;
+                }
                 break;
             }
 
