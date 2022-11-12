@@ -6,7 +6,7 @@ inline double solve_linear_system(
     const double& a, const double& b)
 {
     double result = b / a;
-    if (!isfinite(result)) {
+    if (!std::isfinite(result)) {
         throw std::logic_error("infinite value");
     }
     return result;
@@ -36,7 +36,7 @@ inline array<double, 2> solve_linear_system(
 
     array<double, 2> result{ d1 / d, d2 / d };
 
-    if (!isfinite(result[0]) || !isfinite(result[1])) {
+    if (!std::isfinite(result[0]) || !std::isfinite(result[1])) {
         throw std::logic_error("infinite value");
     }
 
