@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+using std::isfinite;
+
 /// @brief Решение линейного уравнения
 /// ax = b
 inline double solve_linear_system(
