@@ -15,6 +15,10 @@ fixed/fixed_system.h
 )
 include(CMakePackageConfigHelpers)
 
+if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
+add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS})
+else()
+endif()
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME}
                              INTERFACE
