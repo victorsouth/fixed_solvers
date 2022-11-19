@@ -10,7 +10,15 @@ struct golden_section_parameters {
     double function_decrement_factor{ 2 };
     /// @brief Достаточное (достаточно малое) значение целевое значение ц.ф.
     /// Если NaN, то не используется
-    double function_target_value{ std::numeric_limits<double>::quiet_NaN() };
+    double function_target_value{ std::numeric_limits<double>::quiet_NaN() };    
+    /// @brief Если регулировка шага отвалилась и разрешено шаг все-таки сделать, то он будет такой
+    double fail_step_size{ 0.05 };
+    /// @brief Величина шага в случае неудачного завершения регулировки шага 
+    /// Задействуется, только если это разрешено в Ньютон-Рафсоне!
+    double step_on_search_fail() const {
+        return fail_step_size;
+    }
+
     /// @brief Возвращает относительную длины отрезка локализации минимума
     double get_final_section_length() const {
         return pow(0.618, iteration_count);

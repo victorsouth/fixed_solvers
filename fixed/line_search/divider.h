@@ -7,6 +7,11 @@ struct divider_search_parameters {
     double maximum_step{ 1 };
     double minimum_step{ 0.05 };
     double step_divider{ 1.5 };
+    /// @brief Величина шага в случае неудачного завершения регулировки шага 
+    /// Задействуется, только если это разрешено в Ньютон-Рафсоне!
+    double step_on_search_fail() const {
+        return minimum_step;
+    }
 };
 
 /// @brief Линейный поиск методом дробления шага
