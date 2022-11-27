@@ -83,11 +83,16 @@ public:
     /// @brief Невязки системы уравнений
     virtual function_type residuals(const var_type& x) = 0;
     /// @brief Якобиан системы уравнений
-    virtual matrix_value jacobian_dense(const var_type& x);
+    virtual matrix_value jacobian_dense(const var_type& x) {
+        return jacobian_dense_numeric(x);
+    }
+protected:
+    matrix_value jacobian_dense_numeric(const var_type& x);
+
 };
 
 template <>
-inline double fixed_system_t<1>::jacobian_dense(const double& x)
+inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 {
     double e = epsilon * std::max(1.0, x);
     function_type f_plus = residuals(x + e);
@@ -100,7 +105,7 @@ inline double fixed_system_t<1>::jacobian_dense(const double& x)
 
 template <>
 inline fixed_system_t<-1>::matrix_value 
-    fixed_system_t<-1>::jacobian_dense(const fixed_system_t<-1>::var_type& x)
+    fixed_system_t<-1>::jacobian_dense_numeric(const fixed_system_t<-1>::var_type& x)
 {
     throw std::logic_error("var system must have");
 
@@ -108,7 +113,7 @@ inline fixed_system_t<-1>::matrix_value
 
 
 template <std::ptrdiff_t Dimension>
-inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension>::jacobian_dense(const var_type& x)
+inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension>::jacobian_dense_numeric(const var_type& x)
 {
     var_type arg = x;
 
