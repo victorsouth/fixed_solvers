@@ -76,7 +76,7 @@ public:
     static double objective_function(const var_type& r);
 
     /// @brief Расчет целевой функции по аргументу
-    double operator()(const var_type& x) {
+    virtual double operator()(const var_type& x) {
         auto r = residuals(x);
         return objective_function(r);
     }
@@ -139,6 +139,13 @@ template <>
 inline double fixed_system_t<1>::objective_function(const double& r)
 {
     return r * r;
+}
+
+
+template <>
+inline double fixed_system_t<-1>::objective_function(const VectorXd& r)
+{
+    return r.squaredNorm();
 }
 
 template <std::ptrdiff_t Dimension>

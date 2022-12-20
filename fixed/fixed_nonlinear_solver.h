@@ -313,12 +313,10 @@ public:
         fixed_system_t<Dimension>& residuals,
         const var_type& initial_argument,
         const fixed_solver_parameters_t<Dimension, LineSearch>& solver_parameters,
-        fixed_solver_result_t<Dimension>* result
+        fixed_solver_result_t<Dimension>* result, 
+        vector<double>* steps = nullptr
     )
     {
-        //static int dummy = 1;
-        //dummy++;
-
         var_type& r = result->residuals;
         function_type& argument = result->argument;
         double& argument_increment_metric = result->argument_increment_metric;
@@ -374,6 +372,11 @@ public:
                 }
                 break;
             }
+
+            if (steps != nullptr) {
+                steps->push_back(search_step);
+            }
+            
 
             argument_increment = search_step * p;
             argument += argument_increment;
