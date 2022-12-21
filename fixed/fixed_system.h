@@ -107,7 +107,7 @@ template <>
 inline fixed_system_t<-1>::matrix_value 
     fixed_system_t<-1>::jacobian_dense_numeric(const fixed_system_t<-1>::var_type& x)
 {
-    throw std::logic_error("var system must have");
+    throw std::logic_error("var system must have sparse jacobian");
 
 }
 
