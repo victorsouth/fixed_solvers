@@ -127,6 +127,18 @@ struct fixed_solver_constraints
         }
     }
 
+    /// @brief Приводит значение аргумента внутрь ограничений мин/макс
+    void ensure_constraints(double& argument) const
+    {
+        if (!std::isnan(maximum)) {
+            argument = std::min(argument, maximum);
+        }
+        if (!std::isnan(minimum)) {
+            argument = std::max(argument, minimum);
+        }
+    }
+
+
     /// @brief Обрезка по минимуму для скалярного случая
     void trim_max(double argument, double& increment) const
     {
