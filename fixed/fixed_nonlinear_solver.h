@@ -204,11 +204,22 @@ struct fixed_solver_constraints
     }
 };
 
+/// @brief Параметры диагностики сходимости
+struct fixed_solver_analysis_parameters_t {
+    /// @brief Собирает историю значений аргумента
+    bool argument_history{ false };
+    /// @brief Собирать значения шага в методе Ньютона-Рафсона
+    bool steps{false};
+    /// @brief Выполнять исследование целевой функции на каждом шаге
+    bool line_search_explore{ false };
+};
 
 /// @brief Параметры алгоритма Ньютона-Рафсона
 template <std::ptrdiff_t Dimension, typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
 {
+    /// @brief Параметры диагностики
+    fixed_solver_analysis_parameters_t analysis;
     /// @brief Границы на диапазон и единичный шаг
     fixed_solver_constraints<Dimension> constraints;
     /// @brief Параметры алгоритма регулировки шага
@@ -251,6 +262,25 @@ struct fixed_solver_result_t {
 };
 
 
+/// @brief Аналитика сходимости
+template <size_t Dimension>
+struct fixed_solver_result_analysis_t {
+public:
+    /// @brief Значения целевой функции для одной регулировки шага
+    typedef vector<double> target_function_values_t;
+    typedef typename fixed_system_types<Dimension>::var_type var_type;
+    typedef typename fixed_system_types<Dimension>::right_party_type function_type;
+    typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
+public:
+    /// @brief Значения целевой функции по всем шагам Ньютона-Рафсона
+    vector<target_function_values_t> target_function;
+    /// @brief Результат расчета
+    vector<var_type> argument_history;
+    /// @brief Величина шагов Ньютона-Рафсона
+    vector<double> steps;
+};
+
+
 /// @brief Солвер Ньютона-Рафсона для систем уравнений фиксированной размерности
 /// В том числе скалярных
 /// Ньютона-Рафсона - означает регулировку шага
@@ -283,6 +313,33 @@ private:
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
 private:
+    /// @brief Расчет целевой функции при регулировке шага в диапазоне [0, 1]
+    /// @param residuals Векторная функция невязок 
+    /// @param argument Текущее значение аргумента
+    /// @param p Значение приращения по методу Ньютона
+    /// @return Результат исследования ц.ф. 
+    static vector<double> perform_step_research(
+        fixed_system_t<Dimension>& residuals,
+        const var_type& argument,
+        const var_type& p)
+    {
+        auto directed_function = [&](double step) {
+            return residuals(argument + step * p);
+        };
+
+        size_t research_step_count = 100;
+        vector<double> target_function;
+        target_function.reserve(research_step_count);
+        for (size_t index = 0; index <= research_step_count; ++index) {
+            double alpha = 1.0 * index / research_step_count;
+            double norm = directed_function(alpha);
+            target_function.emplace_back(norm);
+        }
+
+        return std::move(target_function);
+    }
+
+
     /// @brief Проведение процедуры линейного поиска по заданному алгоритму
     /// @tparam LineSearch Алгоритм линейного поиска
     /// @param line_search_parameters параметры линейного поиска
@@ -326,7 +383,7 @@ public:
         const var_type& initial_argument,
         const fixed_solver_parameters_t<Dimension, LineSearch>& solver_parameters,
         fixed_solver_result_t<Dimension>* result, 
-        vector<double>* steps = nullptr
+        fixed_solver_result_analysis_t<Dimension>* analysis = nullptr
     )
     {
         var_type& r = result->residuals;
@@ -373,6 +430,10 @@ public:
                 solver_parameters.constraints.trim_relative(p);
             }
 
+            if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
+                analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+            }
+
             double search_step = perform_line_search<LineSearch>(
                 solver_parameters.line_search, residuals, argument, r, p);
             if (std::isnan(search_step)) {
@@ -385,13 +446,17 @@ public:
                 break;
             }
 
-            if (steps != nullptr) {
-                steps->push_back(search_step);
+            if (analysis != nullptr && solver_parameters.analysis.steps) {
+                analysis->steps.push_back(search_step);
             }
             
 
             argument_increment = search_step * p;
             argument += argument_increment;
+
+            if (analysis != nullptr && solver_parameters.analysis.argument_history) {
+                analysis->argument_history.push_back(argument);
+            }
 
             r = residuals.residuals(argument);
             if (has_not_finite(r)) {
