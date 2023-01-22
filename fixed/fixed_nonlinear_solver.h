@@ -393,6 +393,10 @@ public:
 
 
         argument = initial_argument;
+        if (analysis != nullptr && solver_parameters.analysis.argument_history) {
+            analysis->argument_history.push_back(argument);
+        }
+
         var_type argument_increment;
         var_type p;
 
