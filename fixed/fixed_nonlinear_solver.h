@@ -214,6 +214,9 @@ struct fixed_solver_analysis_parameters_t {
     bool line_search_explore{ false };
 };
 
+/// @brief Действия при неудачной регулировке шага
+enum class line_search_fail_action_t { TreatAsFail, TreatAsSuccess, PerformMinStep };
+
 /// @brief Параметры алгоритма Ньютона-Рафсона
 template <std::ptrdiff_t Dimension, typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
@@ -233,6 +236,8 @@ struct fixed_solver_parameters_t
     /// @brief Считать невозможность улучшить ц.ф. при линейном поиске как лучшее решений
     /// Т.е. считать, что причина этого в наличии шума уравнений и ц.ф.
     bool treat_line_search_fail_as_convergence{ false };
+
+    line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail};
 };
 
 enum class numerical_result_code_t
@@ -240,6 +245,15 @@ enum class numerical_result_code_t
     NoNumericalError, IllConditionedMatrix, LargeConditionNumber,
     NotConverged, NumericalNanValues, LineSearchFailed, Converged
 };
+
+/// @brief Оценка качества сходимости
+enum class convergence_score_t : int {
+    Excellent = 5, Good = 4, Satisfactory = 3, Poor = 2, Error = 1
+};
+
+/// @brief Граница малого шага между "отлично" и "хорошо"
+constexpr double small_step_threshold{ 0.1 };
+
 
 /// @brief Результат расчета численного метода
 template <std::ptrdiff_t Dimension>
@@ -253,6 +267,8 @@ struct fixed_solver_result_t {
     bool argument_increment_criteria{ false };
     /// @brief Завершение итерационной процедуры
     numerical_result_code_t result_code{ numerical_result_code_t::NotConverged };
+    /// @brief Балл сходимости
+    convergence_score_t score;
     /// @brief Остаточная невязка по окончании численного метода
     function_type residuals;
     /// @brief Искомый аргумент по окончании численного метода
@@ -404,14 +420,24 @@ public:
         if (has_not_finite(r)) {
             r = residuals.residuals(argument); // для отладки
             result->result_code = numerical_result_code_t::NumericalNanValues;
+            result->score = convergence_score_t::Error;
             return;
         }
 
         result->result_code = numerical_result_code_t::NotConverged;
+        result->score = convergence_score_t::Excellent;
 
         size_t& iteration = result->iteration_count;
         for (iteration = 0; iteration < solver_parameters.iteration_count; ++iteration)
         {
+            if (iteration > 0.3 * solver_parameters.iteration_count) {
+                result->score = std::min(result->score, convergence_score_t::Satisfactory);
+            }
+            else if (iteration > 0.15 * solver_parameters.iteration_count)
+            {
+                result->score = std::min(result->score, convergence_score_t::Good);
+            }
+
             auto J = residuals.jacobian_dense(argument);
             p = -solve_linear_system(J, r);
             // todo: обработчик ошибки решения СЛАУ
@@ -440,14 +466,32 @@ public:
 
             double search_step = perform_line_search<LineSearch>(
                 solver_parameters.line_search, residuals, argument, r, p);
-            if (std::isnan(search_step)) {
-                if (solver_parameters.treat_line_search_fail_as_convergence) {
+            if (std::isfinite(search_step))
+            {
+                if (search_step < small_step_threshold) {
+                    // снижаем до 4-х баллов, если он выше
+                    result->score = std::min(result->score, convergence_score_t::Good);
+                }
+            }
+            else
+            {
+                // Обработка невозможности спуска ц.ф. при линейном поиске
+                if (solver_parameters.line_search_fail_action == line_search_fail_action_t::PerformMinStep) {
+                    // понижаем балл до удовлетворительно, считаем дальше
+                    result->score = std::min(result->score, convergence_score_t::Satisfactory);
+                    search_step = solver_parameters.line_search.step_on_search_fail();
+                }
+                else if (solver_parameters.line_search_fail_action == line_search_fail_action_t::TreatAsFail) {
+                    result->result_code = numerical_result_code_t::LineSearchFailed;
+                    break;
+                }
+                else if (solver_parameters.line_search_fail_action == line_search_fail_action_t::TreatAsSuccess) {
                     result->result_code = numerical_result_code_t::Converged;
+                    break;
                 }
                 else {
-                    result->result_code = numerical_result_code_t::LineSearchFailed;
+                    throw std::logic_error("solver_parameters.line_search_fail_action is unknown");
                 }
-                break;
             }
 
             if (analysis != nullptr && solver_parameters.analysis.steps) {
@@ -480,6 +524,11 @@ public:
                 break;
             }
         }
+
+        if (result->result_code != numerical_result_code_t::Converged) {
+            result->score = convergence_score_t::Poor;
+        }
+
     }
 
 };
