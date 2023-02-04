@@ -3,6 +3,7 @@
 #include "line_search/golden_section.h"
 #include "line_search/divider.h"
 
+using std::vector;
 
 /// @brief Ограничения солвера
 template <std::ptrdiff_t Dimension>
