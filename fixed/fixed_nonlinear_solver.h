@@ -118,8 +118,19 @@ struct fixed_solver_constraints
             }
 
             if (argument[index] + increment[index] < minimum[index]) {
-                double allowed_increment = minimum[index] - argument[index];
-                factor = std::max(factor, increment[index] / allowed_increment);
+
+                constexpr double eps = 1e-8;
+                if (std::abs(argument[index] - minimum[index]) < eps) {
+                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
+                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
+                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    increment[index] = 0;
+                }
+                else {
+                    double allowed_decrement = argument[index] - minimum[index];
+                    factor = std::max(factor, increment[index] / allowed_decrement);
+                }
+
             }
         }
         if (factor > 1)
@@ -157,13 +168,22 @@ struct fixed_solver_constraints
         double factor = 1;
 
         for (size_t index = 0; index < increment.size(); ++index) {
-            if (std::isnan(minimum[index])) {
+            if (std::isnan(maximum[index])) {
                 continue;
             }
 
             if (argument[index] + increment[index] > maximum[index]) {
-                double allowed_increment = maximum[index] - argument[index];
-                factor = std::max(factor, increment[index] / allowed_increment);
+                constexpr double eps = 1e-8;
+                if (std::abs(argument[index] - maximum[index]) < eps) {
+                    // Параметр уже сел на ограничения, allowed_increment будет нулевой,
+                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
+                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    increment[index] = 0;
+                }
+                else {
+                    double allowed_increment = maximum[index] - argument[index];
+                    factor = std::max(factor, increment[index] / allowed_increment);
+                }
             }
         }
         if (factor > 1)
