@@ -128,7 +128,7 @@ struct fixed_solver_constraints
                 }
                 else {
                     double allowed_decrement = argument[index] - minimum[index];
-                    factor = std::max(factor, increment[index] / allowed_decrement);
+                    factor = std::max(factor, abs(increment[index]) / allowed_decrement);
                 }
 
             }
