@@ -4,6 +4,8 @@
 #include "line_search/divider.h"
 
 using std::vector;
+using std::map;
+using std::wstringstream;
 
 /// @brief Ограничения солвера
 template <std::ptrdiff_t Dimension>
@@ -271,6 +273,70 @@ enum class numerical_result_code_t
 enum class convergence_score_t : int {
     Excellent = 5, Good = 4, Satisfactory = 3, Poor = 2, Error = 1
 };
+
+/// @brief Общее количество расчетов при нагрузочном расчете
+/// @param score Статистика расчетов. Ключ - оценка, Значение - количество таких полученных оценок
+/// @return Общее количество расчетов
+inline size_t get_score_total_calculations(const std::map<convergence_score_t, size_t>& score)
+{
+    size_t result = 0;
+    for (auto [sc, count] : score) {
+        result += count;
+    }
+    return result;
+}
+
+/// @brief Строковое представление статистики массового расчета
+/// В строку выводятся только те оценки, которые реально встретились в статистике
+/// @param score Статистика расчетов. Ключ - оценка, Значение - количество таких полученных оценок
+/// @return Строка с оценками
+inline wstring get_score_string(
+    const map<convergence_score_t, size_t>& score)
+{
+    static const map<convergence_score_t, wstring> score_strings{
+        {convergence_score_t::Excellent, L"Exc"},
+        {convergence_score_t::Good , L"Good"},
+        {convergence_score_t::Satisfactory, L"Satis"},
+        {convergence_score_t::Poor, L"Poor"},
+        {convergence_score_t::Error, L"Error"},
+    };
+
+    size_t total_calculations = get_score_total_calculations(score);
+
+    wstringstream result;
+    result << std::setprecision(4);
+
+    for (auto [sc, count] : score) {
+        double percent = 100 * ((double)count) / total_calculations;
+        result << L"" << score_strings.at(sc) << L": " << percent << L"% ";
+    }
+
+    return result.str();
+}
+
+/// @brief Процент расчетов, которые успешно завершились 
+/// Суммарное количество оценок Отл, Хор, Удовл
+/// @param score Статистика расчетов. Ключ - оценка, Значение - количество таких полученных оценок
+/// @return Процент (именно процент, не доля) успешных расчетов 
+inline double get_converged_percent(
+    const map<convergence_score_t, size_t>& score)
+{
+    size_t total_calculations = get_score_total_calculations(score);
+
+    size_t converged_count = 0;
+    for (auto [sc, count] : score) {
+        if (sc == convergence_score_t::Excellent ||
+            sc == convergence_score_t::Good ||
+            sc == convergence_score_t::Satisfactory
+            )
+        {
+            converged_count += count;
+        }
+    }
+
+    return (double)converged_count / total_calculations * 100;
+}
+
 
 /// @brief Граница малого шага между "отлично" и "хорошо"
 constexpr double small_step_threshold{ 0.1 };
