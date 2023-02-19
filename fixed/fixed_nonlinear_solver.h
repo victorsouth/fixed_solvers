@@ -7,6 +7,9 @@ using std::vector;
 using std::map;
 using std::wstringstream;
 
+/// @brief Точность проверки нахождения на ограничениях
+constexpr double eps_constraints = 1e-8;
+
 /// @brief Ограничения солвера
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
@@ -121,8 +124,8 @@ struct fixed_solver_constraints
 
             if (argument[index] + increment[index] < minimum[index]) {
 
-                constexpr double eps = 1e-8;
-                if (std::abs(argument[index] - minimum[index]) < eps) {
+                
+                if (std::abs(argument[index] - minimum[index]) < eps_constraints) {
                     // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
                     // соответственно factor получается бесконечный (см. ветвь "else" ниже)
                     // не учитываем эту переменную при расчете factor, сразу обрезаем 
@@ -175,8 +178,7 @@ struct fixed_solver_constraints
             }
 
             if (argument[index] + increment[index] > maximum[index]) {
-                constexpr double eps = 1e-8;
-                if (std::abs(argument[index] - maximum[index]) < eps) {
+                if (std::abs(argument[index] - maximum[index]) < eps_constraints) {
                     // Параметр уже сел на ограничения, allowed_increment будет нулевой,
                     // соответственно factor получается бесконечный (см. ветвь "else" ниже)
                     // не учитываем эту переменную при расчете factor, сразу обрезаем 
@@ -227,6 +229,8 @@ struct fixed_solver_constraints
     }
 };
 
+
+
 /// @brief Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
     /// @brief Собирает историю значений аргумента
@@ -240,14 +244,120 @@ struct fixed_solver_analysis_parameters_t {
 /// @brief Действия при неудачной регулировке шага
 enum class line_search_fail_action_t { TreatAsFail, TreatAsSuccess, PerformMinStep };
 
+/// @brief Линейные ограничения - произвольная размерность
+template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
+struct fixed_linear_constraints;
+
+/// @brief Специализация линейных ограничений 
+/// для случая отсутствия линейныйх ограничений (их ноль)
+template <std::ptrdiff_t Dimension>
+struct fixed_linear_constraints<Dimension, 0> {
+    /// @brief Функция trim ничего не делает, ее просто можно вызвать
+    typedef typename fixed_system_types<Dimension>::var_type var_type;
+    inline void trim(const var_type& argument, var_type& increment) const
+    { }
+};
+
+/// @brief Специализация для систем второго порядка, одно ограничение
+template <>
+struct fixed_linear_constraints<2, 1> {
+    typedef typename fixed_system_types<2>::var_type var_type;
+    typedef typename fixed_system_types<2>::matrix_type matrix_type;
+    /// @brief Коэффициенты a (левая часть ax <= b)
+    var_type a{ std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Коэффициенты b (правой часть ax <= b)
+    double b{ std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Проверяет, что приближение x не нарушает ограничения
+    bool check_constraint_satisfaction(const var_type& x) const {
+        if (std::isfinite(b))
+            return inner_prod(a, x) <= b;
+        else
+            return true;
+    }
+    /// @brief Проверяет, что приближение x находится на границе ограничений
+    bool check_constraint_border(const var_type& x) const {
+        if (std::isfinite(b))
+            return std::abs(inner_prod(a, x) - b) < eps_constraints;
+        else
+            return true;
+    }
+
+    /// @brief На основе канонического уравления прямой отдает коэффициенты уравнения
+    /// ax = b
+    /// @param p1 Первая точка
+    /// @param p2  Вторая точка
+    /// @return Пара вектор, скаляр: (a, b)
+    static std::pair<var_type, double> get_line_coeffs(const var_type& p1, const var_type& p2) {
+        double x1 = p1[0];
+        double y1 = p1[1];
+        double x2 = p2[0];
+        double y2 = p2[1];
+
+        // Это в виде y = kx + b
+        double k = (y2 - y1) / (x2 - x1);
+        double b = y1 - k * x1;
+
+        // -k*x + 1y = b
+
+        return make_pair(var_type{ -k, 1.0 }, b);
+    }
+
+    /// @brief Режет по линейным ограниченями a'x <= b
+    /// @param argument Текущее значение
+    /// @param increment Приращение
+    void trim(const var_type& x, var_type& dx) const
+    {
+        if (!std::isfinite(b))
+            return;
+
+        const var_type& p1 = x;
+        const var_type p2 = x + dx;
+
+        if (check_constraint_satisfaction(p2))
+            return;
+
+        if (check_constraint_border(p1)) {
+            // Тут что-то понять можно только по рисунку
+            double k = -a[0] / a[1];
+            double alpha = atan(k);
+            double p = sqrt(dx[0]*dx[0] + dx[1]*dx[1]);
+            double beta = acos(dx[0] / p);
+
+            double gamma = beta - alpha;
+            double p_dash = p * cos(gamma);
+            double px = p_dash * cos(alpha);
+            double py = p_dash * sin(alpha);
+            dx = { px, py };
+        }
+        else {
+            auto [a2, b2] = get_line_coeffs(p1, p2);
+            var_type x_star = solve_linear_system({ a, a2 }, { b, b2 });
+            dx = x_star - x;
+        }
+    }
+};
+
+/// @brief Заглушка для ограничений, не даст собраться методу Ньютона, 
+/// т.к. отсутствует метод trim
+template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
+struct fixed_linear_constraints
+{
+};
+
+
 /// @brief Параметры алгоритма Ньютона-Рафсона
-template <std::ptrdiff_t Dimension, typename LineSearch = divider_search>
+template <
+    std::ptrdiff_t Dimension, 
+    std::ptrdiff_t LinearConstraintsCount, 
+    typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
 {
     /// @brief Параметры диагностики
     fixed_solver_analysis_parameters_t analysis;
     /// @brief Границы на диапазон и единичный шаг
     fixed_solver_constraints<Dimension> constraints;
+    /// @brief Линейные ограничения
+    fixed_linear_constraints<Dimension, LinearConstraintsCount> linear_constraints;
     /// @brief Параметры алгоритма регулировки шага
     typename LineSearch::parameters_type line_search;
     /// @brief Количество итераций
@@ -480,11 +590,13 @@ public:
     /// @param initial_argument Начальное приближение
     /// @param solver_parameters Настройки поиска
     /// @param result Результаты расчета
-    template <typename LineSearch = divider_search>
+    template <
+        std::ptrdiff_t LinearConstraintsCount,
+        typename LineSearch = divider_search>
     static void solve_dense(
         fixed_system_t<Dimension>& residuals,
         const var_type& initial_argument,
-        const fixed_solver_parameters_t<Dimension, LineSearch>& solver_parameters,
+        const fixed_solver_parameters_t<Dimension, LinearConstraintsCount, LineSearch>& solver_parameters,
         fixed_solver_result_t<Dimension>* result, 
         fixed_solver_result_analysis_t<Dimension>* analysis = nullptr
     )
@@ -540,6 +652,7 @@ public:
                 }
             }
 
+            solver_parameters.linear_constraints.trim(argument, p);
             solver_parameters.constraints.trim_max(argument, p);
             solver_parameters.constraints.trim_min(argument, p);
             if constexpr (std::is_same<LineSearch, divider_search>()) {
