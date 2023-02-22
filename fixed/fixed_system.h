@@ -73,10 +73,10 @@ public:
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
 public:
     /// @brief Расчет целевой функции по невязкам
-    static double objective_function(const var_type& r);
+    virtual double objective_function(const var_type& r) const;
 
     /// @brief Расчет целевой функции по аргументу
-    virtual double operator()(const var_type& x) {
+    double operator()(const var_type& x) {
         auto r = residuals(x);
         return objective_function(r);
     }
@@ -136,20 +136,20 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
 }
 
 template <>
-inline double fixed_system_t<1>::objective_function(const double& r)
+inline double fixed_system_t<1>::objective_function(const double& r) const
 {
     return r * r;
 }
 
 
 template <>
-inline double fixed_system_t<-1>::objective_function(const VectorXd& r)
+inline double fixed_system_t<-1>::objective_function(const VectorXd& r) const
 {
     return r.squaredNorm();
 }
 
 template <std::ptrdiff_t Dimension>
-inline double fixed_system_t<Dimension>::objective_function(const var_type& r)
+inline double fixed_system_t<Dimension>::objective_function(const var_type& r) const
 {
     double result = std::accumulate(
         r.begin(), r.end(), 0.0, 

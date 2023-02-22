@@ -362,14 +362,13 @@ struct fixed_solver_parameters_t
     typename LineSearch::parameters_type line_search;
     /// @brief Количество итераций
     size_t iteration_count{ 100 };
-    /// @brief Погрешность метода по приращению аргумента
+    /// @brief Критерий выхода из процедуры (погрешность метода) по приращению аргумента 
     double argument_increment_norm{ 1e-4 };
+    /// @brief Критерий выхода из процедуры (погрешность метода) по норме невязок
+    double residuals_norm{ std::numeric_limits<double>::quiet_NaN() };
     /// @brief Проверять векторный шага после регулировки или перед ней
     bool step_criteria_assuming_search_step{ false };
-    /// @brief Считать невозможность улучшить ц.ф. при линейном поиске как лучшее решений
-    /// Т.е. считать, что причина этого в наличии шума уравнений и ц.ф.
-    bool treat_line_search_fail_as_convergence{ false };
-
+    /// @brief Действие при ошибке регулировки шага
     line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail};
 };
 
@@ -468,9 +467,11 @@ struct fixed_solver_result_t {
     convergence_score_t score;
     /// @brief Остаточная невязка по окончании численного метода
     function_type residuals;
+    /// @brief Норма остаточной невязки по окончании численного метода
+    double residuals_norm;
     /// @brief Искомый аргумент по окончании численного метода
     var_type argument;
-    /// @brief Количество итераций
+    /// @brief Количество выполненных итераций
     size_t iteration_count{ 0 };
 };
 
@@ -729,6 +730,14 @@ public:
             result->score = convergence_score_t::Poor;
         }
 
+        result->residuals_norm = residuals.objective_function(r);
+        if (std::isfinite(solver_parameters.residuals_norm)) {
+            if (result->residuals_norm > solver_parameters.residuals_norm) 
+            {
+                result->result_code = numerical_result_code_t::NotConverged;
+                result->score = convergence_score_t::Poor;
+            }
+        }
     }
 
 };
