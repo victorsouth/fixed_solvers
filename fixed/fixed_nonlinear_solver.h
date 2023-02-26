@@ -6,6 +6,7 @@
 using std::vector;
 using std::map;
 using std::wstringstream;
+using std::wstring;
 
 /// @brief Точность проверки нахождения на ограничениях
 constexpr double eps_constraints = 1e-8;
@@ -348,7 +349,7 @@ struct fixed_linear_constraints
 /// @brief Параметры алгоритма Ньютона-Рафсона
 template <
     std::ptrdiff_t Dimension, 
-    std::ptrdiff_t LinearConstraintsCount, 
+    std::ptrdiff_t LinearConstraintsCount = 0, 
     typename LineSearch = divider_search>
 struct fixed_solver_parameters_t
 {
