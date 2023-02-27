@@ -54,3 +54,15 @@ install(FILES
 install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
 endif()
+
+option(FIXED_SOLVERS_BUILD_TESTS "" OF)
+
+if(FIXED_SOLVERS_BUILD_TESTS)
+
+find_package(Threads)
+find_package(GTest REQUIRED)
+
+add_executable(fs_tests testing/test_main.cpp)
+target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
+
+endif()
