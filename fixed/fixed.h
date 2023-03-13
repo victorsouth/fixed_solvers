@@ -3,6 +3,8 @@
 #ifndef __FIXED_H__
 #define __FIXED_H__
 
+#ifndef __COMMON_CUDA__
+
 /// @brief Возвращает знак числа
 /// @return для отрицательных -1, для положительных +1
 template <typename T> inline int sgn(T val) {
@@ -13,6 +15,7 @@ template <typename T> inline int sgn(T val) {
 inline double sqr(double x) {
     return x * x;
 }
+#endif
 
 
 #include "fixed/array_ext.h"
