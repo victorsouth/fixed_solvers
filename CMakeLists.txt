@@ -2,6 +2,8 @@
 # for install and correct include path
 project(fixed_solvers)
 
+find_package(Eigen3)
+
 set(HEADERS_LS
     fixed/line_search/divider.h
     fixed/line_search/golden_section.h
@@ -16,8 +18,10 @@ set(HEADERS
 
 if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
     add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS})
+	target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 else()
     add_library(${PROJECT_NAME} INTERFACE)
+	target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 endif()
 target_include_directories(${PROJECT_NAME}
     INTERFACE
