@@ -94,7 +94,7 @@ protected:
 template <>
 inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 {
-    double e = epsilon * std::max(1.0, x);
+    double e = epsilon * std::max(1.0, abs(x));
     function_type f_plus = residuals(x + e);
     function_type f_minus = residuals(x - e);
     function_type J = (f_plus - f_minus) / (2 * e);
