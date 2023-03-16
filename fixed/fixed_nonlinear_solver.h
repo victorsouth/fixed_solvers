@@ -762,7 +762,7 @@ inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
     double squared_sum = 0;
 
     for (int component = 0; component < argument_increment.size(); ++component) {
-        double arg = std::max(1.0, argument[component]);
+        double arg = std::max(1.0, abs(argument[component]));
         double inc = argument_increment[component];
         squared_sum += pow(inc / arg, 2);
     }
