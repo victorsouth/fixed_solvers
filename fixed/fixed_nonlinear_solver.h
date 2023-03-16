@@ -748,13 +748,13 @@ inline double fixed_newton_raphson<1>::argument_increment_factor(
     const double& argument,
     const double& argument_increment)
 {
-    double arg = std::max(1.0, argument);
+    double arg = std::max(1.0, abs(argument));
     double inc = argument_increment;
 
     double result = abs(inc / arg);
     return result;
 }
-
+ 
 template <size_t Dimension>
 inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
     const var_type& argument, const var_type& argument_increment)
@@ -762,7 +762,7 @@ inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
     double squared_sum = 0;
 
     for (int component = 0; component < argument_increment.size(); ++component) {
-        double arg = std::max(1.0, argument[component]);
+        double arg = std::max(1.0, abs(argument[component]));
         double inc = argument_increment[component];
         squared_sum += pow(inc / arg, 2);
     }
