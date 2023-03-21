@@ -1,8 +1,12 @@
 ﻿#pragma once
 
+#include <numeric>
+
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
+
+using std::accumulate;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using Eigen::SparseMatrix;

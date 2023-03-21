@@ -1,6 +1,11 @@
 # header only library
-# for install and correct include path
+# for install, dependencies and correct include path
 project(fixed_solvers)
+
+set(CMAKE_CXX_STANDARD 17)#23?
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+find_package(Eigen3)
 
 set(HEADERS_LS
     fixed/line_search/divider.h
@@ -19,6 +24,7 @@ if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
+target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 target_include_directories(${PROJECT_NAME}
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -53,4 +59,16 @@ install(FILES
 
 install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
+endif()
+
+option(FIXED_SOLVERS_BUILD_TESTS "" OF)
+
+if(FIXED_SOLVERS_BUILD_TESTS)
+
+find_package(Threads)
+find_package(GTest REQUIRED)
+
+add_executable(fs_tests testing/test_main.cpp)
+target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
+
 endif()
