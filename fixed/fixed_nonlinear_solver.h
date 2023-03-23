@@ -657,10 +657,7 @@ public:
             solver_parameters.linear_constraints.trim(argument, p);
             solver_parameters.constraints.trim_max(argument, p);
             solver_parameters.constraints.trim_min(argument, p);
-            if constexpr (std::is_same<LineSearch, divider_search>()) {
-                // Для ЗС trim делать не надо
-                solver_parameters.constraints.trim_relative(p);
-            }
+            solver_parameters.constraints.trim_relative(p);
 
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
                 analysis->target_function.push_back(perform_step_research(residuals, argument, p));
