@@ -1,22 +1,35 @@
-﻿#pragma once
+﻿/*!
+* \file
+* \brief В данном .h файле реализован решатель Ньютона - Рафсона
+* 
+* \author Автор файла - В.В. Южанин, Автор документации - И.Б. Цехместрук
+* \date Дата докуменатции - 2023-03-31
+* 
+* Документация к этому файлу находится в:
+* 1. 01. Антуан Рауль-Дальтон\02. Документы - черновики\Иван\01. Описание численного метода
+* 2. 01. Антуан Рауль-Дальтон\04. Внутренние учебные материалы\Метод Ньютона-Рафсона
+*/
+
+#pragma once
 
 #include "line_search/golden_section.h"
 #include "line_search/divider.h"
 
+// Подключаемые библиотеки
 using std::vector;
 using std::map;
 using std::wstringstream;
 using std::wstring;
 
-/// @brief Точность проверки нахождения на ограничениях
+/// Точность проверки нахождения на ограничениях
 constexpr double eps_constraints = 1e-8;
 
-/// @brief Ограничения солвера
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
 
-/// @brief Ограничения солвера для переменной размерности 
-/// (пока не используется, заготовка на будущее)
+/*! \brief Cтруктура описывает ограничения для решателя переменной размерности
+* 
+* Ввиду того, что он здесь не используется, то не внесен в Doxygen документацию */ 
 template <>
 struct fixed_solver_constraints<-1>
 {
@@ -44,7 +57,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, b);
     }
 
-    /// @brief Учитывает только minimum, maximum
+    // Учитывает только minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints(const size_t argument_size) const
     {
         // ограничения
@@ -93,26 +106,40 @@ struct fixed_solver_constraints<-1>
 };
 
 
-/// @brief Ограничения солвера
+/// Данная структура описывает ограничения солвера фиксированной размерности
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints
 {
+    /// Псевдоним искомой переменной
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+    /// Ограничение по приращению
     var_type relative_boundary{ fixed_system_types<Dimension>::default_var() };
+    /// Ограничение по минимуму
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
+    /// Ограничение по максимуму
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
 
-    /// @brief Обрезка по минимуму для скалярного случая
+    /*!
+    * \brief Обрезка шага по минимуму для скалярного случая
+    * 
+    * \param [in] argument Значение аргумента на текущей итерации
+    * \param [in] increment Значение инкремента на текущей итерации
+    */
     void trim_min(double argument, double& increment) const
     {
         if (std::isnan(minimum))
             return;
-
         if (argument + increment < minimum) {
             increment = minimum - argument;
         }
     }
-    /// @brief Обрезка по минимуму для векторного случая
+
+    /*!
+    * \brief Обрезка шага по минимуму для векторного случая
+    * 
+    * \param [in] argument Значение аргумента на текущей итерации
+    * \param [in] increment Значение инкремента на текущей итерации
+    */
     void trim_min(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
     {
@@ -145,7 +172,11 @@ struct fixed_solver_constraints
         }
     }
 
-    /// @brief Приводит значение аргумента внутрь ограничений мин/макс
+    /*!
+    * \brief Приводит значение аргумента внутрь ограничений мин/макс
+    * 
+    * \param [in] argument Значение аргумента на текущей итерации 
+    */
     void ensure_constraints(double& argument) const
     {
         if (!std::isnan(maximum)) {
@@ -157,7 +188,12 @@ struct fixed_solver_constraints
     }
 
 
-    /// @brief Обрезка по минимуму для скалярного случая
+    /*!
+    * \brief Обрезка шага по максимуму для скалярного случая
+    *
+    * \param [in] argument Значение аргумента на текущей итерации
+    * \param [in] increment Значение инкремента на текущей итерации
+    */
     void trim_max(double argument, double& increment) const
     {
         if (std::isnan(maximum))
@@ -168,6 +204,12 @@ struct fixed_solver_constraints
         }
     }
 
+    /*!
+    * \brief Обрезка шага по максимуму для векторного случая
+    *
+    * \param [in] argument Значение аргумента на текущей итерации
+    * \param [in] increment Значение инкремента на текущей итерации
+    */
     void trim_max(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
     {
@@ -197,7 +239,11 @@ struct fixed_solver_constraints
         }
     }
 
-    /// @brief Обрезка по максимального приращению для скларяного случая
+    /*!
+    * \brief Обрезка по приращению для скларяного случая
+    *
+    * \param [in] increment Значение приращения аргумента на текущей итерации
+    */
     void trim_relative(double& increment) const
     {
         if (std::isnan(relative_boundary))
@@ -208,7 +254,12 @@ struct fixed_solver_constraints
             increment /= factor;
         }
     }
-    /// @brief Обрезка по максимального приращению для векторного случая
+    
+    /*!
+    * \brief Обрезка по приращению для векторного случая
+    *
+    * \param [in] increment Значение приращения аргумента на текущей итерации
+    */
     void trim_relative(array<double, Dimension>& increment) const
     {
         double factor = 1;
@@ -232,50 +283,68 @@ struct fixed_solver_constraints
 
 
 
-/// @brief Параметры диагностики сходимости
+/// Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
-    /// @brief Собирает историю значений аргумента
+    /// Собирает историю значений аргумента
     bool argument_history{ false };
-    /// @brief Собирать значения шага в методе Ньютона-Рафсона
+    /// Собирает значения шага в методе Ньютона-Рафсона
     bool steps{false};
-    /// @brief Выполнять исследование целевой функции на каждом шаге
+    /// Выполнятся исследование целевой функции на каждом шаге
     bool line_search_explore{ false };
 };
 
-/// @brief Действия при неудачной регулировке шага
-enum class line_search_fail_action_t { TreatAsFail, TreatAsSuccess, PerformMinStep };
+/// Действия при неудачной регулировке шага
+enum class line_search_fail_action_t { 
+    TreatAsFail, ///< Считать ошибкой 
+    TreatAsSuccess, ///< Считать, что все нормально
+    PerformMinStep ///< Выбрать минмимальный шаг
+};
 
-/// @brief Линейные ограничения - произвольная размерность
+// Линейные ограничения - произвольная размерность
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints;
 
-/// @brief Специализация линейных ограничений 
-/// для случая отсутствия линейныйх ограничений (их ноль)
+/// Специализация отсутствия линейных ограничений 
 template <std::ptrdiff_t Dimension>
 struct fixed_linear_constraints<Dimension, 0> {
-    /// @brief Функция trim ничего не делает, ее просто можно вызвать
+
+    /// Псевдоним искомой переменной
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+
+    /// Функция trim ничего не делает, ее просто можно вызвать
     inline void trim(const var_type& argument, var_type& increment) const
     { }
 };
 
-/// @brief Специализация для систем второго порядка, одно ограничение
+/// Специализация для систем второго порядка, одно ограничение
 template <>
 struct fixed_linear_constraints<2, 1> {
     typedef typename fixed_system_types<2>::var_type var_type;
     typedef typename fixed_system_types<2>::matrix_type matrix_type;
-    /// @brief Коэффициенты a (левая часть ax <= b)
+
+    /// Коэффициенты a (левая часть ax <= b)
     var_type a{ std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN() };
-    /// @brief Коэффициенты b (правой часть ax <= b)
+
+    /// Коэффициенты b (правой часть ax <= b)
     double b{ std::numeric_limits<double>::quiet_NaN() };
-    /// @brief Проверяет, что приближение x не нарушает ограничения
+
+    /*!
+    * \brief Проверка, что приближение x не нарушает ограничения
+    * 
+    * \param [in] x Текущее приближение
+    */
     bool check_constraint_satisfaction(const var_type& x) const {
         if (std::isfinite(b))
             return inner_prod(a, x) <= b;
         else
             return true;
     }
-    /// @brief Проверяет, что приближение x находится на границе ограничений
+    
+    /*!
+    * \brief Проверка, что приближение x находится на границе ограничений
+    *
+    * \param [in] x Текущее приближение
+    */
     bool check_constraint_border(const var_type& x) const {
         if (std::isfinite(b))
             return std::abs(inner_prod(a, x) - b) < eps_constraints;
@@ -287,7 +356,7 @@ struct fixed_linear_constraints<2, 1> {
     /// ax = b
     /// @param p1 Первая точка
     /// @param p2  Вторая точка
-    /// @return Пара вектор, скаляр: (a, b)
+    /// @return Пара векторов, скаляр: (a, b)
     static std::pair<var_type, double> get_line_coeffs(const var_type& p1, const var_type& p2) {
         double x1 = p1[0];
         double y1 = p1[1];
@@ -373,6 +442,7 @@ struct fixed_solver_parameters_t
     line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail};
 };
 
+/// Результат расчета Ньютона - Рафсона
 enum class numerical_result_code_t
 {
     NoNumericalError, IllConditionedMatrix, LargeConditionNumber,
@@ -507,6 +577,10 @@ public:
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
 private:
+    
+    /// @brief Проверка значения на Nan/infinite для скалярного случая
+    /// @param value Проверяемое значение
+    /// @return true/false
     static inline bool has_not_finite(const double value)
     {
         if (!std::isfinite(value)) {
@@ -515,6 +589,9 @@ private:
         return false;
     }
 
+    /// @brief Проверка значения на Nan/infinite для векторного случая
+    /// @param value Проверяемое значение
+    /// @return true/false
     template <typename Container>
     static inline bool has_not_finite(const Container& values)
     {
@@ -740,6 +817,11 @@ public:
 
 };
 
+/*! @brief Расчет относительного приращения для скалярного случая
+* @param argument Текущее значение
+* @param argument_increment Текущее приращение
+* @return Отношение приращения к текущему значению
+*/
 template <>
 inline double fixed_newton_raphson<1>::argument_increment_factor(
     const double& argument,
@@ -751,8 +833,12 @@ inline double fixed_newton_raphson<1>::argument_increment_factor(
     double result = abs(inc / arg);
     return result;
 }
- 
+
 template <size_t Dimension>
+/// @brief Расчет относительного приращения для векторного случая
+/// @param argument Текущее значение
+/// @param argument_increment Текущее приращение
+/// @return Отношение приращения к текущему значению
 inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
     const var_type& argument, const var_type& argument_increment)
 {

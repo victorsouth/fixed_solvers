@@ -1,4 +1,16 @@
-﻿#pragma once
+﻿/*!
+* \file
+* \brief В данном .h файле реализовано описание систем различной
+размерности для решателя Ньютона - Рафсона
+*
+* \author Автор файла - В.В. Южанин, Автор документации - И.Б. Цехместрук
+* \date Дата докуменатции - 2023-04-06
+*
+* Документация к этому файлу находится в:
+* 1. 01. Антуан Рауль-Дальтон\02. Документы - черновики\Иван\01. Описание численного метода
+*/
+
+#pragma once
 
 #include <numeric>
 
@@ -24,6 +36,7 @@ struct fixed_system_types<1> {
     typedef double matrix_type;
     typedef double equation_coeffs_type;
 
+    /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(double value = std::numeric_limits<double>::quiet_NaN())
     {
         return value;
@@ -31,6 +44,7 @@ struct fixed_system_types<1> {
 };
 
 /// @brief Специализация случая переменной размерности
+/// @details В данный момент не реализовано и не используется
 template <>
 struct fixed_system_types<-1> {
     typedef VectorXd var_type;
