@@ -445,7 +445,7 @@ struct fixed_solver_parameters_t
 /// Результат расчета Ньютона - Рафсона
 enum class numerical_result_code_t
 {
-    NoNumericalError, IllConditionedMatrix, LargeConditionNumber,
+    NoNumericalError, IllConditionedMatrix, LargeConditionNumber, CustomCriteriaFailed,
     NotConverged, NumericalNanValues, LineSearchFailed, Converged
 };
 
@@ -535,13 +535,13 @@ struct fixed_solver_result_t {
     /// @brief Завершение итерационной процедуры
     numerical_result_code_t result_code{ numerical_result_code_t::NotConverged };
     /// @brief Балл сходимости
-    convergence_score_t score;
+    convergence_score_t score{convergence_score_t::Poor};
     /// @brief Остаточная невязка по окончании численного метода
-    function_type residuals;
+    function_type residuals{ fixed_system_types<Dimension>::default_var() };
     /// @brief Норма остаточной невязки по окончании численного метода
-    double residuals_norm;
+    double residuals_norm{0};
     /// @brief Искомый аргумент по окончании численного метода
-    var_type argument;
+    var_type argument{ fixed_system_types<Dimension>::default_var()};
     /// @brief Количество выполненных итераций
     size_t iteration_count{ 0 };
 };
@@ -813,6 +813,11 @@ public:
                 result->score = convergence_score_t::Poor;
             }
         }
+        if (!residuals.custom_success_criteria(r, argument)) {
+            result->result_code = numerical_result_code_t::CustomCriteriaFailed;
+            result->score = convergence_score_t::Poor;
+        }
+
     }
 
 };

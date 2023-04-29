@@ -104,6 +104,15 @@ public:
     virtual matrix_value jacobian_dense(const var_type& x) {
         return jacobian_dense_numeric(x);
     }
+    /// @brief Специфический критерий успешного завершения расчета
+    /// @param r Текущее значения невязок
+    /// @param x Текущее значение аргумента
+    /// @return Флаг успешного завершения
+    virtual bool custom_success_criteria(const var_type& r, const var_type& x)
+    {
+        return true;
+    }
+
 protected:
     matrix_value jacobian_dense_numeric(const var_type& x);
 
