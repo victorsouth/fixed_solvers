@@ -52,6 +52,7 @@ struct fixed_system_types<-1> {
     typedef MatrixXd matrix_type;
     typedef MatrixXd equation_coeffs_type;
 
+    /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(
         double value = std::numeric_limits<double>::quiet_NaN(),
         size_t dimension = 0)
@@ -70,6 +71,7 @@ struct fixed_system_types {
     typedef array<var_type, Dimension> matrix_type;
     typedef matrix_type equation_coeffs_type;
 
+    /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(double value = std::numeric_limits<double>::quiet_NaN())
     {
         auto getter = [&](size_t index) { return value; };
@@ -118,6 +120,9 @@ protected:
 
 };
 
+/// @brief Численный расчет Якобиана методом двусторонней разности для скалярного случая
+/// @param x Текущее значение аргумента
+/// @return Значение Якобиана
 template <>
 inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 {
@@ -138,7 +143,10 @@ inline fixed_system_t<-1>::matrix_value
 
 }
 
-
+/// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
+/// @tparam Dimension Размерность решаемой системы уравнений
+/// @param x Текущее значение аргумента
+/// @return Значение Якобиана
 template <std::ptrdiff_t Dimension>
 inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension>::jacobian_dense_numeric(const var_type& x)
 {
@@ -162,6 +170,7 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
     return J;
 }
 
+/// @brief Расчет целевой функции для скалярного случая (сумма квадратов)
 template <>
 inline double fixed_system_t<1>::objective_function(const double& r) const
 {
@@ -175,6 +184,7 @@ inline double fixed_system_t<-1>::objective_function(const VectorXd& r) const
     return r.squaredNorm();
 }
 
+/// @brief Расчет целевой функции для векторного случая (сумма квадратов)
 template <std::ptrdiff_t Dimension>
 inline double fixed_system_t<Dimension>::objective_function(const var_type& r) const
 {
