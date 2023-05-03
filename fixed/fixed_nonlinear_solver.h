@@ -106,7 +106,7 @@ struct fixed_solver_constraints<-1>
 };
 
 
-/// Данная структура описывает ограничения солвера фиксированной размерности
+///@brief Данная структура описывает ограничения солвера фиксированной размерности
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints
 {
@@ -283,7 +283,7 @@ struct fixed_solver_constraints
 
 
 
-/// Параметры диагностики сходимости
+///@brief Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
     /// Собирает историю значений аргумента
     bool argument_history{ false };
@@ -293,7 +293,7 @@ struct fixed_solver_analysis_parameters_t {
     bool line_search_explore{ false };
 };
 
-/// Действия при неудачной регулировке шага
+///@brief Действия при неудачной регулировке шага
 enum class line_search_fail_action_t { 
     TreatAsFail, ///< Считать ошибкой 
     TreatAsSuccess, ///< Считать, что все нормально
@@ -304,7 +304,7 @@ enum class line_search_fail_action_t {
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints;
 
-/// Специализация отсутствия линейных ограничений 
+///@brief Специализация отсутствия линейных ограничений 
 template <std::ptrdiff_t Dimension>
 struct fixed_linear_constraints<Dimension, 0> {
 
@@ -316,7 +316,7 @@ struct fixed_linear_constraints<Dimension, 0> {
     { }
 };
 
-/// Специализация для систем второго порядка, одно ограничение
+///@brief Специализация для систем второго порядка, одно ограничение
 template <>
 struct fixed_linear_constraints<2, 1> {
     typedef typename fixed_system_types<2>::var_type var_type;
@@ -356,7 +356,7 @@ struct fixed_linear_constraints<2, 1> {
     /// ax = b
     /// @param p1 Первая точка
     /// @param p2  Вторая точка
-    /// @return Пара векторов, скаляр: (a, b)
+    /// @return Пара вектор, скаляр: (a, b)
     static std::pair<var_type, double> get_line_coeffs(const var_type& p1, const var_type& p2) {
         double x1 = p1[0];
         double y1 = p1[1];
@@ -442,7 +442,7 @@ struct fixed_solver_parameters_t
     line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail};
 };
 
-/// Результат расчета Ньютона - Рафсона
+/// @brief Результат расчета Ньютона - Рафсона
 enum class numerical_result_code_t
 {
     NoNumericalError, IllConditionedMatrix, LargeConditionNumber, CustomCriteriaFailed,
@@ -706,8 +706,12 @@ public:
         result->score = convergence_score_t::Excellent;
 
         size_t& iteration = result->iteration_count;
+
+        // Запуск расчета методом Ньютона - Рафсона
         for (iteration = 0; iteration < solver_parameters.iteration_count; ++iteration)
         {
+
+            // Выставление оценки от количества итераций
             if (iteration > 0.3 * solver_parameters.iteration_count) {
                 result->score = std::min(result->score, convergence_score_t::Satisfactory);
             }
@@ -716,10 +720,14 @@ public:
                 result->score = std::min(result->score, convergence_score_t::Good);
             }
 
+            // Расчет Якобиана
             auto J = residuals.jacobian_dense(argument);
+
+            // Расчет текущего шага Ньютона
             p = -solve_linear_system(J, r);
             // todo: обработчик ошибки решения СЛАУ
 
+            // Проверка критерия выхода по малому относительному приращению
             if (solver_parameters.step_criteria_assuming_search_step == false)
             {
                 argument_increment_metric = argument_increment_factor(argument, p);
@@ -731,15 +739,18 @@ public:
                 }
             }
 
+            // Корректировка шага в соответствии с ограничениями
             solver_parameters.linear_constraints.trim(argument, p);
             solver_parameters.constraints.trim_max(argument, p);
             solver_parameters.constraints.trim_min(argument, p);
             solver_parameters.constraints.trim_relative(p);
 
+            // Информация о том, как изменялась целевая функция по траектории шага
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
                 analysis->target_function.push_back(perform_step_research(residuals, argument, p));
             }
 
+            // Расчет корректироки шага с помощью Рафсона
             double search_step = perform_line_search<LineSearch>(
                 solver_parameters.line_search, residuals, argument, r, p);
             if (std::isfinite(search_step))
@@ -774,7 +785,7 @@ public:
                 analysis->steps.push_back(search_step);
             }
             
-
+            // Корректировка шага с помощью Рафсона
             argument_increment = search_step * p;
             argument += argument_increment;
 
@@ -782,6 +793,7 @@ public:
                 analysis->argument_history.push_back(argument);
             }
 
+            // Расчет невязок
             r = residuals.residuals(argument);
             if (has_not_finite(r)) {
                 r = residuals.residuals(argument); // для отладки
@@ -789,6 +801,7 @@ public:
                 break;
             }
 
+            // Проверка критерия выхода по малому относительному приращению
             argument_increment_metric = solver_parameters.step_criteria_assuming_search_step
                 ? argument_increment_factor(argument, argument_increment)
                 : argument_increment_factor(argument, p);
