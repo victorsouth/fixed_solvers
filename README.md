@@ -1,34 +1,31 @@
-# fixed_solvers
+<div align="center">
+</center><h1>Решатель Ньютона - Рафсона для решения систем нелинейных уравнений фиксированный размерности</h1></center>
+</div>
 Данный солвер решает систему нелинейных уравнений фикисрованной размерности с помощью алгоритма Ньютона-Рафсона.
-Учет фиксированности размерности позволяет не использовать динамическую память для хранения векторов.
----------------------------------------------------------------------------------------------------------------
-    class sample_system : public fixed_system_t<2>
-    {
-        using fixed_system_t<2>::var_type;
-    public:
-        var_type residuals(const var_type& x) {
-            return
-            {
-                pow(x[0] - 2, 3),
-                pow(x[1] - 1, 3)
-            };
-        }
-    };
+Особенностью данного солевера является учет фиксированности размерности позволяет не использовать динамическую память для хранения векторов.
 
-    sample_system test;
-    fixed_solver_parameters_t<2, 0> parameters;
-    fixed_solver_result_t<2> result;
-    fixed_newton_raphson<2>::solve_dense(test, { 0, 0 }, parameters, & result);
----------------------------------------------------------------------------------------------------------------
+## Table of cont
+* [Структура библиотеки](Структура-библиотеки)
+* [Technologies](#technologies)
+* [Setup](#setup)
+
+<div align="center">
+</center><h2>Структура библиотеки</h2></center>
+</div>
+
 <pre>
 ├───fixed
-│   │   array_ext.h
-│   │   fixed.h
-│   │   fixed_linear_solver.h
-│   │   fixed_nonlinear_solver.h
-│   │   fixed_system.h
+│   │   array_ext.h - Дополнительные матричные операции
+│   │   fixed.h - ??????????????
+│   │   fixed_linear_solver.h - Решатель системы линейных уравнений
+│   │   fixed_nonlinear_solver.h - Решатель системы НЕлинейных уравнений
+│   │   fixed_system.h - Специализации систем различной размерности
 │   │
-│   └───line_search
-│           divider.h
-│           golden_section.h
+│   └───line_search - Алгоритмы линейного поиска
+│           divider.h - Линейный поиск методом дробления шага
+│           golden_section.h - Линейный поиск методом золотого сечения
 </pre>
+
+<div align="center">
+</center><h2>fixed_system.h</h2></center>
+</div>
