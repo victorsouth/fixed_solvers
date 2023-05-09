@@ -20,3 +20,15 @@
     fixed_solver_result_t<2> result;
     fixed_newton_raphson<2>::solve_dense(test, { 0, 0 }, parameters, & result);
 ---------------------------------------------------------------------------------------------------------------
+<pre>
+├───fixed
+│   │   array_ext.h
+│   │   fixed.h
+│   │   fixed_linear_solver.h
+│   │   fixed_nonlinear_solver.h
+│   │   fixed_system.h
+│   │
+│   └───line_search
+│           divider.h
+│           golden_section.h
+</pre>
