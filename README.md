@@ -53,31 +53,33 @@
 **Реализация данной задачи с помощью данной бибилотеки будет выглядеть следующим образом:**
 
 ```C++
-    // Класс, для системы размерности <2> - Векторный случай
-    // <2> - Размерность системы уравнений
-    class sample_system : public fixed_system_t<2>
-    {
-        using fixed_system_t<2>::var_type;
-    public:
-        // Задание функции невязок
-        var_type residuals(const var_type& x) {
-            return
-            {
-                pow(x[0] - 2, 3) - 8.0,
-                pow(x[1] - 1, 3) - 27.0
-            };
-        }
-    };
+
+#include <fixed/fixed.h>
+// Класс, для системы размерности <2> - Векторный случай
+// <2> - Размерность системы уравнений
+class sample_system : public fixed_system_t<2>
+{
+    using fixed_system_t<2>::var_type;
+public:
+    // Задание функции невязок
+    var_type residuals(const var_type& x) {
+        return
+        {
+            pow(x[0] - 2, 3) - 8.0,
+            pow(x[1] - 1, 3) - 27.0
+        };
+    }
+};
    
-    // Создание экземпляра класса, который и будет решаемой системой
-    sample_system test;
-    // Задание настроек решателя по умолчанию
-    fixed_solver_parameters_t<2, 0> parameters;
-    // Создание структуры для записи результатов расчета
-    fixed_solver_result_t<2> result;
-    // Решение системы нелинейныйх уравнений <2> с помощью решателя Ньютона - Рафсона
-    // { 0, 0 } - Начальное приближение
-    fixed_newton_raphson<2>::solve_dense(test, { 0, 0 }, parameters, & result);
+// Создание экземпляра класса, который и будет решаемой системой
+sample_system test;
+// Задание настроек решателя по умолчанию
+fixed_solver_parameters_t<2, 0> parameters;
+// Создание структуры для записи результатов расчета
+fixed_solver_result_t<2> result;
+// Решение системы нелинейныйх уравнений <2> с помощью решателя Ньютона - Рафсона
+// { 0, 0 } - Начальное приближение
+fixed_newton_raphson<2>::solve_dense(test, { 0, 0 }, parameters, & result);
 ```
 
 <div align="center">
