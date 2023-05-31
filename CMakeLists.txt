@@ -46,7 +46,7 @@ install(EXPORT fixed_solversTargets NAMESPACE fixed_solvers::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fixed_solvers
 )
 # generate the config file that is includes the exports
-configure_package_config_file(${CMAKE_SOURCE_DIR}/Config.cmake.in
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/fixed_solversConfig.cmake"
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/fixed_solvers"
     NO_SET_AND_CHECK_MACRO
