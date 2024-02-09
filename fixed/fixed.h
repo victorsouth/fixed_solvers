@@ -17,7 +17,7 @@ inline double sqr(double x) {
 }
 #endif
 
-
+#include <iomanip>
 #include "fixed/array_ext.h"
 #include "fixed/fixed_system.h"
 #include "fixed/fixed_linear_solver.h"
