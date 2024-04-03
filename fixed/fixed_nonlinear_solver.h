@@ -86,7 +86,7 @@ struct fixed_solver_constraints<-1>
     }
 
 
-    void trim_increment_relative(VectorXd& increment) const
+    void trim_relative(VectorXd& increment) const
     {
         double factor = 1;
         for (const auto& kvp : relative_boundary)
@@ -103,6 +103,15 @@ struct fixed_solver_constraints<-1>
         }
     }
 
+    void trim_max(VectorXd& argument, VectorXd& increment) const
+    {
+
+    }
+
+    void trim_min(VectorXd& argument, VectorXd& increment) const
+    {
+
+    }
 };
 
 
@@ -548,7 +557,7 @@ struct fixed_solver_result_t {
 
 
 /// @brief Аналитика сходимости
-template <size_t Dimension>
+template <std::ptrdiff_t Dimension>
 struct fixed_solver_result_analysis_t {
 public:
     /// @brief Значения целевой функции для одной регулировки шага
@@ -570,7 +579,7 @@ public:
 /// В том числе скалярных
 /// Ньютона-Рафсона - означает регулировку шага
 /// Реализована регулировка шага за счет дробления
-template <size_t Dimension>
+template <std::ptrdiff_t Dimension>
 class fixed_newton_raphson {
 public:
     typedef typename fixed_system_types<Dimension>::var_type var_type;
@@ -587,6 +596,11 @@ private:
             return true;
         }
         return false;
+    }
+
+    static inline bool has_not_finite(const VectorXd& values)
+    {
+        throw std::runtime_error("not impl");
     }
 
     /// @brief Проверка значения на Nan/infinite для векторного случая
@@ -661,8 +675,62 @@ private:
             directed_function, a, b, function_a, function_b);
         return search_step;
     }
+    /// @brief Расчет шага Ньютона 
+    /// для случая фиксированной - плотный расчет
+    /// для переменной размерности (Dimension = -1) - разрешенный расчет
+    /// @param residuals Функция
+    /// @param current_residuals_value 
+    /// @param argument 
+    /// @return 
+    static var_type calc_newton_step(fixed_system_t<Dimension>& residuals,
+        const var_type& current_residuals_value, const var_type& argument)
+    {
+        if constexpr (Dimension == -1) {
+            auto J_triplets = residuals.jacobian_sparse(argument);
+
+            SparseMatrix<double> J(argument.size(), argument.size());
+            J.setFromTriplets(J_triplets.begin(), J_triplets.end());
+            
+            SparseLU<SparseMatrix<double> > solver;
+            solver.analyzePattern(J);
+            solver.factorize(J);
+
+            if (solver.info() == Eigen::Success) {
+                auto result = -solver.solve(current_residuals_value);
+                return result;
+            }
+            else {
+                throw std::runtime_error("cannot calc newton step");
+            }
+
+        }
+        else {
+            // Расчет Якобиана
+            auto J = residuals.jacobian_dense(argument);
+
+            // Расчет текущего шага Ньютона
+            auto result = -solve_linear_system(J, current_residuals_value);
+            return result;
+        }
+    }
+
 
 public:
+    template <
+        std::ptrdiff_t LinearConstraintsCount,
+        typename LineSearch = divider_search>
+    static void solve_dense(
+        fixed_system_t<Dimension>& residuals,
+        const var_type& initial_argument,
+        const fixed_solver_parameters_t<Dimension, LinearConstraintsCount, LineSearch>& solver_parameters,
+        fixed_solver_result_t<Dimension>* result,
+        fixed_solver_result_analysis_t<Dimension>* analysis = nullptr
+    )
+    {
+        // это просто вызов для обратной совместимости, для тех, кто привык использовать solve_dense
+        solve(residuals, initial_argument, solver_parameters, result, analysis);
+    }
+
     /// @brief Запуск численного метода
     /// @tparam LineSearch Алгоритм регулировки шага поиска
     /// @param residuals Функция невязок
@@ -670,9 +738,9 @@ public:
     /// @param solver_parameters Настройки поиска
     /// @param result Результаты расчета
     template <
-        std::ptrdiff_t LinearConstraintsCount,
+        std::ptrdiff_t LinearConstraintsCount = 0,
         typename LineSearch = divider_search>
-    static void solve_dense(
+    static void solve(
         fixed_system_t<Dimension>& residuals,
         const var_type& initial_argument,
         const fixed_solver_parameters_t<Dimension, LinearConstraintsCount, LineSearch>& solver_parameters,
@@ -720,12 +788,8 @@ public:
                 result->score = std::min(result->score, convergence_score_t::Good);
             }
 
-            // Расчет Якобиана
-            auto J = residuals.jacobian_dense(argument);
-
-            // Расчет текущего шага Ньютона
-            p = -solve_linear_system(J, r);
-            // todo: обработчик ошибки решения СЛАУ
+            // Расчет Якобиана, расчет СЛАУ для шага Ньютона
+            p = calc_newton_step(residuals, r, argument);
 
             // Проверка критерия выхода по малому относительному приращению
             if (solver_parameters.step_criteria_assuming_search_step == false)
@@ -832,8 +896,8 @@ public:
         }
 
     }
-
 };
+
 
 /*! @brief Расчет относительного приращения для скалярного случая
 * @param argument Текущее значение
@@ -852,7 +916,7 @@ inline double fixed_newton_raphson<1>::argument_increment_factor(
     return result;
 }
 
-template <size_t Dimension>
+template <std::ptrdiff_t Dimension>
 /// @brief Расчет относительного приращения для векторного случая
 /// @param argument Текущее значение
 /// @param argument_increment Текущее приращение

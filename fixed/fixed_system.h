@@ -51,6 +51,7 @@ struct fixed_system_types<-1> {
     typedef VectorXd right_party_type;
     typedef MatrixXd matrix_type;
     typedef MatrixXd equation_coeffs_type;
+    typedef std::vector<Eigen::Triplet<double>> sparse_matrix_type;
 
     /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(
@@ -78,6 +79,40 @@ struct fixed_system_types {
         return create_array<Dimension>(getter);
     }
 
+};
+
+
+template <std::ptrdiff_t Dimension>
+class fixed_system_t;
+
+template <>
+class fixed_system_t<-1>
+{
+public:
+    typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
+public:
+    /// @brief Расчет целевой функции по невязкам
+    virtual double objective_function(const VectorXd& r) const
+    {
+        return r.squaredNorm();
+    }
+    /// @brief Расчет целевой функции по аргументу
+    double operator()(const VectorXd& x) {
+        auto r = residuals(x);
+        return objective_function(r);
+    }
+    /// @brief Невязки системы уравнений
+    virtual VectorXd residuals(const VectorXd& x) = 0;
+    /// @brief Якобиан системы уравнений
+    virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) = 0;
+    /// @brief Специфический критерий успешного завершения расчета
+    /// @param r Текущее значения невязок
+    /// @param x Текущее значение аргумента
+    /// @return Флаг успешного завершения
+    virtual bool custom_success_criteria(const VectorXd& r, const VectorXd& x)
+    {
+        return true;
+    }
 };
 
 
@@ -135,14 +170,6 @@ inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 }
 
 
-template <>
-inline fixed_system_t<-1>::matrix_value 
-    fixed_system_t<-1>::jacobian_dense_numeric(const fixed_system_t<-1>::var_type& x)
-{
-    throw std::logic_error("var system must have sparse jacobian");
-
-}
-
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
 /// @tparam Dimension Размерность решаемой системы уравнений
 /// @param x Текущее значение аргумента
@@ -178,11 +205,7 @@ inline double fixed_system_t<1>::objective_function(const double& r) const
 }
 
 
-template <>
-inline double fixed_system_t<-1>::objective_function(const VectorXd& r) const
-{
-    return r.squaredNorm();
-}
+
 
 /// @brief Расчет целевой функции для векторного случая (сумма квадратов)
 template <std::ptrdiff_t Dimension>
