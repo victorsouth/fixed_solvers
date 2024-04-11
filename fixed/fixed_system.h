@@ -24,6 +24,28 @@ using Eigen::MatrixXd;
 using Eigen::SparseMatrix;
 typedef Eigen::Triplet<double> triplet_t;
 
+
+/// @brief Расчет приращения для численного расчета производной на основе относительного отклонения
+/// @param value Точка, где вычисляется производная
+/// @param epsilon Относительное отклонение
+/// @return Приращение
+inline double numeric_derivative_delta(double value, double epsilon)
+{
+    return epsilon * std::max(1.0, std::abs(value));
+}
+
+/// @brief Численный расчет производной от функции одного аргумента по двусторонней формуле
+/// @tparam Function Тип функции
+/// @param f Функция
+/// @param value Точка, в которой вычисляется произвожная
+/// @param epsilon Относительное приращение (см. numeric_derivative_delta)
+/// @return Производная 
+template <typename Function>
+inline auto two_sided_derivative(Function f, double value, double epsilon) {
+    double dx = numeric_derivative_delta(value, epsilon);
+    return (f(value + dx) - f(value - dx)) / (2 * dx);
+}
+
 /// @brief Типы данных для системы уравнений
 template <std::ptrdiff_t Dimension>
 struct fixed_system_types;
@@ -161,13 +183,18 @@ protected:
 template <>
 inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 {
-    double e = epsilon * std::max(1.0, abs(x));
-    function_type f_plus = residuals(x + e);
-    function_type f_minus = residuals(x - e);
-    function_type J = (f_plus - f_minus) / (2 * e);
-    return J;
+    auto f = [&](double x) { return residuals(x); };
+    double result = two_sided_derivative(f,  x, epsilon);
+    return result;
+
+    //double e = epsilon * std::max(1.0, abs(x));
+    //function_type f_plus = residuals(x + e);
+    //function_type f_minus = residuals(x - e);
+    //function_type J = (f_plus - f_minus) / (2 * e);
+    //return J;
 
 }
+
 
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
@@ -182,7 +209,7 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
     matrix_value J;
 
     for (int component = 0; component < x.size(); ++component) {
-        double e = epsilon * std::max(1.0, abs(arg[component]));
+        double e = numeric_derivative_delta(arg[component], epsilon);
         arg[component] = x[component] + e;
         function_type f_plus = residuals(arg);
         arg[component] = x[component] - e;

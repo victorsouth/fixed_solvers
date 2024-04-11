@@ -691,7 +691,7 @@ private:
             SparseMatrix<double> J(argument.size(), argument.size());
             J.setFromTriplets(J_triplets.begin(), J_triplets.end());
             
-            SparseLU<SparseMatrix<double> > solver;
+            Eigen::SparseLU<SparseMatrix<double> > solver;
             solver.analyzePattern(J);
             solver.factorize(J);
 
