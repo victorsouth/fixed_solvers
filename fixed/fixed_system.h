@@ -24,6 +24,28 @@ using Eigen::MatrixXd;
 using Eigen::SparseMatrix;
 typedef Eigen::Triplet<double> triplet_t;
 
+
+/// @brief Расчет приращения для численного расчета производной на основе относительного отклонения
+/// @param value Точка, где вычисляется производная
+/// @param epsilon Относительное отклонение
+/// @return Приращение
+inline double numeric_derivative_delta(double value, double epsilon)
+{
+    return epsilon * std::max(1.0, std::abs(value));
+}
+
+/// @brief Численный расчет производной от функции одного аргумента по двусторонней формуле
+/// @tparam Function Тип функции
+/// @param f Функция
+/// @param value Точка, в которой вычисляется произвожная
+/// @param epsilon Относительное приращение (см. numeric_derivative_delta)
+/// @return Производная 
+template <typename Function>
+inline auto two_sided_derivative(Function f, double value, double epsilon) {
+    double dx = numeric_derivative_delta(value, epsilon);
+    return (f(value + dx) - f(value - dx)) / (2 * dx);
+}
+
 /// @brief Типы данных для системы уравнений
 template <std::ptrdiff_t Dimension>
 struct fixed_system_types;
@@ -51,6 +73,7 @@ struct fixed_system_types<-1> {
     typedef VectorXd right_party_type;
     typedef MatrixXd matrix_type;
     typedef MatrixXd equation_coeffs_type;
+    typedef std::vector<Eigen::Triplet<double>> sparse_matrix_type;
 
     /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(
@@ -78,6 +101,40 @@ struct fixed_system_types {
         return create_array<Dimension>(getter);
     }
 
+};
+
+
+template <std::ptrdiff_t Dimension>
+class fixed_system_t;
+
+template <>
+class fixed_system_t<-1>
+{
+public:
+    typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
+public:
+    /// @brief Расчет целевой функции по невязкам
+    virtual double objective_function(const VectorXd& r) const
+    {
+        return r.squaredNorm();
+    }
+    /// @brief Расчет целевой функции по аргументу
+    double operator()(const VectorXd& x) {
+        auto r = residuals(x);
+        return objective_function(r);
+    }
+    /// @brief Невязки системы уравнений
+    virtual VectorXd residuals(const VectorXd& x) = 0;
+    /// @brief Якобиан системы уравнений
+    virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) = 0;
+    /// @brief Специфический критерий успешного завершения расчета
+    /// @param r Текущее значения невязок
+    /// @param x Текущее значение аргумента
+    /// @return Флаг успешного завершения
+    virtual bool custom_success_criteria(const VectorXd& r, const VectorXd& x)
+    {
+        return true;
+    }
 };
 
 
@@ -126,22 +183,19 @@ protected:
 template <>
 inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 {
-    double e = epsilon * std::max(1.0, abs(x));
-    function_type f_plus = residuals(x + e);
-    function_type f_minus = residuals(x - e);
-    function_type J = (f_plus - f_minus) / (2 * e);
-    return J;
+    auto f = [&](double x) { return residuals(x); };
+    double result = two_sided_derivative(f,  x, epsilon);
+    return result;
+
+    //double e = epsilon * std::max(1.0, abs(x));
+    //function_type f_plus = residuals(x + e);
+    //function_type f_minus = residuals(x - e);
+    //function_type J = (f_plus - f_minus) / (2 * e);
+    //return J;
 
 }
 
 
-template <>
-inline fixed_system_t<-1>::matrix_value 
-    fixed_system_t<-1>::jacobian_dense_numeric(const fixed_system_t<-1>::var_type& x)
-{
-    throw std::logic_error("var system must have sparse jacobian");
-
-}
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
 /// @tparam Dimension Размерность решаемой системы уравнений
@@ -155,7 +209,7 @@ inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension
     matrix_value J;
 
     for (int component = 0; component < x.size(); ++component) {
-        double e = epsilon * std::max(1.0, abs(arg[component]));
+        double e = numeric_derivative_delta(arg[component], epsilon);
         arg[component] = x[component] + e;
         function_type f_plus = residuals(arg);
         arg[component] = x[component] - e;
@@ -178,11 +232,7 @@ inline double fixed_system_t<1>::objective_function(const double& r) const
 }
 
 
-template <>
-inline double fixed_system_t<-1>::objective_function(const VectorXd& r) const
-{
-    return r.squaredNorm();
-}
+
 
 /// @brief Расчет целевой функции для векторного случая (сумма квадратов)
 template <std::ptrdiff_t Dimension>
