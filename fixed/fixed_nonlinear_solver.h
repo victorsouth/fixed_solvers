@@ -589,7 +589,7 @@ private:
     
     /// @brief Проверка значения на Nan/infinite для скалярного случая
     /// @param value Проверяемое значение
-    /// @return true/false
+    /// @return true, если найдены nan
     static inline bool has_not_finite(const double value)
     {
         if (!std::isfinite(value)) {
@@ -598,9 +598,17 @@ private:
         return false;
     }
 
+    /// @brief Поиск nan-значений в векторе
+    /// @param values Проверяемое значение 
+    /// @return true, если найдены nan
     static inline bool has_not_finite(const VectorXd& values)
     {
-        throw std::runtime_error("not impl");
+        for (ptrdiff_t index = 0; index < values.size(); ++index) {
+            if (!std::isfinite(values(index))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @brief Проверка значения на Nan/infinite для векторного случая
