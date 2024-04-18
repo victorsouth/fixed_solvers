@@ -939,5 +939,11 @@ inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
         double inc = argument_increment[component];
         squared_sum += pow(inc / arg, 2);
     }
-    return sqrt(squared_sum) / Dimension;
+    if constexpr (Dimension == -1) {
+        return sqrt(squared_sum) / argument.size();
+    }
+    else {
+        return sqrt(squared_sum) / Dimension;
+    }
+    
 }
