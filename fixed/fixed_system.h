@@ -43,7 +43,13 @@ inline double numeric_derivative_delta(double value, double epsilon)
 template <typename Function>
 inline auto two_sided_derivative(Function f, double value, double epsilon) {
     double dx = numeric_derivative_delta(value, epsilon);
-    return (f(value + dx) - f(value - dx)) / (2 * dx);
+
+    typedef std::invoke_result_t<Function, double> ResultType;
+    ResultType f_plus = f(value + dx);
+    ResultType f_minus = f(value - dx);
+    ResultType difference = f_plus - f_minus;
+    ResultType result = difference / (2 * dx);
+    return result;
 }
 
 /// @brief Типы данных для системы уравнений

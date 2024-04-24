@@ -22,7 +22,7 @@ using std::wstringstream;
 using std::wstring;
 
 /// Точность проверки нахождения на ограничениях
-constexpr double eps_constraints = 1e-8;
+inline constexpr double eps_constraints = 1e-8;
 
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
@@ -105,12 +105,48 @@ struct fixed_solver_constraints<-1>
 
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
-
+        if (!maximum.empty())
+            throw std::runtime_error("Please, implement me");
     }
 
     void trim_min(VectorXd& argument, VectorXd& increment) const
     {
+        double factor = 1;
 
+        for (const auto& [index, min_value] : minimum) 
+        {
+            if (argument[index] + increment[index] < min_value) {
+                if (std::abs(argument[index] - min_value) < eps_constraints) {
+                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
+                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
+                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    increment[index] = 0;
+                }
+                else {
+                    double allowed_decrement = argument[index] - min_value;
+                    factor = std::max(factor, abs(increment[index]) / allowed_decrement);
+                }
+
+            }
+        }
+        if (factor > 1)
+        {
+            increment = increment / factor;
+        }
+    }
+
+    void ensure_constraints(VectorXd& argument) const
+    {
+        VectorXd increment = VectorXd::Zero(argument.size());
+
+        if (!maximum.empty())
+            throw std::runtime_error("Please, implement me");
+
+        for (const auto& [index, min_value] : minimum) {
+            if (argument[index] < min_value) {
+                argument[index] = min_value;
+            }
+        }
     }
 };
 
@@ -589,7 +625,7 @@ private:
     
     /// @brief Проверка значения на Nan/infinite для скалярного случая
     /// @param value Проверяемое значение
-    /// @return true/false
+    /// @return true, если найдены nan
     static inline bool has_not_finite(const double value)
     {
         if (!std::isfinite(value)) {
@@ -598,9 +634,17 @@ private:
         return false;
     }
 
+    /// @brief Поиск nan-значений в векторе
+    /// @param values Проверяемое значение 
+    /// @return true, если найдены nan
     static inline bool has_not_finite(const VectorXd& values)
     {
-        throw std::runtime_error("not impl");
+        for (ptrdiff_t index = 0; index < values.size(); ++index) {
+            if (!std::isfinite(values(index))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// @brief Проверка значения на Nan/infinite для векторного случая
@@ -931,5 +975,11 @@ inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
         double inc = argument_increment[component];
         squared_sum += pow(inc / arg, 2);
     }
-    return sqrt(squared_sum) / Dimension;
+    if constexpr (Dimension == -1) {
+        return sqrt(squared_sum) / argument.size();
+    }
+    else {
+        return sqrt(squared_sum) / Dimension;
+    }
+    
 }
