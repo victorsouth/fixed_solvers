@@ -14,6 +14,7 @@ set(HEADERS_LS
 set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
+    fixed/fixed_bisection.h
     fixed/fixed_linear_solver.h
     fixed/fixed_nonlinear_solver.h
     fixed/fixed_system.h
