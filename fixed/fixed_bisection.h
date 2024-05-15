@@ -2,68 +2,6 @@
 #include <fixed/fixed.h>
 #include <iostream>
 
-///
-/// \brief в поток
-/// \param os - поток
-/// \param c - numerical_result_code_t
-/// \return поток
-///
-inline std::ostream& operator<<(std::ostream& os,const numerical_result_code_t& c){
-    switch (c) {
-    case numerical_result_code_t::NoNumericalError:
-        os<<"NoNumericalError("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::NumericalNanValues:
-        os<<"NumericalNanValues("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::Converged:
-        os<<"Converged("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::NotConverged:
-        os<<"NotConverged("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::CustomCriteriaFailed:
-        os<<"CustomCriteriaFailed("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::IllConditionedMatrix:
-        os<<"IllConditionedMatrix("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::LargeConditionNumber:
-        os<<"LargeConditionNumber("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::LineSearchFailed:
-        os<<"LineSearchFailed("<<int(c)<<")";
-        break;
-    }
-    return os;
-}
-
-///
-/// \brief в поток
-/// \param os - поток
-/// \param c - convergence_score_t
-/// \return поток
-///
-inline std::ostream& operator<<(std::ostream& os,const convergence_score_t& c){
-    switch (c) {
-    case convergence_score_t::Excellent:
-        os<<"Excellent("<<int(c)<<")";
-        break;
-    case convergence_score_t::Good:
-        os<<"Good("<<int(c)<<")";
-        break;
-    case convergence_score_t::Satisfactory:
-        os<<"Satisfactory("<<int(c)<<")";
-        break;
-    case convergence_score_t::Poor:
-        os<<"Poor("<<int(c)<<")";
-        break;
-    case convergence_score_t::Error:
-        os<<"Error("<<int(c)<<")";
-        break;
-    }
-    return os;
-}
 /// \brief метод решения уравнения
 enum class fixed_bisectional_solution_type{
     /// метод дихотомии

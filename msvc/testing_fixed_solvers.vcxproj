@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\testing\test_main.cpp" />
+    <ClCompile Include="..\testing\bisection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\testing\test_linear_constraints.h" />
