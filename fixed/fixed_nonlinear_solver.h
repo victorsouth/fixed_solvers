@@ -498,67 +498,78 @@ enum class numerical_result_code_t
     NotConverged, NumericalNanValues, LineSearchFailed, Converged
 };
 
+/// \brief в поток
+/// \param os - поток
+/// \param c - numerical_result_code_t
+/// \return поток
+inline std::ostream& operator<<(std::ostream& os, const numerical_result_code_t& c) {
+    switch (c) {
+    case numerical_result_code_t::NoNumericalError:
+        os << "NoNumericalError(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::NumericalNanValues:
+        os << "NumericalNanValues(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::Converged:
+        os << "Converged(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::NotConverged:
+        os << "NotConverged(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::CustomCriteriaFailed:
+        os << "CustomCriteriaFailed(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::IllConditionedMatrix:
+        os << "IllConditionedMatrix(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::LargeConditionNumber:
+        os << "LargeConditionNumber(" << int(c) << ")";
+        break;
+    case numerical_result_code_t::LineSearchFailed:
+        os << "LineSearchFailed(" << int(c) << ")";
+        break;
+    }
+    return os;
+}
+
+
 /// @brief Оценка качества сходимости
 enum class convergence_score_t : int {
     Excellent = 5, Good = 4, Satisfactory = 3, Poor = 2, Error = 1
 };
 
-/// \brief в поток
-/// \param os - поток
-/// \param c - numerical_result_code_t
-/// \return поток
-inline std::ostream& operator<<(std::ostream& os,const numerical_result_code_t& c){
-    switch (c) {
-    case numerical_result_code_t::NoNumericalError:
-        os<<"NoNumericalError("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::NumericalNanValues:
-        os<<"NumericalNanValues("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::Converged:
-        os<<"Converged("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::NotConverged:
-        os<<"NotConverged("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::CustomCriteriaFailed:
-        os<<"CustomCriteriaFailed("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::IllConditionedMatrix:
-        os<<"IllConditionedMatrix("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::LargeConditionNumber:
-        os<<"LargeConditionNumber("<<int(c)<<")";
-        break;
-    case numerical_result_code_t::LineSearchFailed:
-        os<<"LineSearchFailed("<<int(c)<<")";
-        break;
-    }
-    return os;
+/// @brief Преобразование кода сходимости в строковый вид (wide string)
+inline const map<convergence_score_t, wstring>& get_score_wstrings() {
+    static const map<convergence_score_t, wstring> score_strings{
+        {convergence_score_t::Excellent, L"Excellent(5)"},
+        {convergence_score_t::Good , L"Good(4)"},
+        {convergence_score_t::Satisfactory, L"Satisfactory(3)"},
+        {convergence_score_t::Poor, L"Poor(2)"},
+        {convergence_score_t::Error, L"Error(1)"},
+    };
+    return score_strings;
 }
+
+/// @brief Преобразование кода сходимости в строковый вид (regular string)
+inline const map<convergence_score_t, string>& get_score_strings() {
+    static const map<convergence_score_t, string> score_strings{
+        {convergence_score_t::Excellent, "Excellent(5)"},
+        {convergence_score_t::Good , "Good(4)"},
+        {convergence_score_t::Satisfactory, "Satisfactory(3)"},
+        {convergence_score_t::Poor, "Poor(2)"},
+        {convergence_score_t::Error, "Error(1)"},
+    };
+    return score_strings;
+}
+
+
 
 /// \brief в поток
 /// \param os - поток
 /// \param c - convergence_score_t
 /// \return поток
 inline std::ostream& operator<<(std::ostream& os,const convergence_score_t& c){
-    switch (c) {
-    case convergence_score_t::Excellent:
-        os<<"Excellent("<<int(c)<<")";
-        break;
-    case convergence_score_t::Good:
-        os<<"Good("<<int(c)<<")";
-        break;
-    case convergence_score_t::Satisfactory:
-        os<<"Satisfactory("<<int(c)<<")";
-        break;
-    case convergence_score_t::Poor:
-        os<<"Poor("<<int(c)<<")";
-        break;
-    case convergence_score_t::Error:
-        os<<"Error("<<int(c)<<")";
-        break;
-    }
+    os << get_score_strings().at(c);
     return os;
 }
 
@@ -581,14 +592,7 @@ inline size_t get_score_total_calculations(const std::map<convergence_score_t, s
 inline wstring get_score_string(
     const map<convergence_score_t, size_t>& score)
 {
-    static const map<convergence_score_t, wstring> score_strings{
-        {convergence_score_t::Excellent, L"Exc"},
-        {convergence_score_t::Good , L"Good"},
-        {convergence_score_t::Satisfactory, L"Satis"},
-        {convergence_score_t::Poor, L"Poor"},
-        {convergence_score_t::Error, L"Error"},
-    };
-
+    const auto& score_strings = get_score_wstrings();
     size_t total_calculations = get_score_total_calculations(score);
 
     wstringstream result;
@@ -628,6 +632,8 @@ inline double get_converged_percent(
 
 /// @brief Граница малого шага между "отлично" и "хорошо"
 constexpr double small_step_threshold{ 0.1 };
+
+
 
 
 /// @brief Результат расчета численного метода
@@ -672,6 +678,36 @@ public:
     /// @brief Величина шагов Ньютона-Рафсона
     vector<double> steps;
 };
+
+/// @brief Настройки регулировки шага "без регулировки"
+struct no_line_search_parameters {
+    double maximum_step{ 1.0 };
+    double step_on_search_fail() const {
+        return 1.0;
+    }
+};
+
+/// @brief Алгоритм без регулировки шага
+class no_line_search {
+public:
+    typedef no_line_search_parameters parameters_type;
+
+public:
+    template <typename Function>
+    static inline std::pair<double, size_t> search(
+        const no_line_search_parameters& parameters,
+        Function& function,
+        double a, double b,
+        double f_a, double f_b
+    )
+    {
+        size_t index = 1;
+        double step = 1;
+        return { step, index };
+    }
+};
+
+
 
 
 /// @brief Солвер Ньютона-Рафсона для систем уравнений фиксированной размерности
