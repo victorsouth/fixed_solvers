@@ -44,7 +44,7 @@ struct fixed_bisectional_parameters_t{
     /// признак печать отладочной информации
     /// в стандартный поток вывода
     bool verbose{false};
-    /// использовать Illinois algorithm
+    /// использовать Illinois algorithm, сужает диапазон бисекции, ускоряя сходимость
     /// https://en.wikipedia.org/wiki/Regula_falsi
     bool use_Illinois{true};
     /// проверка схождения невязок на границе
@@ -112,8 +112,8 @@ public:
     std::vector<var_type> argument_history;
 };
 
-/// \brief
-///
+/// \brief Солвер бисекции, а также прицепом к нему комбинированный солвер бисекции/секущих и отдельно солвер секущих
+/// Логику выбора способа расчета шага см. в next_argument_value
 template <size_t Dimension>
 class fixed_bisectional {
 public:
@@ -126,18 +126,15 @@ public:
     /// использования
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
 private:
-    /// @brief
-    /// TODO: Описать, откуда умная формулу взята
-    /// взята из головы из соображений, что отрезок длинной initial_delta
-    /// можно делить пополам 2^get_max_allowed_iterations раз, пока он не станет равен
-    /// argument_precision
-    /// @return
-    static size_t get_max_allowed_iterations(double initial_delta,double argument_precision) {
+    /// @brief Возвращает количество итераций, нужных чтобы при делении пополам 
+    /// изначальный отрезок initial_delta уменьшился до величины требуемой точности argument_precision
+    /// Отрезок длинной initial_delta можно делить пополам 2^get_max_allowed_iterations раз, 
+    /// пока он не станет равен argument_precision
+    static size_t get_max_allowed_iterations(double initial_delta, double argument_precision) {
         return static_cast<size_t>(floor(log(1. / argument_precision) / log(2.0)));
     }
 
-    /// \brief
-    /// выдаёт следующее приближение аргумента
+    /// \brief выдаёт следующее приближение аргумента в зависимости от типа расчета solver_parameters.solution_type
     /// \param solver_parameters - параметры солвера
     /// \param x1 - минимальное значение аргумента на предыдущем шаге
     /// \param x2 - минимальное значение аргумента на предыдущем шаге
@@ -145,7 +142,6 @@ private:
     /// \param y2 - значение невязки при x2
     /// \param iterations - количество сделанных итераций
     /// \return возврвщяет следующее приближение аргумента, код ошибки расчета
-    ///
     static std::pair<var_type, numerical_result_code_t> next_argument_value(const fixed_bisectional_parameters_t& solver_parameters,
         const var_type& x1,const var_type& x2,const var_type& y1,const var_type& y2,size_t iterations,bool& use_secant)
     {
@@ -167,7 +163,6 @@ private:
             if (use_secant) 
             {
                 auto [x3, code] = next_argument_secant(x1, x2, y1, y2);
-                //std::cerr<<code<<std::endl;
                 if (code != numerical_result_code_t::Converged)  {
                     use_secant = false;
                     return next_argument_bisection(x1, x2,y1,y2);
@@ -184,6 +179,7 @@ private:
             throw std::runtime_error("unsupported solution_type");
         }
     }
+    /// @brief Расчет следующего приближения по методу секущих
     static std::pair<var_type, numerical_result_code_t> next_argument_secant(
         const var_type& x1, const var_type& x2, const var_type& y1, const var_type& y2)
     {
@@ -198,6 +194,7 @@ private:
         }
         return std::make_pair(std::numeric_limits<double>::quiet_NaN(), numerical_result_code_t::CustomCriteriaFailed);
     }
+    /// @brief Расчет следующего приближения по методу бисекции
     static std::pair<var_type, numerical_result_code_t> next_argument_bisection(
         const var_type& x1, const var_type& x2, const var_type& y1, const var_type& y2)
     {
@@ -210,8 +207,7 @@ private:
         return std::make_pair(x3, numerical_result_code_t::Converged);
     }
 
-    /// \brief 
-    /// Проверяет не пора ли завершать расчет (успешно или аварийно)
+    /// \brief Проверяет не пора ли завершать расчет (успешно или аварийно)
     ///  - сошлись по невзяке (успешно)
     ///  - получили NaN или Inf (аварийно)
     ///  В этих случаях также заполняет поля result_code и score в result.
@@ -263,8 +259,6 @@ private:
     /// \param x3 - первое приближение
     /// \param solver_parameters - параметры солвера
     /// \param analysis - указатель на служебную структуру, для хранения истории
-    /// \return тру
-    ///
     static void solve_limited(
             const fixed_bisectional_parameters_t& solver_parameters,
             fixed_system_t<Dimension>& residuals,
@@ -275,57 +269,71 @@ private:
     {
         var_type& x3 = *_x3;
 
-        var_type y1=residuals.residuals(x1);
-        var_type y2=residuals.residuals(x2);
-        var_type y3=residuals.residuals(x3);
+        var_type y1 = residuals.residuals(x1);
+        var_type y2 = residuals.residuals(x2);
+        var_type y3 = residuals.residuals(x3);
 
         size_t& iteration = result->iteration_count;
 
-        result->reached_precision=std::max(std::max(std::fabs(x2),std::fabs(x1))*std::numeric_limits<double>::epsilon(),solver_parameters.argument_precision);
+        result->reached_precision=std::max(
+            std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon(),
+            solver_parameters.argument_precision);
 
-        result->max_allowed_iterations = get_max_allowed_iterations(std::fabs(x2-x1),solver_parameters.argument_precision);
+        // Ниже в while проверка на диапазон abs(x2-x1) < argument_precision сделана через итерации, 
+        // т.к. при малых значениях x1, x2 есть проблемы с такой проверкой
+        result->max_allowed_iterations = get_max_allowed_iterations(std::abs(x2-x1),solver_parameters.argument_precision);
 
 
-        //https://en.wikipedia.org/wiki/Regula_falsi
-        // Illinois algorithm
-        int side = 0;
-        while( std::fabs(x2-x1)>result->reached_precision &&
-            ++iteration< result->max_allowed_iterations )
+        int previous_residual_sign = 0; // знак функции на прошлой итерации
+        while (std::abs(x2 - x1) > result->reached_precision &&
+            ++iteration < result->max_allowed_iterations)
         {
             bool use_secant=false;
             std::tie(x3, result->result_code) = next_argument_value(solver_parameters, x1, x2, y1, y2, iteration,use_secant);
             if (result->result_code != numerical_result_code_t::Converged) {
-                std::cout<<iteration<<'\t'<<result->max_allowed_iterations<<std::endl;
-                std::cout<<std::fabs(x2-x1)<<'\t'<<2.*solver_parameters.argument_precision<<'\t'<<solver_parameters.residual_precision<<std::endl;
+                if (solver_parameters.verbose) {
+                    std::cout << iteration << '\t' << result->max_allowed_iterations << std::endl;
+                    std::cout << std::abs(x2 - x1) << '\t' << 2. * solver_parameters.argument_precision << '\t' << solver_parameters.residual_precision << std::endl;
+                }
                 result->score = convergence_score_t::Error;
                 return;
             }
             y3 = residuals.residuals(x3);
             if (solver_parameters.verbose)
                 std::cout <<std::setprecision(20)<< x3 << '\t' << y3 << '\t' << iteration << " of " << result->max_allowed_iterations << std::endl;
-            if (residual_exit_criterium(solver_parameters, y3, x3, analysis, result)){
+            if (residual_exit_criterium(solver_parameters, y3, x3, analysis, result)) {
                 return;
             }
 
-            if(y3>0) {
+            if (y3 > 0) {
                 x1 = x3;
                 y1 = y3;
-                if(use_secant && solver_parameters.use_Illinois && side == -1)y2 /= 2.;
-                side = -1;
-            }else if (y3<0){
+                if (use_secant && solver_parameters.use_Illinois && previous_residual_sign == +1) {
+                    // Если в прошлый раз знак функции был тот же, можем сузить поиск
+                    //https://en.wikipedia.org/wiki/Regula_falsi, раздел Illinois algorithm
+                    y2 /= 2.0;
+                }
+                previous_residual_sign = +1;
+            }
+            else if (y3 < 0) {
                 x2 = x3;
                 y2 = y3;
-                if (use_secant && solver_parameters.use_Illinois && side == +1) y1 /= 2.;
-                side = +1;
+                if (use_secant && solver_parameters.use_Illinois && previous_residual_sign == -1)
+                    y1 /= 2.0;
+                previous_residual_sign = -1;
             }
-            // todo: А y3 == 0 может быть? не может см. residual_exit_criterium
-            result->reached_precision=std::max(std::max(std::fabs(x2),std::fabs(x1))*std::numeric_limits<double>::epsilon(),solver_parameters.argument_precision/2.);
+            // y3 == 0 не может быть, см. residual_exit_criterium
+
+            result->reached_precision=std::max(
+                std::max(std::fabs(x2), std::fabs(x1)) * std::numeric_limits<double>::epsilon(),
+                solver_parameters.argument_precision/2.);
         }
-        result->residuals=y3;
-        if(iteration >= result->max_allowed_iterations){
+        result->residuals = y3;
+        if (iteration >= result->max_allowed_iterations) {
             result->result_code = numerical_result_code_t::Converged;
             result->score = convergence_score_t::Poor;
-        }else{
+        }
+        else {
             result->result_code = numerical_result_code_t::Converged;
             result->score = convergence_score_t::Good;
         }
