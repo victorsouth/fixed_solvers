@@ -93,7 +93,7 @@ struct fixed_bisection_result_t {
     size_t iteration_count{ 0 };
     /// @brief макс Количество выполненных итераций
     size_t max_allowed_iterations{ 0 };
-    /// \brief достигаемая точность
+    /// \brief достигнутая точность
     var_type reached_precision=std::numeric_limits<double>::epsilon();
 };
 
@@ -134,24 +134,14 @@ private:
         return static_cast<size_t>(floor(log(1. / argument_precision) / log(2.0)));
     }
 
-    // \brief Вычисление точности по аргументам, которую мы можем достигнуть учитавая величины x1 и x2
-    // Вычисление точности по аргументам, которую мы можем достигнуть учитавая величины x1 и x2
-    // "Вообще, епсилон в IEE-754 это норма не для абсолютной погрешности, а для относительной"
-    // учитывая что solver_parameters.argument_precision может быть задан произвольно
-    // а для чисел x1 и x2 для абсолютной погрешности мы имеем:
-    //  std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon()
-    // то получаем, что точность, которую мы можем (и должны, а то с какого перепуга мы вообще точность в параментры добавили?) обеспечить по аргументу:
-    //
-    //   это максимальное из:
-    //           - норма для абсолютной погрешности
-    //           - заданная в параметрах точность по аргументу.
-    //
-    //   Если мы НЕ ХОТИМ задавать точность в параметрах, то норма для абсолютной погрешности будет достаточной величиной
-    //
-    static double get_reached_argument_precission(const fixed_bisectional_parameters_t& solver_parameters,double x1,double x2){
-        return std::max(
-            std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon(),
-            solver_parameters.argument_precision);
+    /// @brief Проверяет, что диапазон поиска [x1, x2] меньше машинной точности x1 или x2
+    /// Другими словами диапазон поиска меньше машинного эпсилон x1 или x2
+    /// Эпсилон в IEE-754 это норма не для абсолютной погрешности, а для относительной!
+    /// @param x1 Нижняя граница диапазона поиска
+    /// @param x2 Верхняя граница диапазона поиска
+    /// @return Истина, если диапазон настолько узок, что попал в машинный эпсилон - дальше улучшить не выйдет
+    static bool is_within_machine_epsilon(double x1, double x2) {
+        return std::abs(x1 - x2) < std::max(std::abs(x2), std::abs(x1)) * std::numeric_limits<double>::epsilon();
     }
 
     /// \brief выдаёт следующее приближение аргумента в зависимости от типа расчета solver_parameters.solution_type
@@ -270,8 +260,14 @@ private:
         }
         return false;
     }
-    /// \brief
-    /// поиск решения уравнения при полностью определённых входных параментах
+    /// \brief поиск решения уравнения при полностью определённых входных параментах
+    /// Критерии выхода 
+    ///       1. По заданной абсолютной погрешности 
+    ///       2. По количеству итераций на основе абсолютной погрешности. 
+    ///       3. По машинному эпсилону
+    /// Заметим, что 1 потенциально быстрее, чем 2 (т.к.Иллинойс), но может 
+    /// не сработать при больших порядках чисел. Поэтому 2 нас подстраховывает.
+    /// Проверка 3 нужна для больших аргументов
     /// \param residuals  Функция невязок
     /// \param result - указатель на служебную структуру, для хранения резудьтата
     /// \param x1 - нижняя граница аргумента
@@ -282,30 +278,30 @@ private:
     static void solve_limited(
             const fixed_bisectional_parameters_t& solver_parameters,
             fixed_system_t<Dimension>& residuals,
-            var_type x1, var_type x2, var_type* _x3,
+            var_type x1, var_type x2,
             fixed_bisection_result_t<Dimension>* result,
             fixed_bisection_result_analysis_t<Dimension>* analysis
             )
     {
-        var_type& x3 = *_x3;
+        var_type& x3 = result->argument;
 
         var_type y1 = residuals.residuals(x1);
         var_type y2 = residuals.residuals(x2);
-        var_type y3 = residuals.residuals(x3);
+        var_type& y3 = result->residuals;
+        y3 = residuals.residuals(x3);
 
         size_t& iteration = result->iteration_count;
-
-        // см get_reached_argument_precission
-        result->reached_precision= get_reached_argument_precission(solver_parameters,x1,x2);
+        result->reached_precision = std::abs(x2 - x1);
 
         // Ниже в while проверка на диапазон abs(x2-x1) < argument_precision сделана через итерации, 
         // т.к. при малых значениях x1, x2 есть проблемы с такой проверкой
-        result->max_allowed_iterations = get_max_allowed_iterations(std::abs(x2-x1),solver_parameters.argument_precision);
+        result->max_allowed_iterations = get_max_allowed_iterations(
+            std::abs(x2-x1),
+            solver_parameters.argument_precision);
 
 
         int previous_residual_sign = 0; // знак функции на прошлой итерации
-        while (std::abs(x2 - x1) > result->reached_precision &&
-            ++iteration < result->max_allowed_iterations)
+        for (iteration = 0; iteration < result->max_allowed_iterations; ++iteration) 
         {
             bool use_secant=false;
             std::tie(x3, result->result_code) = next_argument_value(solver_parameters, x1, x2, y1, y2, iteration,use_secant);
@@ -345,27 +341,41 @@ private:
             }
             // y3 == 0 не может быть, см. residual_exit_criterium
 
-            // ЗАНЧЕНИЯ x1 или x2 изменидись, обновим достижимую точность
-            result->reached_precision= get_reached_argument_precission(solver_parameters,x1,x2);
+            // ЗНАЧЕНИЯ x1 или x2 изменидись, обновим достигнутую точность
+            result->reached_precision = std::abs(x2 - x1);
+            // диапазон поиска попал в абсолютная погрешность
+            if (result->reached_precision < solver_parameters.argument_precision) 
+                break;
+
+            // диапазон поиска уже меньше машинного эпсилон x1 или x2)
+            if (is_within_machine_epsilon(x1, x2))
+                break;
+
         }
+
         // Если мы сюда попали, то не сошлись по невязке, она в приоритете
         // видимо задали недостижимую точнось
-        result->residuals = y3;
+
         // тут что-то пошло не так ))
         if (iteration >= result->max_allowed_iterations) {
             result->result_code = numerical_result_code_t::Converged;
-            result->score = convergence_score_t::Poor;
+            result->score = convergence_score_t::Satisfactory;
         }
         // иначе проанализируем, что у нас по точности решения
         else {
             result->result_code = numerical_result_code_t::Converged;
-            // А ВОТ тут вот не вышло: норма для абсолютной погрешности больше заданной в параметрах точности по аргументу.
-            // ну мало ли X был энтальпией, а хотели 0.00003 точность,
-            // ну что ж признаем результат "удовлетворительным"
-            if(result->reached_precision > solver_parameters.argument_precision )
-                result->score = convergence_score_t::Satisfactory;
-            else
-                result->score = convergence_score_t::Good;// а тут всё как хотели по аргументу
+            if (result->reached_precision < solver_parameters.argument_precision) {
+                // Достигнута точность по аргументу
+                result->score = convergence_score_t::Excellent;
+            }
+            else {
+                // Нельзя достигнуть точность по аргументу из-за точности double
+                // Конкретнее - выскочили за машинный эпсилон, 
+                // и тогда норма для абсолютной погрешности больше заданной в параметрах точности по аргументу.
+                // Пример - если X был энтальпией, а хотели 0.00003 точность
+                // ну что ж признаем результат "удовлетворительным"
+                result->score = convergence_score_t::Good;
+            }
         }
         return;
     }
@@ -446,9 +456,9 @@ public:
         result->result_code = numerical_result_code_t::NotConverged;
         result->score = convergence_score_t::Excellent;
         
-        // todo: Здесь argument передается дважды - отдельно и в составе result
-        solve_limited(solver_parameters, residuals, minx, maxx, 
-            &argument, result, analysis);
+        // Здесь подготовленная переменная argument передается в составе result
+        solve_limited(solver_parameters, residuals, minx, maxx,
+            result, analysis);
     }
 
 };
