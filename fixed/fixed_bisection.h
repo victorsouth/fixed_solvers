@@ -134,6 +134,26 @@ private:
         return static_cast<size_t>(floor(log(1. / argument_precision) / log(2.0)));
     }
 
+    // \brief Вычисление точности по аргументам, которую мы можем достигнуть учитавая величины x1 и x2
+    // Вычисление точности по аргументам, которую мы можем достигнуть учитавая величины x1 и x2
+    // "Вообще, епсилон в IEE-754 это норма не для абсолютной погрешности, а для относительной"
+    // учитывая что solver_parameters.argument_precision может быть задан произвольно
+    // а для чисел x1 и x2 для абсолютной погрешности мы имеем:
+    //  std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon()
+    // то получаем, что точность, которую мы можем (и должны, а то с какого перепуга мы вообще точность в параментры добавили?) обеспечить по аргументу:
+    //
+    //   это максимальное из:
+    //           - норма для абсолютной погрешности
+    //           - заданная в параметрах точность по аргументу.
+    //
+    //   Если мы НЕ ХОТИМ задавать точность в параметрах, то норма для абсолютной погрешности будет достаточной величиной
+    //
+    static double get_reached_argument_precission(const fixed_bisectional_parameters_t& solver_parameters,double x1,double x2){
+        return std::max(
+            std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon(),
+            solver_parameters.argument_precision);
+    }
+
     /// \brief выдаёт следующее приближение аргумента в зависимости от типа расчета solver_parameters.solution_type
     /// \param solver_parameters - параметры солвера
     /// \param x1 - минимальное значение аргумента на предыдущем шаге
@@ -275,9 +295,8 @@ private:
 
         size_t& iteration = result->iteration_count;
 
-        result->reached_precision=std::max(
-            std::max(std::abs(x2),std::abs(x1))*std::numeric_limits<double>::epsilon(),
-            solver_parameters.argument_precision);
+        // см get_reached_argument_precission
+        result->reached_precision= get_reached_argument_precission(solver_parameters,x1,x2);
 
         // Ниже в while проверка на диапазон abs(x2-x1) < argument_precision сделана через итерации, 
         // т.к. при малых значениях x1, x2 есть проблемы с такой проверкой
@@ -302,6 +321,8 @@ private:
             if (solver_parameters.verbose)
                 std::cout <<std::setprecision(20)<< x3 << '\t' << y3 << '\t' << iteration << " of " << result->max_allowed_iterations << std::endl;
             if (residual_exit_criterium(solver_parameters, y3, x3, analysis, result)) {
+                // Сошлись по невязке, она в приоритете
+                result->score = convergence_score_t::Excellent;
                 return;
             }
 
@@ -324,18 +345,27 @@ private:
             }
             // y3 == 0 не может быть, см. residual_exit_criterium
 
-            result->reached_precision=std::max(
-                std::max(std::fabs(x2), std::fabs(x1)) * std::numeric_limits<double>::epsilon(),
-                solver_parameters.argument_precision/2.);
+            // ЗАНЧЕНИЯ x1 или x2 изменидись, обновим достижимую точность
+            result->reached_precision= get_reached_argument_precission(solver_parameters,x1,x2);
         }
+        // Если мы сюда попали, то не сошлись по невязке, она в приоритете
+        // видимо задали недостижимую точнось
         result->residuals = y3;
+        // тут что-то пошло не так ))
         if (iteration >= result->max_allowed_iterations) {
             result->result_code = numerical_result_code_t::Converged;
             result->score = convergence_score_t::Poor;
         }
+        // иначе проанализируем, что у нас по точности решения
         else {
             result->result_code = numerical_result_code_t::Converged;
-            result->score = convergence_score_t::Good;
+            // А ВОТ тут вот не вышло: норма для абсолютной погрешности больше заданной в параметрах точности по аргументу.
+            // ну мало ли X был энтальпией, а хотели 0.00003 точность,
+            // ну что ж признаем результат "удовлетворительным"
+            if(result->reached_precision > solver_parameters.argument_precision )
+                result->score = convergence_score_t::Satisfactory;
+            else
+                result->score = convergence_score_t::Good;// а тут всё как хотели по аргументу
         }
         return;
     }

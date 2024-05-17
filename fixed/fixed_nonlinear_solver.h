@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <string>
 // Подключаемые библиотеки
 using std::vector;
 using std::map;
@@ -551,8 +552,8 @@ inline const map<convergence_score_t, wstring>& get_score_wstrings() {
 }
 
 /// @brief Преобразование кода сходимости в строковый вид (regular string)
-inline const map<convergence_score_t, string>& get_score_strings() {
-    static const map<convergence_score_t, string> score_strings{
+inline const map<convergence_score_t, std::string>& get_score_strings() {
+    static const map<convergence_score_t, std::string> score_strings{
         {convergence_score_t::Excellent, "Excellent(5)"},
         {convergence_score_t::Good , "Good(4)"},
         {convergence_score_t::Satisfactory, "Satisfactory(3)"},
