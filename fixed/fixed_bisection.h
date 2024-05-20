@@ -141,7 +141,7 @@ private:
     /// @param x2 Верхняя граница диапазона поиска
     /// @return Истина, если диапазон настолько узок, что попал в машинный эпсилон - дальше улучшить не выйдет
     static bool is_within_machine_epsilon(double x1, double x2) {
-        return std::abs(x1 - x2) < std::max(std::abs(x2), std::abs(x1)) * std::numeric_limits<double>::epsilon();
+        return std::abs(x1 - x2) <= std::max(std::abs(x2), std::abs(x1)) * std::numeric_limits<double>::epsilon();
     }
 
     /// \brief выдаёт следующее приближение аргумента в зависимости от типа расчета solver_parameters.solution_type
@@ -301,7 +301,7 @@ private:
 
 
         int previous_residual_sign = 0; // знак функции на прошлой итерации
-        for (iteration = 0; iteration < result->max_allowed_iterations; ++iteration) 
+        for (iteration = 0; iteration <= result->max_allowed_iterations; ++iteration)
         {
             bool use_secant=false;
             std::tie(x3, result->result_code) = next_argument_value(solver_parameters, x1, x2, y1, y2, iteration,use_secant);
@@ -344,7 +344,7 @@ private:
             // ЗНАЧЕНИЯ x1 или x2 изменидись, обновим достигнутую точность
             result->reached_precision = std::abs(x2 - x1);
             // диапазон поиска попал в абсолютная погрешность
-            if (result->reached_precision < solver_parameters.argument_precision) 
+            if (result->reached_precision <= solver_parameters.argument_precision)
                 break;
 
             // диапазон поиска уже меньше машинного эпсилон x1 или x2)
