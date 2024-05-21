@@ -14,6 +14,7 @@ set(HEADERS_LS
 set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
+    fixed/fixed_bisection.h
     fixed/fixed_linear_solver.h
     fixed/fixed_nonlinear_solver.h
     fixed/fixed_system.h
@@ -68,7 +69,7 @@ if(FIXED_SOLVERS_BUILD_TESTS)
 find_package(Threads)
 find_package(GTest REQUIRED)
 
-add_executable(fs_tests testing/test_main.cpp)
+add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
 
 endif()
