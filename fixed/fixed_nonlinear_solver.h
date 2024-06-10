@@ -1015,7 +1015,7 @@ public:
                 : argument_increment_factor(argument, p);
             argument_increment_criteria =
                 argument_increment_metric < solver_parameters.argument_increment_norm;
-            bool custom_criteria = false;
+            bool custom_criteria = residuals.custom_success_criteria(r, argument);
             if (custom_criteria || argument_increment_criteria) {
                 result->result_code = numerical_result_code_t::Converged;
                 break;
@@ -1034,10 +1034,10 @@ public:
                 result->score = convergence_score_t::Poor;
             }
         }
-        if (!residuals.custom_success_criteria(r, argument)) {
-            result->result_code = numerical_result_code_t::CustomCriteriaFailed;
-            result->score = convergence_score_t::Poor;
-        }
+        //if (!residuals.custom_success_criteria(r, argument)) {
+        //    result->result_code = numerical_result_code_t::CustomCriteriaFailed;
+        //    result->score = convergence_score_t::Poor;
+        //}
 
     }
 };
