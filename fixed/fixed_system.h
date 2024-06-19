@@ -175,7 +175,7 @@ public:
     /// @return Флаг успешного завершения
     virtual bool custom_success_criteria(const var_type& r, const var_type& x)
     {
-        return true;
+        return false;
     }
 
 protected:
