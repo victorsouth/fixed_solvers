@@ -1034,11 +1034,6 @@ public:
                 result->score = convergence_score_t::Poor;
             }
         }
-        //if (!residuals.custom_success_criteria(r, argument)) {
-        //    result->result_code = numerical_result_code_t::CustomCriteriaFailed;
-        //    result->score = convergence_score_t::Poor;
-        //}
-
     }
 };
 
