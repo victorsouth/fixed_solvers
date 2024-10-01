@@ -1,7 +1,7 @@
-#pragma once
+п»ї#pragma once
 
 
-/// @brief Тест решения линейной системы
+/// @brief РўРµСЃС‚ СЂРµС€РµРЅРёСЏ Р»РёРЅРµР№РЅРѕР№ СЃРёСЃС‚РµРјС‹
 TEST(Common, LinearEquationSolver)
 {
     array<array<double, 2>, 2> A;

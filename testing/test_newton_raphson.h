@@ -1,6 +1,6 @@
-#pragma once
+п»ї#pragma once
 
-/// @brief Тест солвера Гаусса-Ньютона
+/// @brief РўРµСЃС‚ СЃРѕР»РІРµСЂР° Р“Р°СѓСЃСЃР°-РќСЊСЋС‚РѕРЅР°
 TEST(NewtonRaphson, UseCase)
 {
     class sample_system : public fixed_system_t<2>
