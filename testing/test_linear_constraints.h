@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 
 TEST(Fixed, LinearConstraints1) {
@@ -11,9 +11,9 @@ TEST(Fixed, LinearConstraints1) {
     fixed_linear_constraints<2, 1> linear_constraints;
     linear_constraints.a = { 1 , 1 };
     linear_constraints.b = 1;
-    linear_constraints.trim(x, dx); // подходим к ограничениям
+    linear_constraints.trim(x, dx); // РїРѕРґС…РѕРґРёРј Рє РѕРіСЂР°РЅРёС‡РµРЅРёСЏРј
 
-    // dx должно обрезаться с {1,1} до {0.5, 0.5}
+    // dx РґРѕР»Р¶РЅРѕ РѕР±СЂРµР·Р°С‚СЊСЃСЏ СЃ {1,1} РґРѕ {0.5, 0.5}
 
 }
 
@@ -28,8 +28,8 @@ TEST(Fixed, LinearConstraints2) {
     linear_constraints.a = { -1 , 1 };
     linear_constraints.b = 0;
 
-    linear_constraints.trim(x, dx); // изначально сидим на ограниченях
-    // dx должно спроецироваться с {0,1} до {0.5, 0.5}
+    linear_constraints.trim(x, dx); // РёР·РЅР°С‡Р°Р»СЊРЅРѕ СЃРёРґРёРј РЅР° РѕРіСЂР°РЅРёС‡РµРЅСЏС…
+    // dx РґРѕР»Р¶РЅРѕ СЃРїСЂРѕРµС†РёСЂРѕРІР°С‚СЊСЃСЏ СЃ {0,1} РґРѕ {0.5, 0.5}
 }
 
 TEST(Fixed, LinearConstraints3) {
@@ -43,8 +43,8 @@ TEST(Fixed, LinearConstraints3) {
     linear_constraints.a = { 1 , 1 };
     linear_constraints.b = 0;
 
-    linear_constraints.trim(x, dx); // изначально сидим на ограниченях
-    // dx должно спроецироваться с {0,1} до {-0.5, 0.5}
+    linear_constraints.trim(x, dx); // РёР·РЅР°С‡Р°Р»СЊРЅРѕ СЃРёРґРёРј РЅР° РѕРіСЂР°РЅРёС‡РµРЅСЏС…
+    // dx РґРѕР»Р¶РЅРѕ СЃРїСЂРѕРµС†РёСЂРѕРІР°С‚СЊСЃСЏ СЃ {0,1} РґРѕ {-0.5, 0.5}
 
     var_type ethalon{ -0.5, 0.5 };
 }
@@ -60,11 +60,11 @@ TEST(Fixed, LinearConstraints4) {
     linear_constraints.a = { 1 , 1 };
     linear_constraints.b = 0;
 
-    linear_constraints.trim(x, dx); // изначально сидим на ограниченях
+    linear_constraints.trim(x, dx); // РёР·РЅР°С‡Р°Р»СЊРЅРѕ СЃРёРґРёРј РЅР° РѕРіСЂР°РЅРёС‡РµРЅСЏС…
 
     var_type ethalon{ 0.5, -0.5 };
 
-    // dx должно спроецироваться с {1, 0} до {0.5, -0.5}
+    // dx РґРѕР»Р¶РЅРѕ СЃРїСЂРѕРµС†РёСЂРѕРІР°С‚СЊСЃСЏ СЃ {1, 0} РґРѕ {0.5, -0.5}
 }
 
 TEST(Fixed, LinearConstraints5) {
@@ -78,8 +78,8 @@ TEST(Fixed, LinearConstraints5) {
     linear_constraints.a = { 1 , 1 };
     linear_constraints.b = 0;
 
-    linear_constraints.trim(x, dx); // изначально сидим на ограниченях
-    // dx должно спроецироваться с {1, 1} до {0, 0}
+    linear_constraints.trim(x, dx); // РёР·РЅР°С‡Р°Р»СЊРЅРѕ СЃРёРґРёРј РЅР° РѕРіСЂР°РЅРёС‡РµРЅСЏС…
+    // dx РґРѕР»Р¶РЅРѕ СЃРїСЂРѕРµС†РёСЂРѕРІР°С‚СЊСЃСЏ СЃ {1, 1} РґРѕ {0, 0}
 
     var_type ethalon{ 0.0, 0.0 };
 
