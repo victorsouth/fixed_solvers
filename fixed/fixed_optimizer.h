@@ -12,11 +12,14 @@ public:
     typedef MatrixXd matrix_type;
 
 public:
+    virtual double objective_function(const residuals_type& r) {
+        double sum_of_squares = r.squaredNorm();
+        return sum_of_squares;
+    }
     /// @brief Расчет целевой функции по аргументу
     double operator()(const argument_type& x) {
         residuals_type r = residuals(x);
-        double sum_of_squares = r.squaredNorm();
-        return sum_of_squares;
+        return objective_function(r);
     }
     /// @brief Невязки системы уравнений
     virtual residuals_type residuals(const argument_type& x) = 0;
@@ -143,9 +146,16 @@ public:
         fixed_least_squares_function_t& function,
         const argument_type& initial_argument,
         const fixed_solver_parameters_t<-1, 0, LineSearch>& solver_parameters,
-        fixed_solver_result_t<-1>* result
+        fixed_solver_result_t<-1>* result,
+        fixed_solver_result_analysis_t<-1>* analysis = nullptr
     )
     {
+        // Информация о том, как изменялась целевая функция по траектории шага
+        if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
+            throw std::runtime_error("Line search exploring not implemented");
+            //analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+        }
+
         size_t n = initial_argument.size();
 
         if (n == 0) {
@@ -157,9 +167,17 @@ public:
         VectorXd& argument = result->argument;
         VectorXd& r = result->residuals;
 
+        if (analysis != nullptr && solver_parameters.analysis.argument_history) {
+            analysis->argument_history.push_back(argument);
+        }
+
         VectorXd argument_increment, search_direction;
 
         r = function.residuals(argument);
+        result->residuals_norm = function.objective_function(r);
+        if (analysis != nullptr && solver_parameters.analysis.objective_function_history) {
+            analysis->target_function.push_back({ result->residuals_norm });
+        }
 
         bool custom_stop_criteria = function.custom_success_criteria(r, argument);
         /*if (custom_stop_criteria) {
@@ -210,11 +228,15 @@ public:
                 //trim_increment(solver_parameters.constraints.boundaries, search_direction);
                 //trim_increment_relative(solver_parameters.constraints.relative_boundaries, search_direction);
 
+
             }
 
 
             double search_step = perform_line_search<LineSearch>(
                 solver_parameters.line_search, function, argument, r, search_direction);
+            if (analysis != nullptr && solver_parameters.analysis.steps) {
+                analysis->steps.push_back(search_step);
+            }
 
             if (!std::isfinite(search_step)) {
                 result->result_code = numerical_result_code_t::LineSearchFailed;
@@ -224,8 +246,15 @@ public:
             argument_increment = search_step * search_direction;
             argument += argument_increment;
 
-            r = function.residuals(argument);
+            if (analysis != nullptr && solver_parameters.analysis.argument_history) {
+                analysis->argument_history.push_back(argument);
+            }
 
+            r = function.residuals(argument);
+            result->residuals_norm = function.objective_function(r);
+            if (analysis != nullptr && solver_parameters.analysis.objective_function_history) {
+                analysis->target_function.push_back({ result->residuals_norm });
+            }
 
             // Проверка критерия выхода по малому относительному приращению
             double argument_increment_metric = solver_parameters.step_criteria_assuming_search_step

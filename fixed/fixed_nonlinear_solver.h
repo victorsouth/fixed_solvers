@@ -335,11 +335,13 @@ struct fixed_solver_constraints
 
 ///@brief Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
-    /// Собирает историю значений аргумента
+    ///@brief Собирает историю значений аргумента
     bool argument_history{ false };
-    /// Собирает значения шага в методе Ньютона-Рафсона
+    /// @brief История целевой функции
+    bool objective_function_history{ false };
+    ///@brief Собирает значения шага в методе Ньютона-Рафсона
     bool steps{false};
-    /// Выполнятся исследование целевой функции на каждом шаге
+    ///@brief Выполнятся исследование целевой функции на каждом шаге
     bool line_search_explore{ false };
 };
 
@@ -350,7 +352,7 @@ enum class line_search_fail_action_t {
     PerformMinStep ///< Выбрать минмимальный шаг
 };
 
-// Линейные ограничения - произвольная размерность
+///@brief Линейные ограничения - произвольная размерность
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints;
 
@@ -672,12 +674,27 @@ public:
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
 public:
-    /// @brief Значения целевой функции по всем шагам Ньютона-Рафсона
+    /// @brief Исследование целевой функции по всем шагам Ньютона-Рафсона или Гаусса-Ньютона
     vector<target_function_values_t> target_function;
     /// @brief Результат расчета
     vector<var_type> argument_history;
     /// @brief Величина шагов Ньютона-Рафсона
     vector<double> steps;
+    /// @brief Строит результат на основе собранного в target_function в режиме однократного расчета ц.ф.
+    vector<double> get_learning_curve() const {
+        vector<double> result;
+        result.reserve(target_function.size());
+        std::transform(target_function.begin(), target_function.end(), 
+            std::back_inserter(result),
+            [](const vector<double>& objective_function_value) {
+                if (objective_function_value.size() != 1)
+                    throw std::runtime_error("Unexpected objective function values per step");
+                return objective_function_value[0];
+            }
+            );
+
+        return result;
+    }
 };
 
 /// @brief Настройки регулировки шага "без регулировки"
