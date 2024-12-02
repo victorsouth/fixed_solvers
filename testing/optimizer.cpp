@@ -55,8 +55,9 @@ TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
     ASSERT_NEAR(result.argument(1), 1.0, parameters.argument_increment_norm);
 };
 
-
-TEST(OptimizeGaussNewton, PerformsAnalysis)
+/// @brief Проверяет способность собирать кривую обучение 
+/// Проверяется снижение целевой функции на каждом шаге расчета
+TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
 {
     VectorXd initial = VectorXd::Zero(2);
     rosenbrock_function_t function;
@@ -74,6 +75,10 @@ TEST(OptimizeGaussNewton, PerformsAnalysis)
 
     vector<double> learning_curve = analysis.get_learning_curve();
 
+    ASSERT_EQ(learning_curve.empty(), false);
 
-    FAIL(); // придумать, как проверить
+    for (size_t index = 1; index < learning_curve.size(); ++index) {
+        bool decrements = learning_curve[index] < learning_curve[index - 1];
+        ASSERT_EQ(decrements, true);
+    }
 }; 
