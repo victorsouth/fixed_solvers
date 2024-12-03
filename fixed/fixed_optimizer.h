@@ -267,20 +267,6 @@ public:
                 result->result_code = numerical_result_code_t::Converged;
                 break;
             }
-
-            //double argument_increment_metric = solver_parameters.step_criteria_assuming_search_step
-            //    ? argument_increment_factor(gains, argument_increment)
-            //    : argument_increment_factor(gains, search_direction);
-
-            //result->argument_increment_criteria =
-            //    argument_increment_metric < solver_parameters.argument_increment_norm;
-            //result->custom_stop_criteria = function.custom_stop_criteria(r);
-            //result->enough_iterations_criteria = iteration + 1 == solver_parameters.iteration_count;
-
-            //if (result->has_any_stop_criteria()) {
-            //    result->converged = true;
-            //    break;
-            //}
         }
     };
 
