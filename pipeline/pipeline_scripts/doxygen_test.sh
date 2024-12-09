@@ -15,13 +15,22 @@ Doxyfile="${SCRIPT_DIR}/../../Doxyfile"
 
 #Определяем измененные файлы и записываем их в переменную
 if [ "${CI_PIPELINE_SOURCE}" = "merge_request_event" ]; then
-  files="$(git diff --name-only origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME} origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}| xargs -I {} basename {} | grep -owP "[^\s]+\.cpp|[^\s]+\.h")"
   echo -e "\033[32m---------------MR---------------"
   echo -e "\033[32morigin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME} to origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
 else
-  files="$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA| xargs -I {} basename {} | grep -owP "[^\s]+\.cpp|[^\s]+\.h")"
   echo -e "\033[32m-------------COMMIT-------------"
 fi
+
+declare repoPath="${CI_PROJECT_DIR}"
+declare path=$repoPath"/**/**/*"
+
+for i in $path
+do
+    if [ -f "$i" ];
+    then
+        echo "${i%/*}""/""${i##*/}"| grep -owP "[^\s]+\.cpp|[^\s]+\.h" >> files
+    fi
+done
 
 #Выходим из скрипта, если файл с изменениями пуст
 if [[ -z "$files" ]]; then

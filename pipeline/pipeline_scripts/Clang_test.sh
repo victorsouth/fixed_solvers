@@ -13,7 +13,7 @@ else
 fi
 
 declare repoPath="${CI_PROJECT_DIR}"
-declare path=$repoPath"/**/*"
+declare path=$repoPath"/**/**/*"
 
 shopt -s globstar
 for i in $path
@@ -27,10 +27,10 @@ done
 for line in $(cat files);
 do
 	echo $line
-	clang-tidy $line -checks='modernize-use-default-member-init,modernize-use-default,cppcoreguidelines-virtual-class-destructor,modernize-use-using,readability-convert-member-functions-to-static' >> clang_${dir}_full_log.txt 2>&1
+	clang-tidy $line -checks='modernize-use-default-member-init,modernize-use-default,cppcoreguidelines-virtual-class-destructor,modernize-use-using,readability-convert-member-functions-to-static' >> clang_full_log.txt 2>&1
 done
 
-cat "clang_full_log.txt" | grep "modernize-use-default-member-init\|modernize-use-default\|cppcoreguidelines-virtual-class-destructor\|modernize-use-using\|readability-convert-member-functions-to-static"| egrep -v "clang-diagnostic" >> clang_${dir}_log.txt
+cat "clang_full_log.txt" | grep "modernize-use-default-member-init\|modernize-use-default\|cppcoreguidelines-virtual-class-destructor\|modernize-use-using\|readability-convert-member-functions-to-static"| egrep -v "clang-diagnostic" >> clang_log.txt
 
 cp "clang_log.txt" "${SCRIPT_DIR}/../pipeline_result/clang_log.txt"
 
