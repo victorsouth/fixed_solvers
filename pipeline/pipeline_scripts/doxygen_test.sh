@@ -1,20 +1,34 @@
 #!/bin/bash
-# Скрипт предназначен для поиска измененных файлов, идущих на MR, и прогонки их через doxygen.
-
 # Забираем изменения из репозитория
 git fetch
 
 #Получаем абсолютный путь к директории, в которой находится этот скрипт
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Забираем файл конфигурации и переносим в корневую папку
+# Забираем файл конфигурации из .\pipeline\pipeline_scripts
 cp "${SCRIPT_DIR}/Doxyfile" "${SCRIPT_DIR}/../../Doxyfile"
 
 #Получаем путь к файлу конфигурации doxygen
 Doxyfile="${SCRIPT_DIR}/../../Doxyfile"
 
-for file in $(find . -type f \(-name "*.cpp" -o -name "*.h" \)); do
-	echo $file >> files
+#Определяем куда идет ветка
+if [ "${CI_PIPELINE_SOURCE}" = "merge_request_event" ]; then
+  echo -e "\033[32m---------------MR---------------"
+  echo -e "\033[32morigin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME} to origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+else
+  echo -e "\033[32m-------------COMMIT-------------"
+fi
+
+declare repoPath="${CI_PROJECT_DIR}"
+declare path=$repoPath"/**/*"
+
+shopt -s globstar
+for i in $path
+do
+    if [ -f "$i" ];
+    then
+        echo "${i%/*}""/""${i##*/}"| grep -owP "[^\s]+\.cpp|[^\s]+\.h" >> files
+    fi
 done
 
 #Выходим из скрипта, если файл с изменениями пуст
