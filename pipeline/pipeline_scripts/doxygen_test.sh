@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Забираем изменения из репозитория
 git fetch
 
@@ -11,27 +12,15 @@ cp "${SCRIPT_DIR}/Doxyfile" "${SCRIPT_DIR}/../../Doxyfile"
 #Получаем путь к файлу конфигурации doxygen
 Doxyfile="${SCRIPT_DIR}/../../Doxyfile"
 
-#Определяем куда идет ветка
+#Определяем измененные файлы и записываем их в переменную. CI_PIPELINE_SOURCE
 if [ "${CI_PIPELINE_SOURCE}" = "merge_request_event" ]; then
   echo -e "\033[32m---------------MR---------------"
   echo -e "\033[32morigin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME} to origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
 else
   echo -e "\033[32m-------------COMMIT-------------"
 fi
+files="$(git ls-tree --full-tree -r --name-only HEAD | xargs -I {} basename {} | grep -owP "[^\s]+\.cpp|[^\s]+\.h")"
 
-declare repoPath="${CI_PROJECT_DIR}"
-declare path=$repoPath"/**/*"
-
-shopt -s globstar
-for i in $path
-do
-    if [ -f "$i" ];
-    then
-        echo "${i%/*}""/""${i##*/}"| grep -owP "[^\s]+\.cpp|[^\s]+\.h" >> files
-    fi
-done
-echo "--------files--------"
-echo $files
 #Выходим из скрипта, если файл с изменениями пуст
 if [[ -z "$files" ]]; then
 	echo -e "\033[32m--------No-files-to-check--------"
