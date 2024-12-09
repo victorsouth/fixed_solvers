@@ -30,7 +30,8 @@ do
         echo "${i%/*}""/""${i##*/}"| grep -owP "[^\s]+\.cpp|[^\s]+\.h" >> files
     fi
 done
-
+echo "--------files--------"
+echo $files
 #Выходим из скрипта, если файл с изменениями пуст
 if [[ -z "$files" ]]; then
 	echo -e "\033[32m--------No-files-to-check--------"
