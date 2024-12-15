@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+using fixed_optimizer_parameters_t = fixed_solver_parameters_t<-1>;
+using fixed_optimizer_result_t = fixed_solver_result_t<-1>;
+using fixed_optimizer_result_analysis_t = fixed_solver_result_analysis_t<-1>;
 
 /// @brief Целевая функция суммы квадратов - базовый класс
 class fixed_least_squares_function_t {
@@ -12,11 +15,12 @@ public:
     typedef MatrixXd matrix_type;
 
 public:
+    /// @brief Расчет целевой функции по невязкам (без вызова residuals)
     virtual double objective_function(const residuals_type& r) {
         double sum_of_squares = r.squaredNorm();
         return sum_of_squares;
     }
-    /// @brief Расчет целевой функции по аргументу
+    /// @brief Расчет целевой функции по аргументу (с вызовом residuals)
     double operator()(const argument_type& x) {
         residuals_type r = residuals(x);
         return objective_function(r);
@@ -60,6 +64,25 @@ public:
     virtual bool custom_success_criteria(const residuals_type& r, const argument_type& x)
     {
         return true;
+    }
+};
+
+
+/// @brief Функция Розенброка 
+/// f(x1, x2) = (1 - x1)^2 + 100*(x2 - x1^2)^2 
+/// В виде суммы квадратов:
+/// r1 = 1 - x1
+/// r2 = 10*(x2 - x1^2)
+/// Используется для тестов
+class rosenbrock_function_t : public fixed_least_squares_function_t
+{
+public:
+    /// @brief Невязки r = (x1 - 2)^2 + (x2 - 1)^2 
+    VectorXd residuals(const VectorXd& x) {
+        VectorXd result(2);
+        result[0] = 10 * (x(1) - x(0) * x(0));
+        result[1] = 1 - x(0);
+        return result;
     }
 };
 
@@ -145,9 +168,9 @@ public:
     static void optimize(
         fixed_least_squares_function_t& function,
         const argument_type& initial_argument,
-        const fixed_solver_parameters_t<-1, 0, LineSearch>& solver_parameters,
-        fixed_solver_result_t<-1>* result,
-        fixed_solver_result_analysis_t<-1>* analysis = nullptr
+        const fixed_solver_parameters_t<-1, 0, LineSearch>& solver_parameters, // когда будет готово, заменить на fixed_optimizer_parameters
+        fixed_optimizer_result_t* result,
+        fixed_optimizer_result_analysis_t* analysis = nullptr
     )
     {
         // Информация о том, как изменялась целевая функция по траектории шага
