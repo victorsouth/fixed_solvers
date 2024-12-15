@@ -125,9 +125,9 @@ class fixed_system_t;
 
 /// @brief Система уравнений с переменной размерности
 template <>
-class fixed_system_t<-1>
-{
+class fixed_system_t<-1> {
 public:
+    /// @brief Тип разреженной матрицы
     typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
 public:
     /// @brief Расчет целевой функции по невязкам
