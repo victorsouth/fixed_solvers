@@ -38,14 +38,19 @@ struct fixed_solver_constraints;
 template <>
 struct fixed_solver_constraints<-1>
 {
+    /// @brief Список ограничений на относительное приращение параметра
     std::vector<std::pair<size_t, double>> relative_boundary;
+    /// @brief Список ограничений на минимальное значение параметра
     std::vector<std::pair<size_t, double>> minimum;
+    /// @brief Список ограничений на максимальное значение параметра
     std::vector<std::pair<size_t, double>> maximum;
+    /// @brief Возвращает количество ограничений 
     size_t get_constraint_count() const
     {
         return minimum.size() + maximum.size();
     }
 
+    /// @brief Ограничения по минимуму и максимум для квадратичного программирования
     static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors(
         size_t argument_dimension, 
         const std::vector<std::pair<size_t, double>>& boundaries)
@@ -62,7 +67,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, b);
     }
 
-    // Учитывает только minimum, maximum
+    /// @brief Учитывает только minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints(const size_t argument_size) const
     {
         // ограничения
@@ -90,7 +95,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, B);
     }
 
-
+    /// @brief Обрезание по приращению
     void trim_relative(VectorXd& increment) const
     {
         double factor = 1;
@@ -108,12 +113,14 @@ struct fixed_solver_constraints<-1>
         }
     }
 
+    /// @brief Обрезание по максимуму
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
         if (!maximum.empty())
             throw std::runtime_error("Please, implement me");
     }
 
+    /// @brief Обрезание по минимуму
     void trim_min(VectorXd& argument, VectorXd& increment) const
     {
         double factor = 1;
@@ -140,6 +147,7 @@ struct fixed_solver_constraints<-1>
         }
     }
 
+    /// @brief Обрезание по ограничениям
     void ensure_constraints(VectorXd& argument) const
     {
         VectorXd increment = VectorXd::Zero(argument.size());
