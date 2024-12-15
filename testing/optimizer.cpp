@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+п»ї#include "gtest/gtest.h"
 #include <fixed/fixed.h>
 
 
@@ -46,8 +46,8 @@ TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
     ASSERT_NEAR(result.argument(1), 1.0, parameters.argument_increment_norm);
 };
 
-/// @brief Проверяет способность собирать кривую обучение 
-/// Проверяется снижение целевой функции на каждом шаге расчета
+/// @brief РџСЂРѕРІРµСЂСЏРµС‚ СЃРїРѕСЃРѕР±РЅРѕСЃС‚СЊ СЃРѕР±РёСЂР°С‚СЊ РєСЂРёРІСѓСЋ РѕР±СѓС‡РµРЅРёРµ 
+/// РџСЂРѕРІРµСЂСЏРµС‚СЃСЏ СЃРЅРёР¶РµРЅРёРµ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё РЅР° РєР°Р¶РґРѕРј С€Р°РіРµ СЂР°СЃС‡РµС‚Р°
 TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
 {
     VectorXd initial = VectorXd::Zero(2);

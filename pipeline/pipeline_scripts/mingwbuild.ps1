@@ -20,20 +20,20 @@ $MakeResult = $LASTEXITCODE
 Select-String -Pattern "error:|fatal error:|Error" -Path "$LogDir/fixed_solvers_build.log" | ForEach-Object { $_.Line }
 if ($MakeResult -ne 0) {
     Write-Host "--------------- ERROR ---------------"
-    Write-Host "Error: fixed_solvers build failed"
+    Write-Host "Error: fixed_solvers [$env:FIXED_SOLVERS_BRANCH] build failed"
     Write-Host "-------------------------------------"
     exit 1
 }
 
-Write-Host "fixed_solvers successfully assembled"
+Write-Host "fixed_solvers [$env:FIXED_SOLVERS_BRANCH] successfully assembled"
 
 # Устанавливаем fixed_solvers
 cmake --install . >> "$LogDir/fixed_solvers_build.log" 2>&1
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "--------------- ERROR ---------------"
-    Write-Host "Error: fixed_solvers installation failed"
+    Write-Host "Error: fixed_solvers [$env:FIXED_SOLVERS_BRANCH] installation failed"
     Write-Host "-------------------------------------"
     exit 1
 }
-Write-Host "fixed_solvers installed successfully"
+Write-Host "fixed_solvers [$env:FIXED_SOLVERS_BRANCH] installed successfully"
