@@ -2,7 +2,7 @@
 #include <fixed/fixed.h>
 
 
-/// @brief Проверка способности вычислить простую функцию
+/// @brief пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 /// J(x1, x2) = (x1 - 2)^2 + (x2 - 1)^2 
 TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
 {
@@ -31,7 +31,7 @@ TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
 
 
 
-/// @brief Проверяет способность минимизировать функцию Розенброка
+/// @brief пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
 {
     VectorXd initial = VectorXd::Zero(2);
