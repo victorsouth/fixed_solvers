@@ -2,7 +2,7 @@
 #include <fixed/fixed.h>
 
 
-/// @brief �������� ����������� ��������� ������� �������
+/// @brief Проверяет сходимость простой функции
 /// J(x1, x2) = (x1 - 2)^2 + (x2 - 1)^2 
 TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
 {
@@ -31,7 +31,7 @@ TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
 
 
 
-/// @brief ��������� ����������� �������������� ������� ����������
+/// @brief Проверяет сходимость к верному результату для функции Розенброка
 TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
 {
     VectorXd initial = VectorXd::Zero(2);

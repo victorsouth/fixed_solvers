@@ -10,8 +10,11 @@ protected:
     /// @brief Относительное (!) приращение для расчета производных
     double epsilon{ 1e-6 };
 public:
+    /// @brief Тип аргумента
     typedef VectorXd argument_type;
+    /// @brief Тип невязок
     typedef VectorXd residuals_type;
+    /// @brief Тип матрицы (для якобиана)
     typedef MatrixXd matrix_type;
 
 public:
@@ -90,8 +93,11 @@ public:
 /// 2006 Nocedal, Wright 
 class fixed_optimize_gauss_newton {
 public:
+    /// @brief Тип аргумента
     typedef VectorXd argument_type;
+    /// @brief Тип невязок
     typedef VectorXd residuals_type;
+    /// @brief Тип матрицы (для якобиана)
     typedef MatrixXd matrix_type;
 private:
     /// @brief Проверка значения на Nan/infinite для скалярного случая
