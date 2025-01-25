@@ -40,18 +40,24 @@ struct golden_section_parameters {
 };
 
 
-/// @brief Линейный поиск методом золотого сечения
+/// @brief Оптимизация методом золотого сечения
 class golden_section_search {
 public:
+    /// @brief Для использования из Ньютона-Рафсона
     typedef golden_section_parameters parameters_type;
 public:
+    /// @brief Левая граница ЗС
     static inline double get_alpha(double a, double b) {
         return a + 2 / (3 + sqrt(5)) * (b - a);
     }
+    /// @brief Правая граница ЗС
     static inline double get_beta(double a, double b) {
         return a + 2 / (1 + sqrt(5)) * (b - a);
     }
 public:
+    /// @brief Оптимизация методом золотого сечения
+    /// @return [величина спуска; количество итераций]
+    /// величина спуска = nan, если произошел сбой регулировки
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const golden_section_parameters& parameters,

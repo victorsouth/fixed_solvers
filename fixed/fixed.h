@@ -22,5 +22,6 @@ inline double sqr(double x) {
 #include "fixed/fixed_system.h"
 #include "fixed/fixed_linear_solver.h"
 #include "fixed/fixed_nonlinear_solver.h"
+#include "fixed/fixed_optimizer.h"
 
 #endif

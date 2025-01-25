@@ -3,9 +3,11 @@
 
 /// @brief Настройки поиска дробления шага
 struct divider_search_parameters {
-    /// @brief полезно уменьшать <1, чтобы не было зацикливания
+    /// @brief Максимальная величина регулировки шага
     double maximum_step{ 1 };
+    /// @brief Минимальная величина регулировка шага
     double minimum_step{ 0.05 };
+    /// @brief Величина дробления шага
     double step_divider{ 1.5 };
     /// @brief Величина шага в случае неудачного завершения регулировки шага 
     /// Задействуется, только если это разрешено в Ньютон-Рафсоне!
@@ -17,9 +19,12 @@ struct divider_search_parameters {
 /// @brief Линейный поиск методом дробления шага
 class divider_search {
 public:
+    /// @brief Нужно для обобщения использования в Ньютоне-Рафсоне
     typedef divider_search_parameters parameters_type;
-
 public:
+    /// @brief Алгоритм регулировки шага методом дробления 
+    /// @return [величина спуска; количество итераций]
+    /// Величина спуска = nan, если произошел сбой регулировка
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const divider_search_parameters& parameters,
