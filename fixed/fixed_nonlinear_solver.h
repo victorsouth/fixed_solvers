@@ -38,14 +38,19 @@ struct fixed_solver_constraints;
 template <>
 struct fixed_solver_constraints<-1>
 {
+    /// @brief Список ограничений на относительное приращение параметра
     std::vector<std::pair<size_t, double>> relative_boundary;
+    /// @brief Список ограничений на минимальное значение параметра
     std::vector<std::pair<size_t, double>> minimum;
+    /// @brief Список ограничений на максимальное значение параметра
     std::vector<std::pair<size_t, double>> maximum;
+    /// @brief Возвращает количество ограничений 
     size_t get_constraint_count() const
     {
         return minimum.size() + maximum.size();
     }
 
+    /// @brief Ограничения по минимуму и максимум для квадратичного программирования
     static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors(
         size_t argument_dimension, 
         const std::vector<std::pair<size_t, double>>& boundaries)
@@ -62,7 +67,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, b);
     }
 
-    // Учитывает только minimum, maximum
+    /// @brief Учитывает только minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints(const size_t argument_size) const
     {
         // ограничения
@@ -90,7 +95,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, B);
     }
 
-
+    /// @brief Обрезание по приращению
     void trim_relative(VectorXd& increment) const
     {
         double factor = 1;
@@ -108,12 +113,14 @@ struct fixed_solver_constraints<-1>
         }
     }
 
+    /// @brief Обрезание по максимуму
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
         if (!maximum.empty())
             throw std::runtime_error("Please, implement me");
     }
 
+    /// @brief Обрезание по минимуму
     void trim_min(VectorXd& argument, VectorXd& increment) const
     {
         double factor = 1;
@@ -140,6 +147,7 @@ struct fixed_solver_constraints<-1>
         }
     }
 
+    /// @brief Обрезание по ограничениям
     void ensure_constraints(VectorXd& argument) const
     {
         VectorXd increment = VectorXd::Zero(argument.size());
@@ -335,11 +343,13 @@ struct fixed_solver_constraints
 
 ///@brief Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
-    /// Собирает историю значений аргумента
+    ///@brief Собирает историю значений аргумента
     bool argument_history{ false };
-    /// Собирает значения шага в методе Ньютона-Рафсона
+    /// @brief История целевой функции
+    bool objective_function_history{ false };
+    ///@brief Собирает значения шага в методе Ньютона-Рафсона
     bool steps{false};
-    /// Выполнятся исследование целевой функции на каждом шаге
+    ///@brief Выполнятся исследование целевой функции на каждом шаге
     bool line_search_explore{ false };
 };
 
@@ -350,7 +360,7 @@ enum class line_search_fail_action_t {
     PerformMinStep ///< Выбрать минмимальный шаг
 };
 
-// Линейные ограничения - произвольная размерность
+///@brief Линейные ограничения - произвольная размерность
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints;
 
@@ -369,7 +379,9 @@ struct fixed_linear_constraints<Dimension, 0> {
 ///@brief Специализация для систем второго порядка, одно ограничение
 template <>
 struct fixed_linear_constraints<2, 1> {
+    /// @brief Тип аргумента
     typedef typename fixed_system_types<2>::var_type var_type;
+    /// @brief Тип матрицы системы
     typedef typename fixed_system_types<2>::matrix_type matrix_type;
 
     /// Коэффициенты a (левая часть ax <= b)
@@ -640,7 +652,9 @@ constexpr double small_step_threshold{ 0.1 };
 /// @brief Результат расчета численного метода
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_result_t {
+    /// @brief Тип аргумента
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+    /// @brief Тип функции
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
 
     /// @brief Метрика приращения
@@ -668,21 +682,42 @@ struct fixed_solver_result_analysis_t {
 public:
     /// @brief Значения целевой функции для одной регулировки шага
     typedef vector<double> target_function_values_t;
+    /// @brief Тип аргумента
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+    /// @brief Тип функции
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
+    /// @brief Тип коэффициентов уравнения (неясно, зачем нужно)
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
 public:
-    /// @brief Значения целевой функции по всем шагам Ньютона-Рафсона
+    /// @brief Исследование целевой функции по всем шагам Ньютона-Рафсона или Гаусса-Ньютона
     vector<target_function_values_t> target_function;
     /// @brief Результат расчета
     vector<var_type> argument_history;
     /// @brief Величина шагов Ньютона-Рафсона
     vector<double> steps;
+    /// @brief Строит результат на основе собранного в target_function в режиме однократного расчета ц.ф.
+    vector<double> get_learning_curve() const {
+        vector<double> result;
+        result.reserve(target_function.size());
+        std::transform(target_function.begin(), target_function.end(), 
+            std::back_inserter(result),
+            [](const vector<double>& objective_function_value) {
+                if (objective_function_value.size() != 1)
+                    throw std::runtime_error("Unexpected objective function values per step");
+                return objective_function_value[0];
+            }
+            );
+
+        return result;
+    }
 };
 
 /// @brief Настройки регулировки шага "без регулировки"
 struct no_line_search_parameters {
+    /// @brief Максимальная величина шага (формально нужна)
     double maximum_step{ 1.0 };
+    /// @brief Ошибка при вылете регулировки 
+    /// (по идее, не должна вызываться, т.к. данная "регулировка" никогда не фейлится)
     double step_on_search_fail() const {
         return 1.0;
     }
@@ -691,9 +726,12 @@ struct no_line_search_parameters {
 /// @brief Алгоритм без регулировки шага
 class no_line_search {
 public:
+    /// @brief Формально надо для вызова из Ньютона-Рафсона
     typedef no_line_search_parameters parameters_type;
 
 public:
+    /// @brief Фиктивная регулировка шага
+    /// @return [величина спуска == 1.0; количество итераций == 1]
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const no_line_search_parameters& parameters,
@@ -718,8 +756,11 @@ public:
 template <std::ptrdiff_t Dimension>
 class fixed_newton_raphson {
 public:
+    /// @brief Тип аргумента
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+    /// @brief Тип функции
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
+    /// @brief Тип коэффициентов уравнения (неясно, зачем нужно)
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type equation_coeffs_type;
 private:
     
@@ -760,6 +801,7 @@ private:
         return false;
     }
 private:
+    /// @brief Расчет относительного приращения (реализация зависит от var_type)
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
 private:
@@ -860,6 +902,8 @@ private:
 
 
 public:
+    /// @brief Запуск численного метода, вызывает solve
+    /// это просто вызов для обратной совместимости, для тех, кто привык использовать solve_dense
     template <
         std::ptrdiff_t LinearConstraintsCount,
         typename LineSearch = divider_search>

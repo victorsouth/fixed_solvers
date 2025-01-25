@@ -18,17 +18,17 @@ MAKE_RESULT=$?
 grep -E "error:|fatal error:|Error" ${LOG_DIR}/fixed_solvers_build.log
 if [ $MAKE_RESULT -ne 0 ]; then
     echo "--------------- Result ---------------"
-	echo "Ошибка: сборка fixed_solvers не удалась"
+	echo "Ошибка: сборка fixed_solvers [$FIXED_SOLVERS_BRANCH] не удалась"
     echo "--------------------------------------"
 	exit 1
 fi
-echo "fixed_solvers успешно собран"
+echo "fixed_solvers [$FIXED_SOLVERS_BRANCH] успешно собран"
 #Устанавливаем fixed_solvers
 make install >> ${LOG_DIR}/fixed_solvers_build.log 2>&1
 if [ $? -ne 0 ]; then
     echo "--------------- Result ---------------"
-	echo "Ошибка: установка fixed_solvers не удалась"
+	echo "Ошибка: установка fixed_solvers [$FIXED_SOLVERS_BRANCH] не удалась"
 	echo "--------------------------------------"
     exit 1
 fi
-echo "fixed_solvers успешно установлен"
+echo "fixed_solvers [$FIXED_SOLVERS_BRANCH] успешно установлен"

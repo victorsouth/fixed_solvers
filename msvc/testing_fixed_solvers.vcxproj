@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\testing\optimizer.cpp" />
     <ClCompile Include="..\testing\test_main.cpp" />
     <ClCompile Include="..\testing\bisection.cpp" />
   </ItemGroup>

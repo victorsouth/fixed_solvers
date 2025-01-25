@@ -59,9 +59,13 @@ struct fixed_system_types;
 /// @brief Специализация вырожденного случая системы уравнений - одного уравнения, скалярный случай
 template <>
 struct fixed_system_types<1> {
+    /// @brief Тип переменной
     typedef double var_type;
+    /// @brief Тип правой части
     typedef double right_party_type;
+    /// @brief Тип матрицы (линейная система, якобиан)
     typedef double matrix_type;
+    /// @brief Тип коэффициентов уравнения
     typedef double equation_coeffs_type;
 
     /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
@@ -75,12 +79,16 @@ struct fixed_system_types<1> {
 /// @details В данный момент не реализовано и не используется
 template <>
 struct fixed_system_types<-1> {
+    /// @brief Тип переменной
     typedef VectorXd var_type;
+    /// @brief Тип правой части
     typedef VectorXd right_party_type;
+    /// @brief Тип матрицы (линейная система, якобиан)
     typedef MatrixXd matrix_type;
+    /// @brief Тип коэффициентов уравнения
     typedef MatrixXd equation_coeffs_type;
+    /// @brief Тип разреженной матрицы
     typedef std::vector<Eigen::Triplet<double>> sparse_matrix_type;
-
     /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(
         double value = std::numeric_limits<double>::quiet_NaN(),
@@ -95,28 +103,31 @@ struct fixed_system_types<-1> {
 /// @brief Общий случай системы уравнений фиксированной размерности
 template <std::ptrdiff_t Dimension>
 struct fixed_system_types {
+    /// @brief Тип переменной
     typedef array<double, Dimension> var_type;
+    /// @brief Тип правой части
     typedef var_type right_party_type;
+    /// @brief Тип матрицы (линейная система, якобиан)
     typedef array<var_type, Dimension> matrix_type;
+    /// @brief Тип коэффициентов уравнения
     typedef matrix_type equation_coeffs_type;
-
     /// @brief Инициализация неизвестной переменной по умолчанию для скалярного случая
     static var_type default_var(double value = std::numeric_limits<double>::quiet_NaN())
     {
         auto getter = [&](size_t index) { return value; };
         return create_array<Dimension>(getter);
     }
-
 };
 
 
 template <std::ptrdiff_t Dimension>
 class fixed_system_t;
 
+/// @brief Система уравнений с переменной размерности
 template <>
-class fixed_system_t<-1>
-{
+class fixed_system_t<-1> {
 public:
+    /// @brief Тип разреженной матрицы
     typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
 public:
     /// @brief Расчет целевой функции по невязкам
@@ -151,13 +162,15 @@ protected:
     /// @brief Относительное (!) приращение для расчета производных
     double epsilon{ 1e-6 };
 public:
+    /// @brief Тип переменной
     typedef typename fixed_system_types<Dimension>::var_type var_type;
+    /// @brief Тип функции
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
+    /// @brief Тип матрицы (якобиан)
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
 public:
     /// @brief Расчет целевой функции по невязкам
     virtual double objective_function(const var_type& r) const;
-
     /// @brief Расчет целевой функции по аргументу
     double operator()(const var_type& x) {
         auto r = residuals(x);
@@ -179,6 +192,7 @@ public:
     }
 
 protected:
+    /// @brief Численный расчет плотного якобиана
     matrix_value jacobian_dense_numeric(const var_type& x);
 
 };
@@ -238,8 +252,6 @@ inline double fixed_system_t<1>::objective_function(const double& r) const
 }
 
 
-
-
 /// @brief Расчет целевой функции для векторного случая (сумма квадратов)
 template <std::ptrdiff_t Dimension>
 inline double fixed_system_t<Dimension>::objective_function(const var_type& r) const
@@ -251,22 +263,28 @@ inline double fixed_system_t<Dimension>::objective_function(const var_type& r) c
     return result;
 }
 
-/// @brief Реализация residuals и jacobian для лямбда-функций
-/// @tparam Lambda Лямба-функция
+/// @brief Оборачивает лямбда-функцию в fixed_system_t<1>
+/// Реализация якобина - численная из fixed_system_t<1>
+/// @tparam Lambda Тип лямба-функции
 template <typename Lambda>
 class fixed_scalar_wrapper_t : public fixed_system_t<1>
 {
 protected:
+    /// @brief Указатель на лямбду
     Lambda function;
 public:
-    fixed_scalar_wrapper_t(
-        Lambda function, double epsilon = std::numeric_limits < double >::quiet_NaN())
-        :function(function)
+    /// @brief Конструктор позволяет переопределить 
+    /// @param function 
+    /// @param epsilon 
+    fixed_scalar_wrapper_t(Lambda function, 
+        double epsilon = std::numeric_limits < double >::quiet_NaN())
+        : function(function)
     {
         if (!std::isnan(epsilon)) {
             this->epsilon = epsilon;
         }
     }
+    /// @brief Невязки уравнения
     virtual function_type residuals(const var_type& x) override
     {
         return function(x);
