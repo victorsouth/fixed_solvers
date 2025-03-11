@@ -74,7 +74,6 @@ Clang_build:
   script:
     - cd pipeline/pipeline_scripts/
     - .\clangbuild.ps1
-  resource_group: dev-build
   allow_failure: false
   artifacts:
     expire_in: 24 hour
@@ -91,7 +90,6 @@ MinGW_build:
   script:
     - cd pipeline/pipeline_scripts/
     - .\mingwbuild.ps1
-  resource_group: dev-build
   allow_failure: false
   artifacts:
     expire_in: 24 hour
