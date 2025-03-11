@@ -7,7 +7,7 @@ Unicode:
   stage: Static_test
   tags:
     - docker
-  image: hub.ktk.gubkin.ru/proxy/gcc
+  image: $KTK_CONTAINER_REGISTRY/proxy/gcc
   script:
     - mkdir -p pipeline/pipeline_result
     - touch encoding_error_list.txt pipeline/pipeline_result
@@ -23,7 +23,7 @@ Doxygen:
   stage: Static_test
   tags:
     - docker
-  image: hub.ktk.gubkin.ru/library/greenbone/doxygen:latest
+  image: $KTK_CONTAINER_REGISTRY/library/greenbone/doxygen:latest
   script:
     - mkdir -p pipeline/pipeline_result
     - bash ./pipeline/pipeline_scripts/doxygen_test.sh
@@ -38,7 +38,7 @@ Clang:
   stage: Static_test
   tags:
     - docker
-  image: hub.ktk.gubkin.ru/proxy/jhasse/clang-tidy:latest
+  image: $KTK_CONTAINER_REGISTRY/proxy/jhasse/clang-tidy:latest
   #image: jhasse/clang-tidy
   script:
     - mkdir -p pipeline/pipeline_result
@@ -55,7 +55,7 @@ GCC_build:
   stage: Build
   tags:
     - docker
-  image: hub.ktk.gubkin.ru/library/gcc_cmake_boost_eigen_gtest:latest
+  image: $KTK_CONTAINER_REGISTRY/library/gcc_cmake_boost_eigen_gtest:latest
   script:
     - bash pipeline/pipeline_scripts/gccbuild.sh
   allow_failure: false
@@ -66,11 +66,28 @@ GCC_build:
       - pipeline/pipeline_result/build_gcc_result
       - Libs/GCC
 
+#Сборка проекта Clang
+Clang_build:
+  stage: Build
+  tags:
+    - dev-build-clang
+  script:
+    - cd pipeline/pipeline_scripts/
+    - .\clangbuild.ps1
+  resource_group: dev-build
+  allow_failure: false
+  artifacts:
+    expire_in: 24 hour
+    when: always
+    paths:
+      - pipeline/pipeline_result/build_clang_result
+      - Libs/Clang
+
 #Сборка проекта MinGW
 MinGW_build:
   stage: Build
   tags:
-    - windows
+    - ktk-dev-build
   script:
     - cd pipeline/pipeline_scripts/
     - .\mingwbuild.ps1
