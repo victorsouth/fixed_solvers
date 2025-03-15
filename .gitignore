@@ -33,3 +33,5 @@
 /bin
 /build
 /msvc/.vs/*
+.vs
+out
