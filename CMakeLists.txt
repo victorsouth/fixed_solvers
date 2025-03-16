@@ -4,7 +4,7 @@ project(fixed_solvers)
 
 set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-
+cmake_policy(SET CMP0012 NEW)
 
 
 find_package(Eigen3)
