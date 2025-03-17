@@ -4,7 +4,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RES_DIR="${SCRIPT_DIR}/../pipeline_result/tests_out"
 mkdir -p ${RES_DIR}
-cd "${SCRIPT_DIR}/../../Libs/${1}/bin/tests/"
+cd "${SCRIPT_DIR}/../../Libs/${1}/bin/"
 TEST_NAME="$2"
 
 if [ ! -f "./$TEST_NAME" ]; then
