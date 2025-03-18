@@ -11,7 +11,7 @@ mkdir -p ${LOG_DIR}
 mkdir -p build
 cd build 
 #Собираем fixed_solvers
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-w -Wno-#pragma-messages" -DCMAKE_INSTALL_PREFIX=../Libs/GCC > ${LOG_DIR}/fixed_solvers_build.log 2>&1
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-w -Wno-#pragma-messages" -DFIXED_SOLVERS_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=../Libs/GCC > ${LOG_DIR}/fixed_solvers_build.log 2>&1
 make -j$(nproc) >> ${LOG_DIR}/fixed_solvers_build.log 2>&1
 MAKE_RESULT=$?
 # Выводим ошибки из файла fixed_solvers_build.log, содержащие 'error:' или 'fatal error:'
