@@ -2,6 +2,9 @@
 
 # define paths
 PWD_STORE=$PWD
+PRJ_NAME="fixed_solvers"
+LOG_NAME="${PRJ_NAME}_build.log"
+BRANCH=$FIXED_SOLVERS_BRANCH
 
 # Проверяем, передан ли аргумент (GCC, MinGW или Clang)
 if [ -z "$1" ]; then
@@ -42,26 +45,26 @@ mkdir -p ${LOG_DIR}
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-w -Wno-#pragma-messages" -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" > ${LOG_DIR}/fixed_solvers_build.log 2>&1
-cmake --build . -j$(nproc) >> ${LOG_DIR}/fixed_solvers_build.log 2>&1
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-w -Wno-#pragma-messages" -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" > ${LOG_DIR}/${LOG_NAME} 2>&1
+cmake --build . -j$(nproc) >> ${LOG_DIR}/${LOG_NAME} 2>&1
 MAKE_RESULT=$?
-# Выводим ошибки из файла fixed_solvers_build.log, содержащие 'error:' или 'fatal error:'
-grep -E "error:|fatal error:|Error" ${LOG_DIR}/fixed_solvers_build.log
+# Выводим ошибки из файла ${LOG_NAME}, содержащие 'error:' или 'fatal error:'
+grep -E "error:|fatal error:|Error" ${LOG_DIR}/${LOG_NAME}
 if [ $MAKE_RESULT -ne 0 ]; then
     echo "--------------- Result ---------------"
-	echo "Ошибка: сборка fixed_solvers [$FIXED_SOLVERS_BRANCH] не удалась"
+	echo "Ошибка: сборка ${PRJ_NAME} [$BRANCH] не удалась"
     echo "--------------------------------------"
 	exit 1
 fi
-echo "fixed_solvers [$FIXED_SOLVERS_BRANCH] успешно собран"
+echo "${PRJ_NAME} [$BRANCH] успешно собран"
 mkdir -p ${INSTALL_DIR}
-#Устанавливаем fixed_solvers
-cmake --install . >> ${LOG_DIR}/fixed_solvers_build.log 2>&1
+#Устанавливаем ${PRJ_NAME}
+cmake --install . >> ${LOG_DIR}/${LOG_NAME} 2>&1
 if [ $? -ne 0 ]; then
     echo "--------------- Result ---------------"
-	echo "Ошибка: установка fixed_solvers [$FIXED_SOLVERS_BRANCH] не удалась"
+	echo "Ошибка: установка ${PRJ_NAME} [$BRANCH] не удалась"
 	echo "--------------------------------------"
     exit 1
 fi
-echo "fixed_solvers [$FIXED_SOLVERS_BRANCH] успешно установлен"
+echo "${PRJ_NAME} [$BRANCH] успешно установлен"
 cd $PWD_STORE
