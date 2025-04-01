@@ -1,6 +1,5 @@
 # header only library
 # for install, dependencies and correct include path
-cmake_minimum_required(VERSION 2.8)
 project(fixed_solvers)
 
 set(CMAKE_CXX_STANDARD 17)#23?
