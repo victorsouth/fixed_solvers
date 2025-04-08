@@ -58,7 +58,7 @@ GCC_build:
     - docker
   image: $DOCKER_REGISTRY/$DOCKER_REPO/gcc_cmake_boost_eigen_gtest:latest
   script:
-    - bash pipeline/pipeline_scripts/gccbuild.sh
+    - bash pipeline/pipeline_scripts/build.sh GCC
   allow_failure: false
   artifacts:
     expire_in: 24 hour
@@ -73,8 +73,7 @@ Clang_build:
   tags:
     - dev-build-clang
   script:
-    - cd pipeline/pipeline_scripts/
-    - .\clangbuild.ps1
+    - c:\msys64\msys2_shell.cmd -defterm -here -no-start -clang64 -c "./pipeline/pipeline_scripts/build.sh Clang"
   allow_failure: false
   artifacts:
     expire_in: 24 hour
@@ -89,8 +88,7 @@ MinGW_build:
   tags:
     - ktk-dev-build
   script:
-    - cd pipeline/pipeline_scripts/
-    - .\mingwbuild.ps1
+    - c:\msys64\msys2_shell.cmd -defterm -here -no-start -mingw64 -c "./pipeline/pipeline_scripts/build.sh MinGW"
   allow_failure: false
   artifacts:
     expire_in: 24 hour
