@@ -33,3 +33,4 @@
 /bin
 /build
 /msvc/.vs/*
+/msvc_cmake
