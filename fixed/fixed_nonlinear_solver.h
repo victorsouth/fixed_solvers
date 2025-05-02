@@ -20,6 +20,8 @@
 #include <map>
 #include <iostream>
 #include <string>
+#include <algorithm>
+
 // Подключаемые библиотеки
 using std::vector;
 using std::map;
@@ -31,6 +33,9 @@ inline constexpr double eps_constraints = 1e-8;
 
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
+
+
+
 
 /*! \brief Cтруктура описывает ограничения для решателя переменной размерности
 * 
@@ -51,7 +56,7 @@ struct fixed_solver_constraints<-1>
     }
 
     /// @brief Ограничения по минимуму и максимум для квадратичного программирования
-    static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors(
+    static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors_dense(
         size_t argument_dimension, 
         const std::vector<std::pair<size_t, double>>& boundaries)
     {
@@ -68,7 +73,7 @@ struct fixed_solver_constraints<-1>
     }
 
     /// @brief Учитывает только minimum, maximum
-    std::pair<MatrixXd, VectorXd> get_inequalities_constraints(const size_t argument_size) const
+    std::pair<MatrixXd, VectorXd> get_inequalities_constraints_dense(const size_t argument_size) const
     {
         // ограничения
         const auto n = argument_size;
@@ -78,7 +83,7 @@ struct fixed_solver_constraints<-1>
         size_t offset = 0;
         // максимальное значение
         { 
-            auto [a, b] = get_inequalities_constraints_vectors(n, maximum);
+            auto [a, b] = get_inequalities_constraints_vectors_dense(n, maximum);
 
             A.block(offset, 0, a.rows(), n) = a;
             B.segment(offset, b.size()) = b;
@@ -86,7 +91,7 @@ struct fixed_solver_constraints<-1>
         }
         // минимальное значение
         {
-            auto [a, b] = get_inequalities_constraints_vectors(n, minimum);
+            auto [a, b] = get_inequalities_constraints_vectors_dense(n, minimum);
 
             A.block(offset, 0, a.rows(), n) = -a;
             B.segment(offset, b.size()) = -b;
@@ -112,6 +117,59 @@ struct fixed_solver_constraints<-1>
             increment /= factor;
         }
     }
+    /// @brief Проверяет наличие параметров аргумента, находящихся на ограничениях min или max
+    /// Но не relative, т.к. на это ограничение можно попасть только 
+    /// @param argument 
+    /// @return 
+    bool has_active_constraints(const VectorXd& argument) const {
+        for (const auto& [index, min_value] : minimum) {
+            if (std::abs(argument[index] - min_value) < eps_constraints) {
+                return true;
+            }
+        }
+        for (const auto& [index, max_value] : maximum) {
+            if (std::abs(argument[index] - max_value) < eps_constraints) {
+                return true;
+            }
+        }
+    }
+
+public:
+    std::pair<SparseMatrix<double, ColMajor>, VectorXd> get_inequalities_constraints_sparse(
+        const VectorXd& current_argument) const
+    {
+        // ограничения
+        auto n = current_argument.size();
+
+        size_t row_index = 0;
+        std::vector<Eigen::Triplet<double>> A;
+        VectorXd b(minimum.size() + maximum.size());
+
+        auto add_constraints = [&](const std::vector<std::pair<size_t, double>>& boundaries) {
+            for (const auto& [var_index, value] : boundaries) {
+                Eigen::Triplet<double> triplet(
+                    row_index,
+                    var_index,
+                    value
+                );
+
+                A.emplace_back(std::move(triplet));
+                b(row_index) = value;
+                row_index++;
+            }
+        };
+
+        add_constraints(minimum);
+        add_constraints(maximum);
+
+        SparseMatrix<double, ColMajor> A_matrix(minimum.size() + maximum.size(), n);
+        A_matrix.setFromTriplets(A.begin(), A.end());
+        b -= A_matrix * current_argument;
+
+        return std::make_pair(std::move(A_matrix), std::move(b));
+    }
+
+
 
     /// @brief Обрезание по максимуму
     void trim_max(VectorXd& argument, VectorXd& increment) const

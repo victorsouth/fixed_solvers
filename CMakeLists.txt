@@ -12,6 +12,7 @@ set(HEADERS_LS
     fixed/line_search/golden_section.h
 )
 set(HEADERS
+    fixed/qp/qp_wrapper.h
     fixed/array_ext.h
     fixed/fixed.h
     fixed/fixed_bisection.h
