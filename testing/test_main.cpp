@@ -11,8 +11,6 @@
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
 
-//#include <iostream>
-
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

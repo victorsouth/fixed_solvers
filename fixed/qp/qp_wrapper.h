@@ -1,6 +1,11 @@
 #pragma once
 
+#include <tuple>
+#include <Eigen/Sparse>
+#include <Eigen/Dense>
 
+
+using Eigen::SparseMatrix;
 
 /// @brief Преобразует разреженную матрицу Eigen в формат CCS
 /// Формат CCS (он же CSC) соответствует ColMajor
@@ -23,9 +28,9 @@ inline std::tuple<
     std::vector<double>, // aka qp_real
     std::vector<IndexType>,
     std::vector<IndexType>>
-    get_sparse_matrix_CCS(const SparseMatrix<double, ColMajor>& _matrix)
+    get_sparse_matrix_CCS(const SparseMatrix<double, Eigen::ColMajor>& _matrix)
 {
-    SparseMatrix<double, ColMajor> matrix = _matrix;
+    SparseMatrix<double, Eigen::ColMajor> matrix = _matrix;
     matrix.makeCompressed();
 
     std::vector<double> values;
@@ -33,7 +38,7 @@ inline std::tuple<
     std::vector<IndexType> cols;
 
     for (IndexType k = 0; k < matrix.outerSize(); ++k) {
-        typename SparseMatrix<double, ColMajor>::InnerIterator it(matrix, k);
+        typename SparseMatrix<double, Eigen::ColMajor>::InnerIterator it(matrix, k);
 
         cols.push_back(values.size());
 
@@ -48,7 +53,9 @@ inline std::tuple<
 }
 
 
-template <typename IndexType = long long>
+#ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
+template <typename IndexType>
 VectorXd solve_quadprog_inequalities_swift(
     const SparseMatrix<double, ColMajor, IndexType>& H, const VectorXd& f,
     const SparseMatrix<double, ColMajor, IndexType>& A, const VectorXd& b);
+#endif

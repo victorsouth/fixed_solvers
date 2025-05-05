@@ -103,13 +103,14 @@ struct fixed_solver_constraints<-1>
     /// @brief Обрезание по приращению
     void trim_relative(VectorXd& increment) const
     {
+        using std::max;
         double factor = 1;
         for (const auto& kvp : relative_boundary)
         {
             int sign = sgn(increment(kvp.first));
             if (sign * increment(kvp.first) > kvp.second) {
                 double current_factor = sign * increment(kvp.first) / kvp.second;
-                factor = std::max(factor, current_factor);
+                factor = max(factor, current_factor);
             }
         }
         if (factor > 1)
@@ -136,7 +137,7 @@ struct fixed_solver_constraints<-1>
     }
 
 public:
-    std::pair<SparseMatrix<double, ColMajor>, VectorXd> get_inequalities_constraints_sparse(
+    std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const VectorXd& current_argument) const
     {
         // ограничения
@@ -163,7 +164,7 @@ public:
         add_constraints(minimum, -1.0);
         add_constraints(maximum, +1.0);
 
-        SparseMatrix<double, ColMajor> A_matrix(minimum.size() + maximum.size(), n);
+        SparseMatrix<double, Eigen::ColMajor> A_matrix(minimum.size() + maximum.size(), n);
         A_matrix.setFromTriplets(A.begin(), A.end());
         b -= A_matrix * current_argument;
 
@@ -173,6 +174,7 @@ public:
     /// @brief Обрезание по максимуму
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
+        using std::max;
         double factor = 1;
 
         for (const auto& [index, max_value] : maximum)
@@ -186,7 +188,7 @@ public:
                 }
                 else {
                     double allowed_increment = max_value - argument[index];
-                    factor = std::max(factor, abs(increment[index]) / allowed_increment);
+                    factor = max(factor, abs(increment[index]) / allowed_increment);
                 }
             }
         }
@@ -200,6 +202,7 @@ public:
     /// @brief Обрезание по минимуму
     void trim_min(VectorXd& argument, VectorXd& increment) const
     {
+        using std::max;
         double factor = 1;
 
         for (const auto& [index, min_value] : minimum) 
@@ -213,7 +216,7 @@ public:
                 }
                 else {
                     double allowed_decrement = argument[index] - min_value;
-                    factor = std::max(factor, abs(increment[index]) / allowed_decrement);
+                    factor = max(factor, abs(increment[index]) / allowed_decrement);
                 }
 
             }
@@ -280,6 +283,7 @@ struct fixed_solver_constraints
     void trim_min(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
     {
+        using std::max;
         double factor = 1;
 
         for (size_t index = 0; index < increment.size(); ++index) {
@@ -298,7 +302,7 @@ struct fixed_solver_constraints
                 }
                 else {
                     double allowed_decrement = argument[index] - minimum[index];
-                    factor = std::max(factor, abs(increment[index]) / allowed_decrement);
+                    factor = max(factor, abs(increment[index]) / allowed_decrement);
                 }
 
             }
@@ -316,21 +320,25 @@ struct fixed_solver_constraints
     */
     void ensure_constraints(double& argument) const
     {
+        using std::min;
+        using std::max;
         if (!std::isnan(maximum)) {
-            argument = std::min(argument, maximum);
+            argument = min(argument, maximum);
         }
         if (!std::isnan(minimum)) {
-            argument = std::max(argument, minimum);
+            argument = max(argument, minimum);
         }
     }
     void ensure_constraints(std::array<double, 2>& argument) const
     {
+        using std::min;
+        using std::max;
         for (size_t index = 0; index < Dimension; ++index) {
             if (!std::isnan(maximum[index])) {
-                argument[index] = std::min(argument[index], maximum[index]);
+                argument[index] = min(argument[index], maximum[index]);
             }
             if (!std::isnan(minimum[index])) {
-                argument[index] = std::max(argument[index], minimum[index]);
+                argument[index] = max(argument[index], minimum[index]);
             }
 
         }
@@ -352,7 +360,7 @@ struct fixed_solver_constraints
         return false;
     }
 
-    std::pair<SparseMatrix<double, ColMajor>, VectorXd> get_inequalities_constraints_sparse(
+    std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const std::array<double, Dimension>& current_argument) const
     {
         // ограничения
@@ -383,7 +391,7 @@ struct fixed_solver_constraints
         add_constraints(minimum, -1.0);
         add_constraints(maximum, +1.0);
 
-        SparseMatrix<double, ColMajor> A_matrix(A.size(), n);
+        SparseMatrix<double, Eigen::ColMajor> A_matrix(A.size(), n);
         A_matrix.setFromTriplets(A.begin(), A.end());
 
         VectorXd b_vec = VectorXd::Map(b.data(), b.size());
@@ -417,6 +425,7 @@ struct fixed_solver_constraints
     void trim_max(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
     {
+        using std::max;
         double factor = 1;
 
         for (size_t index = 0; index < increment.size(); ++index) {
@@ -433,7 +442,7 @@ struct fixed_solver_constraints
                 }
                 else {
                     double allowed_increment = maximum[index] - argument[index];
-                    factor = std::max(factor, increment[index] / allowed_increment);
+                    factor = max(factor, increment[index] / allowed_increment);
                 }
             }
         }
@@ -466,6 +475,7 @@ struct fixed_solver_constraints
     */
     void trim_relative(array<double, Dimension>& increment) const
     {
+        using std::max;
         double factor = 1;
         for (size_t index = 0; index < increment.size(); ++index) {
             if (std::isnan(relative_boundary[index])) {
@@ -475,7 +485,7 @@ struct fixed_solver_constraints
             double abs_inc = abs(increment[index]);
             if (abs_inc > relative_boundary[index]) {
                 double current_factor = abs_inc / relative_boundary[index];
-                factor = std::max(factor, current_factor);
+                factor = max(factor, current_factor);
             }
         }
         if (factor > 1)
@@ -1032,6 +1042,7 @@ private:
             SparseMatrix<double> J(argument.size(), argument.size());
             J.setFromTriplets(J_triplets.begin(), J_triplets.end());
 
+#ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
             if (solver_parameters.constrain_step_with_quadprog
                 && solver_parameters.constraints.has_active_constraints(argument))
             {
@@ -1045,7 +1056,9 @@ private:
                 VectorXd result = solve_quadprog_inequalities_swift(H, f, A, b);
                 return result;
             }
-            else {
+            else 
+#endif
+            {
                 Eigen::SparseLU<SparseMatrix<double> > solver;
                 solver.analyzePattern(J);
                 solver.factorize(J);
@@ -1062,6 +1075,7 @@ private:
         }
         else {
             if constexpr (Dimension != 1) {
+#ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
                 if (solver_parameters.constrain_step_with_quadprog
                     && solver_parameters.constraints.has_active_constraints(argument))
                 {
@@ -1086,7 +1100,9 @@ private:
                     std::copy(&result(0), &result(0) + result.size(), p.begin());
                     return p;
                 }
-                else {
+                else 
+#endif
+                {
                     // Расчет Якобиана
                     auto J = residuals.jacobian_dense(argument);
                     // Расчет текущего шага Ньютона
@@ -1140,6 +1156,9 @@ public:
         fixed_solver_result_analysis_t<Dimension>* analysis = nullptr
     )
     {
+        using std::max;
+        using std::min;
+
         var_type& r = result->residuals;
         function_type& argument = result->argument;
         double& argument_increment_metric = result->argument_increment_metric;
@@ -1173,11 +1192,11 @@ public:
 
             // Выставление оценки от количества итераций
             if (iteration > 0.3 * solver_parameters.iteration_count) {
-                result->score = std::min(result->score, convergence_score_t::Satisfactory);
+                result->score = min(result->score, convergence_score_t::Satisfactory);
             }
             else if (iteration > 0.15 * solver_parameters.iteration_count)
             {
-                result->score = std::min(result->score, convergence_score_t::Good);
+                result->score = min(result->score, convergence_score_t::Good);
             }
 
             // Расчет Якобиана, расчет СЛАУ для шага Ньютона
@@ -1215,7 +1234,7 @@ public:
             {
                 if (search_step < small_step_threshold) {
                     // снижаем до 4-х баллов, если он выше
-                    result->score = std::min(result->score, convergence_score_t::Good);
+                    result->score = min(result->score, convergence_score_t::Good);
                 }
             }
             else
@@ -1223,7 +1242,7 @@ public:
                 // Обработка невозможности спуска ц.ф. при линейном поиске
                 if (solver_parameters.line_search_fail_action == line_search_fail_action_t::PerformMinStep) {
                     // понижаем балл до удовлетворительно, считаем дальше
-                    result->score = std::min(result->score, convergence_score_t::Satisfactory);
+                    result->score = min(result->score, convergence_score_t::Satisfactory);
                     search_step = solver_parameters.line_search.step_on_search_fail();
                 }
                 else if (solver_parameters.line_search_fail_action == line_search_fail_action_t::TreatAsFail) {
@@ -1286,7 +1305,7 @@ public:
             else {
                 if (solver_parameters.residuals_norm_allow_force_success) {
                     result->result_code = numerical_result_code_t::Converged;
-                    int score = std::max(
+                    int score = max(
                         static_cast<int>(result->score),
                         static_cast<int>(convergence_score_t::Satisfactory));
                     result->score = static_cast<convergence_score_t>(score);
@@ -1307,7 +1326,8 @@ inline double fixed_newton_raphson<1>::argument_increment_factor(
     const double& argument,
     const double& argument_increment)
 {
-    double arg = std::max(1.0, abs(argument));
+    using std::max;
+    double arg = max(1.0, abs(argument));
     double inc = argument_increment;
 
     double result = abs(inc / arg);
@@ -1322,10 +1342,11 @@ template <std::ptrdiff_t Dimension>
 inline double fixed_newton_raphson<Dimension>::argument_increment_factor(
     const var_type& argument, const var_type& argument_increment)
 {
+    using std::max;
     double squared_sum = 0;
 
     for (int component = 0; component < argument_increment.size(); ++component) {
-        double arg = std::max(1.0, abs(argument[component]));
+        double arg = max(1.0, abs(argument[component]));
         double inc = argument_increment[component];
         squared_sum += pow(inc / arg, 2);
     }

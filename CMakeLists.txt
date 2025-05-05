@@ -11,8 +11,10 @@ set(HEADERS_LS
     fixed/line_search/divider.h
     fixed/line_search/golden_section.h
 )
-set(HEADERS
+set(HEADERS_QP
     fixed/qp/qp_wrapper.h
+)
+set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
     fixed/fixed_bisection.h
@@ -62,6 +64,7 @@ install(FILES
 
 install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
+install(FILES ${HEADERS_QP} DESTINATION include/fixed_solvers/fixed/qp)
 endif()
 
 option(FIXED_SOLVERS_BUILD_TESTS "" OF)

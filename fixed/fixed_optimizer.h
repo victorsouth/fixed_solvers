@@ -37,12 +37,13 @@ public:
     /// @brief Численный расчет якобиана
     matrix_type jacobian_dense_numeric(const argument_type& x)
     {
+        using std::max;
         argument_type arg = x;
 
         matrix_type J;
 
         for (int arg_index = 0; arg_index < x.size(); ++arg_index) {
-            double e = epsilon * std::max(1.0, abs(arg[arg_index]));
+            double e = epsilon * max(1.0, abs(arg[arg_index]));
             arg[arg_index] = x[arg_index] + e;
             residuals_type f_plus = residuals(arg);
             arg[arg_index] = x[arg_index] - e;

@@ -24,15 +24,16 @@ using Eigen::MatrixXd;
 using Eigen::SparseMatrix;
 typedef Eigen::Triplet<double> triplet_t;
 
-
 /// @brief Расчет приращения для численного расчета производной на основе относительного отклонения
 /// @param value Точка, где вычисляется производная
 /// @param epsilon Относительное отклонение
 /// @return Приращение
 inline double numeric_derivative_delta(double value, double epsilon)
 {
-    return epsilon * std::max(1.0, std::abs(value));
+    using std::max;
+    return epsilon * max(1.0, std::abs(value));
 }
+
 
 /// @brief Численный расчет производной от функции одного аргумента по двусторонней формуле
 /// @tparam Function Тип функции
@@ -161,7 +162,7 @@ protected:
     sparse_matrix_type jacobian_sparse_numeric(const VectorXd& x) {
         
 
-        vector<Eigen::Triplet<double>> result;
+        std::vector<Eigen::Triplet<double>> result;
         VectorXd arg = x;
 
         for (int component = 0; component < x.size(); ++component) {
@@ -227,23 +228,31 @@ protected:
     /// @brief Численный расчет плотного якобиана
     matrix_value jacobian_dense_numeric(const var_type& x);
     sparse_matrix_type jacobian_sparse_numeric(const var_type& x) {
-        vector<Eigen::Triplet<double>> result;
-        var_type arg = x;
 
-        for (int component = 0; component < Dimension; ++component) {
-            double e = numeric_derivative_delta(arg[component], epsilon);
-            arg[component] = x[component] + e;
-            auto f_plus = residuals(arg);
-            arg[component] = x[component] - e;
-            auto f_minus = residuals(arg);
-            arg[component] = x[component];
+        if constexpr (Dimension > 1) {
+            vector<Eigen::Triplet<double>> result;
+            var_type arg = x;
 
-            var_type Jcol = (f_plus - f_minus) / (2 * e);
-            for (int row = 0; row < static_cast<int>(Dimension); ++row) {
-                result.emplace_back(row, component, Jcol[row]);
+            for (int component = 0; component < Dimension; ++component) {
+                double e = numeric_derivative_delta(arg[component], epsilon);
+                arg[component] = x[component] + e;
+                auto f_plus = residuals(arg);
+                arg[component] = x[component] - e;
+                auto f_minus = residuals(arg);
+                arg[component] = x[component];
+
+                var_type Jcol = (f_plus - f_minus) / (2 * e);
+                for (int row = 0; row < static_cast<int>(Dimension); ++row) {
+                    result.emplace_back(row, component, Jcol[row]);
+                }
             }
+            return result;
+
         }
-        return result;
+        else {
+            throw std::runtime_error("Must not be called");
+        }
+
     }
 };
 
@@ -265,17 +274,17 @@ inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 
 }
 
-template <>
-inline vector<Eigen::Triplet<double>> fixed_system_t<1>::jacobian_sparse_numeric(const double& x)
-{
-    // по идее, вообще не нужна эта функция
-    vector<Eigen::Triplet<double>> result;
-    throw std::runtime_error("Please, implement");
-    /*auto f = [&](double x) { return residuals(x); };
-    double result = two_sided_derivative(f, x, epsilon);
-    return result;*/
-
-}
+//template <>
+//inline vector<Eigen::Triplet<double>> fixed_system_t<1>::jacobian_sparse_numeric(const double& x)
+//{
+//    // по идее, вообще не нужна эта функция
+//    vector<Eigen::Triplet<double>> result;
+//    throw std::runtime_error("Please, implement");
+//    /*auto f = [&](double x) { return residuals(x); };
+//    double result = two_sided_derivative(f, x, epsilon);
+//    return result;*/
+//
+//}
 
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
