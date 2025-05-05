@@ -126,6 +126,9 @@ class fixed_system_t;
 /// @brief Система уравнений с переменной размерности
 template <>
 class fixed_system_t<-1> {
+protected:
+    /// @brief Относительное (!) приращение для расчета производных
+    double epsilon{ 1e-6 };
 public:
     /// @brief Тип разреженной матрицы
     typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
@@ -143,15 +146,40 @@ public:
     /// @brief Невязки системы уравнений
     virtual VectorXd residuals(const VectorXd& x) = 0;
     /// @brief Якобиан системы уравнений
-    virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) = 0;
+    virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) {
+        return jacobian_sparse_numeric(x);
+    }
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
     /// @return Флаг успешного завершения
     virtual bool custom_success_criteria(const VectorXd& r, const VectorXd& x)
     {
-        return true;
+        return false;
     }
+protected:
+    sparse_matrix_type jacobian_sparse_numeric(const VectorXd& x) {
+        
+
+        vector<Eigen::Triplet<double>> result;
+        VectorXd arg = x;
+
+        for (int component = 0; component < x.size(); ++component) {
+            double e = numeric_derivative_delta(arg[component], epsilon);
+            arg[component] = x[component] + e;
+            auto f_plus = residuals(arg);
+            arg[component] = x[component] - e;
+            auto f_minus = residuals(arg);
+            arg[component] = x[component];
+
+            VectorXd Jcol = (f_plus - f_minus) / (2 * e);
+            for (int row = 0; row < x.size(); ++row) {
+                result.emplace_back(row, component, Jcol(row));
+            }
+        }
+        return result;
+    }
+
 };
 
 
@@ -168,6 +196,7 @@ public:
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     /// @brief Тип матрицы (якобиан)
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
+    typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
 public:
     /// @brief Расчет целевой функции по невязкам
     virtual double objective_function(const var_type& r) const;
@@ -182,6 +211,9 @@ public:
     virtual matrix_value jacobian_dense(const var_type& x) {
         return jacobian_dense_numeric(x);
     }
+    virtual sparse_matrix_type jacobian_sparse(const var_type& x) {
+        return jacobian_sparse_numeric(x);
+    }
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
@@ -194,7 +226,25 @@ public:
 protected:
     /// @brief Численный расчет плотного якобиана
     matrix_value jacobian_dense_numeric(const var_type& x);
+    sparse_matrix_type jacobian_sparse_numeric(const var_type& x) {
+        vector<Eigen::Triplet<double>> result;
+        var_type arg = x;
 
+        for (int component = 0; component < Dimension; ++component) {
+            double e = numeric_derivative_delta(arg[component], epsilon);
+            arg[component] = x[component] + e;
+            auto f_plus = residuals(arg);
+            arg[component] = x[component] - e;
+            auto f_minus = residuals(arg);
+            arg[component] = x[component];
+
+            var_type Jcol = (f_plus - f_minus) / (2 * e);
+            for (int row = 0; row < static_cast<int>(Dimension); ++row) {
+                result.emplace_back(row, component, Jcol[row]);
+            }
+        }
+        return result;
+    }
 };
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для скалярного случая
@@ -215,6 +265,17 @@ inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
 
 }
 
+template <>
+inline vector<Eigen::Triplet<double>> fixed_system_t<1>::jacobian_sparse_numeric(const double& x)
+{
+    // по идее, вообще не нужна эта функция
+    vector<Eigen::Triplet<double>> result;
+    throw std::runtime_error("Please, implement");
+    /*auto f = [&](double x) { return residuals(x); };
+    double result = two_sided_derivative(f, x, epsilon);
+    return result;*/
+
+}
 
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая

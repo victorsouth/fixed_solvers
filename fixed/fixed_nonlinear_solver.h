@@ -132,6 +132,7 @@ struct fixed_solver_constraints<-1>
                 return true;
             }
         }
+        return false;
     }
 
 public:
@@ -145,22 +146,22 @@ public:
         std::vector<Eigen::Triplet<double>> A;
         VectorXd b(minimum.size() + maximum.size());
 
-        auto add_constraints = [&](const std::vector<std::pair<size_t, double>>& boundaries) {
+        auto add_constraints = [&](const std::vector<std::pair<size_t, double>>& boundaries, double sign) {
             for (const auto& [var_index, value] : boundaries) {
                 Eigen::Triplet<double> triplet(
-                    row_index,
-                    var_index,
-                    value
+                    static_cast<int>(row_index),
+                    static_cast<int>(var_index),
+                    sign * 1.0
                 );
 
                 A.emplace_back(std::move(triplet));
-                b(row_index) = value;
+                b(row_index) = sign * value;
                 row_index++;
             }
         };
 
-        add_constraints(minimum);
-        add_constraints(maximum);
+        add_constraints(minimum, -1.0);
+        add_constraints(maximum, +1.0);
 
         SparseMatrix<double, ColMajor> A_matrix(minimum.size() + maximum.size(), n);
         A_matrix.setFromTriplets(A.begin(), A.end());
@@ -169,13 +170,31 @@ public:
         return std::make_pair(std::move(A_matrix), std::move(b));
     }
 
-
-
     /// @brief Обрезание по максимуму
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
-        if (!maximum.empty())
-            throw std::runtime_error("Please, implement me");
+        double factor = 1;
+
+        for (const auto& [index, max_value] : maximum)
+        {
+            if (argument[index] + increment[index] > max_value) {
+                if (std::abs(argument[index] - max_value) < eps_constraints) {
+                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
+                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
+                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    increment[index] = 0;
+                }
+                else {
+                    double allowed_increment = max_value - argument[index];
+                    factor = std::max(factor, abs(increment[index]) / allowed_increment);
+                }
+            }
+        }
+        if (factor > 1)
+        {
+            increment = increment / factor;
+        }
+
     }
 
     /// @brief Обрезание по минимуму
@@ -210,12 +229,14 @@ public:
     {
         VectorXd increment = VectorXd::Zero(argument.size());
 
-        if (!maximum.empty())
-            throw std::runtime_error("Please, implement me");
-
         for (const auto& [index, min_value] : minimum) {
             if (argument[index] < min_value) {
                 argument[index] = min_value;
+            }
+        }
+        for (const auto& [index, max_value] : maximum) {
+            if (argument[index] > max_value) {
+                argument[index] = max_value;
             }
         }
     }
@@ -302,7 +323,74 @@ struct fixed_solver_constraints
             argument = std::max(argument, minimum);
         }
     }
+    void ensure_constraints(std::array<double, 2>& argument) const
+    {
+        for (size_t index = 0; index < Dimension; ++index) {
+            if (!std::isnan(maximum[index])) {
+                argument[index] = std::min(argument[index], maximum[index]);
+            }
+            if (!std::isnan(minimum[index])) {
+                argument[index] = std::max(argument[index], minimum[index]);
+            }
 
+        }
+    }
+
+    bool has_active_constraints(const std::array<double, Dimension>& argument) const {
+        for (size_t index = 0; index < Dimension; ++index) {        
+            if (!std::isnan(minimum[index])) {
+                if (std::abs(argument[index] - minimum[index]) < eps_constraints) {
+                    return true;
+                }
+            }
+            if (!std::isnan(maximum[index])) {
+                if (std::abs(argument[index] - maximum[index]) < eps_constraints) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    std::pair<SparseMatrix<double, ColMajor>, VectorXd> get_inequalities_constraints_sparse(
+        const std::array<double, Dimension>& current_argument) const
+    {
+        // ограничения
+        auto n = current_argument.size();
+
+        
+        std::vector<Eigen::Triplet<double>> A;
+        vector<double> b;
+
+        auto add_constraints = [&](const var_type& boundaries, double sign) {
+            for (size_t var_index = 0; var_index < Dimension; ++var_index) {
+                if (std::isnan(boundaries[var_index]))
+                    continue;
+
+                size_t row_index = A.size();
+
+                Eigen::Triplet<double> triplet(
+                    static_cast<int>(row_index),
+                    static_cast<int>(var_index),
+                    sign * 1.0
+                );
+
+                A.emplace_back(std::move(triplet));
+                b.emplace_back(sign * boundaries[var_index]);
+            }
+        };
+
+        add_constraints(minimum, -1.0);
+        add_constraints(maximum, +1.0);
+
+        SparseMatrix<double, ColMajor> A_matrix(A.size(), n);
+        A_matrix.setFromTriplets(A.begin(), A.end());
+
+        VectorXd b_vec = VectorXd::Map(b.data(), b.size());
+        b_vec -= A_matrix * VectorXd::Map(current_argument.data(), current_argument.size());
+
+        return std::make_pair(std::move(A_matrix), std::move(b_vec));
+    }
 
     /*!
     * \brief Обрезка шага по максимуму для скалярного случая
@@ -540,16 +628,20 @@ template <
     std::ptrdiff_t Dimension, 
     std::ptrdiff_t LinearConstraintsCount = 0, 
     typename LineSearch = divider_search>
-struct fixed_solver_parameters_t
+struct fixed_solver_parameters_t 
 {
     /// @brief Параметры диагностики
     fixed_solver_analysis_parameters_t analysis;
     /// @brief Границы на диапазон и единичный шаг
     fixed_solver_constraints<Dimension> constraints;
+    /// @brief Использовать квадратичное программирование при необходимости ограничить шаг
+    bool constrain_step_with_quadprog{ false };
     /// @brief Линейные ограничения
     fixed_linear_constraints<Dimension, LinearConstraintsCount> linear_constraints;
     /// @brief Параметры алгоритма регулировки шага
     typename LineSearch::parameters_type line_search;
+    /// @brief Действие при ошибке регулировки шага
+    line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail };
     /// @brief Количество итераций
     size_t iteration_count{ 100 };
     /// @brief Критерий выхода из процедуры (погрешность метода) по приращению аргумента 
@@ -561,8 +653,6 @@ struct fixed_solver_parameters_t
     bool residuals_norm_allow_force_success{ false };
     /// @brief Проверять векторный шага после регулировки или перед ней
     bool step_criteria_assuming_search_step{ false };
-    /// @brief Действие при ошибке регулировки шага
-    line_search_fail_action_t line_search_fail_action{ line_search_fail_action_t::TreatAsFail};
 };
 
 /// @brief Результат расчета Ньютона - Рафсона
@@ -922,6 +1012,7 @@ private:
             directed_function, a, b, function_a, function_b);
         return search_step;
     }
+    
     /// @brief Расчет шага Ньютона 
     /// для случая фиксированной - плотный расчет
     /// для переменной размерности (Dimension = -1) - разрешенный расчет
@@ -929,7 +1020,10 @@ private:
     /// @param current_residuals_value 
     /// @param argument 
     /// @return 
-    static var_type calc_newton_step(fixed_system_t<Dimension>& residuals,
+    template <std::ptrdiff_t LinearConstraintsCount, typename LineSearch = divider_search>
+    static var_type calc_step_direction(
+        const fixed_solver_parameters_t<Dimension, LinearConstraintsCount, LineSearch>& solver_parameters,        
+        fixed_system_t<Dimension>& residuals,
         const var_type& current_residuals_value, const var_type& argument)
     {
         if constexpr (Dimension == -1) {
@@ -937,27 +1031,76 @@ private:
 
             SparseMatrix<double> J(argument.size(), argument.size());
             J.setFromTriplets(J_triplets.begin(), J_triplets.end());
-            
-            Eigen::SparseLU<SparseMatrix<double> > solver;
-            solver.analyzePattern(J);
-            solver.factorize(J);
 
-            if (solver.info() == Eigen::Success) {
-                auto result = -solver.solve(current_residuals_value);
+            if (solver_parameters.constrain_step_with_quadprog
+                && solver_parameters.constraints.has_active_constraints(argument))
+            {
+                SparseMatrix<double> H = J.transpose() * J;
+                VectorXd f = current_residuals_value.transpose() * J; // r * J
+
+                SparseMatrix<double> A;
+                VectorXd b;
+                std::tie(A, b) = solver_parameters.constraints.get_inequalities_constraints_sparse(argument);
+
+                VectorXd result = solve_quadprog_inequalities_swift(H, f, A, b);
                 return result;
             }
             else {
-                throw std::runtime_error("cannot calc newton step");
+                Eigen::SparseLU<SparseMatrix<double> > solver;
+                solver.analyzePattern(J);
+                solver.factorize(J);
+
+                if (solver.info() == Eigen::Success) {
+                    auto result = -solver.solve(current_residuals_value);
+                    return result;
+                }
+                else {
+                    throw std::runtime_error("cannot calc newton step");
+                }
             }
 
         }
         else {
-            // Расчет Якобиана
-            auto J = residuals.jacobian_dense(argument);
+            if constexpr (Dimension != 1) {
+                if (solver_parameters.constrain_step_with_quadprog
+                    && solver_parameters.constraints.has_active_constraints(argument))
+                {
+                    // Расчет Якобиана
+                    auto J = residuals.jacobian_sparse(argument);
 
-            // Расчет текущего шага Ньютона
-            auto result = -solve_linear_system(J, current_residuals_value);
-            return result;
+                    SparseMatrix<double> Js(2, 2);
+                    Js.setFromTriplets(J.begin(), J.end());
+
+                    SparseMatrix<double> H = Js.transpose() * Js;
+                    VectorXd r = VectorXd::Map(current_residuals_value.data(), current_residuals_value.size());
+                    VectorXd f = r.transpose() * Js; // r * J
+
+                    SparseMatrix<double> A;
+                    VectorXd b;
+                    VectorXd arg = VectorXd::Map(argument.data(), argument.size());
+                    std::tie(A, b) = solver_parameters.constraints.get_inequalities_constraints_sparse(argument);
+
+                    VectorXd result = solve_quadprog_inequalities_swift(H, f, A, b);
+
+                    var_type p;
+                    std::copy(&result(0), &result(0) + result.size(), p.begin());
+                    return p;
+                }
+                else {
+                    // Расчет Якобиана
+                    auto J = residuals.jacobian_dense(argument);
+                    // Расчет текущего шага Ньютона
+                    auto result = -solve_linear_system(J, current_residuals_value);
+                    return result;
+                }
+            }
+            else {
+                // Расчет Якобиана
+                auto J = residuals.jacobian_dense(argument);
+                // Расчет текущего шага Ньютона
+                auto result = -solve_linear_system(J, current_residuals_value);
+                return result;
+            }
         }
     }
 
@@ -1038,12 +1181,14 @@ public:
             }
 
             // Расчет Якобиана, расчет СЛАУ для шага Ньютона
-            p = calc_newton_step(residuals, r, argument);
+            p = calc_step_direction(solver_parameters, residuals, r, argument);
 
             // Проверка критерия выхода по малому относительному приращению
             if (solver_parameters.step_criteria_assuming_search_step == false)
             {
-                argument_increment_metric = argument_increment_factor(argument, p);
+                argument_increment_metric = solver_parameters.step_criteria_assuming_search_step
+                    ? argument_increment_factor(argument, argument_increment)
+                    : argument_increment_factor(argument, p);
                 argument_increment_criteria =
                     argument_increment_metric < solver_parameters.argument_increment_norm;
                 if (argument_increment_criteria) {
