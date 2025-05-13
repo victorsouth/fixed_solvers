@@ -150,6 +150,9 @@ public:
     virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) {
         return jacobian_sparse_numeric(x);
     }
+    virtual vector<sparse_matrix_type> jacobian_sparse_columns(const VectorXd& x) {
+        throw std::runtime_error("Not impl");
+    }
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
@@ -160,8 +163,6 @@ public:
     }
 protected:
     sparse_matrix_type jacobian_sparse_numeric(const VectorXd& x) {
-        
-
         std::vector<Eigen::Triplet<double>> result;
         VectorXd arg = x;
 
@@ -180,7 +181,6 @@ protected:
         }
         return result;
     }
-
 };
 
 

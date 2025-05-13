@@ -245,6 +245,8 @@ public:
     }
 };
 
+enum class step_constraint_algorithm_t { Quadprog, CoordinateDescent };
+
 
 ///@brief Данная структура описывает ограничения солвера фиксированной размерности
 template <std::ptrdiff_t Dimension>
@@ -258,6 +260,7 @@ struct fixed_solver_constraints
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
     /// Ограничение по максимуму
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
+
 
     /*!
     * \brief Обрезка шага по минимуму для скалярного случая
@@ -632,7 +635,6 @@ struct fixed_linear_constraints
 {
 };
 
-
 /// @brief Параметры алгоритма Ньютона-Рафсона
 template <
     std::ptrdiff_t Dimension, 
@@ -644,8 +646,10 @@ struct fixed_solver_parameters_t
     fixed_solver_analysis_parameters_t analysis;
     /// @brief Границы на диапазон и единичный шаг
     fixed_solver_constraints<Dimension> constraints;
-    /// @brief Использовать квадратичное программирование при необходимости ограничить шаг
-    bool constrain_step_with_quadprog{ false };
+    /// @brief Использовать условную оптимизацию при необходимости ограничить шаг
+    bool step_constraint_as_optimization{ false };
+    /// @brief Алгоритм условной оптимизации для ограничения шага
+    step_constraint_algorithm_t step_constraint_algorithm{ step_constraint_algorithm_t::CoordinateDescent };
     /// @brief Линейные ограничения
     fixed_linear_constraints<Dimension, LinearConstraintsCount> linear_constraints;
     /// @brief Параметры алгоритма регулировки шага
@@ -1042,9 +1046,12 @@ private:
             SparseMatrix<double> J(argument.size(), argument.size());
             J.setFromTriplets(J_triplets.begin(), J_triplets.end());
 
+            throw std::runtime_error("not impl");
+
 #ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
-            if (solver_parameters.constrain_step_with_quadprog
-                && solver_parameters.constraints.has_active_constraints(argument))
+            if (
+                //solver_parameters.constrain_step_with_quadprog && 
+                solver_parameters.constraints.has_active_constraints(argument))
             {
                 SparseMatrix<double> H = J.transpose() * J;
                 VectorXd f = current_residuals_value.transpose() * J; // r * J
@@ -1076,8 +1083,8 @@ private:
         else {
             if constexpr (Dimension != 1) {
 #ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
-                if (solver_parameters.constrain_step_with_quadprog
-                    && solver_parameters.constraints.has_active_constraints(argument))
+                if (//solver_parameters.constrain_step_with_quadprog && 
+                    solver_parameters.constraints.has_active_constraints(argument))
                 {
                     // Расчет Якобиана
                     auto J = residuals.jacobian_sparse(argument);
