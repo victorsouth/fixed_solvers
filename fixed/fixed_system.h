@@ -230,7 +230,7 @@ protected:
     sparse_matrix_type jacobian_sparse_numeric(const var_type& x) {
 
         if constexpr (Dimension > 1) {
-            vector<Eigen::Triplet<double>> result;
+            std::vector<Eigen::Triplet<double>> result;
             var_type arg = x;
 
             for (int component = 0; component < Dimension; ++component) {
