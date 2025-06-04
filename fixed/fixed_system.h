@@ -199,6 +199,7 @@ public:
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
     /// @brief Тип матрицы (якобиан)
     typedef typename fixed_system_types<Dimension>::equation_coeffs_type matrix_value;
+    /// @brief Тип разреженной матрицы (якобиан)
     typedef typename fixed_system_types<-1>::sparse_matrix_type sparse_matrix_type;
 public:
     /// @brief Расчет целевой функции по невязкам

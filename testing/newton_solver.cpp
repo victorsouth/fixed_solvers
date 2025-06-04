@@ -5,6 +5,7 @@
 
 /// @brief Простейшая система уравнений 2x2 фиксированной размерности
 struct simple_equation_fixed : public fixed_system_t<2> {
+    /// @brief Невязки
     virtual std::array<double, 2> residuals(const std::array<double, 2>& x) {
         std::array<double, 2> x0{ 4, 5 };
         return x - x0;
@@ -13,6 +14,7 @@ struct simple_equation_fixed : public fixed_system_t<2> {
 
 /// @brief Простейшая система уравнений 2x2 размерность переменная
 struct simple_equation_var : public fixed_system_t<-1> {
+    /// @brief Невязки
     virtual VectorXd residuals(const VectorXd& x) {
         VectorXd x0(2);
         x0 << 4, 5;
