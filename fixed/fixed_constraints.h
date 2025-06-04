@@ -1,14 +1,14 @@
-#pragma once
+п»ї#pragma once
 
-/// Точность проверки нахождения на ограничениях
+/// РўРѕС‡РЅРѕСЃС‚СЊ РїСЂРѕРІРµСЂРєРё РЅР°С…РѕР¶РґРµРЅРёСЏ РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏС…
 inline constexpr double eps_constraints = 1e-8;
 
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints;
 
-/// @brief Полезный хелпер для прохода по ограничениям
-/// @param callback Вызывается с параметрами index, min, max. 
-/// Если ограничение задано
+/// @brief РџРѕР»РµР·РЅС‹Р№ С…РµР»РїРµСЂ РґР»СЏ РїСЂРѕС…РѕРґР° РїРѕ РѕРіСЂР°РЅРёС‡РµРЅРёСЏРј
+/// @param callback Р’С‹Р·С‹РІР°РµС‚СЃСЏ СЃ РїР°СЂР°РјРµС‚СЂР°РјРё index, min, max. 
+/// Р•СЃР»Рё РѕРіСЂР°РЅРёС‡РµРЅРёРµ Р·Р°РґР°РЅРѕ
 template <typename Callback>
 inline void prepare_box_constraints(
     const std::vector<std::pair<size_t, double>>& minimum,
@@ -70,19 +70,19 @@ inline void prepare_box_constraints(
 }
 
 
-/*! \brief Cтруктура описывает ограничения для решателя переменной размерности
+/*! \brief CС‚СЂСѓРєС‚СѓСЂР° РѕРїРёСЃС‹РІР°РµС‚ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ РґР»СЏ СЂРµС€Р°С‚РµР»СЏ РїРµСЂРµРјРµРЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё
 *
-* Ввиду того, что он здесь не используется, то не внесен в Doxygen документацию */
+* Р’РІРёРґСѓ С‚РѕРіРѕ, С‡С‚Рѕ РѕРЅ Р·РґРµСЃСЊ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ, С‚Рѕ РЅРµ РІРЅРµСЃРµРЅ РІ Doxygen РґРѕРєСѓРјРµРЅС‚Р°С†РёСЋ */
 template <>
 struct fixed_solver_constraints<-1>
 {
-    /// @brief Список ограничений на относительное приращение параметра
+    /// @brief РЎРїРёСЃРѕРє РѕРіСЂР°РЅРёС‡РµРЅРёР№ РЅР° РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРµ РїСЂРёСЂР°С‰РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР°
     std::vector<std::pair<size_t, double>> relative_boundary;
-    /// @brief Список ограничений на минимальное значение параметра
+    /// @brief РЎРїРёСЃРѕРє РѕРіСЂР°РЅРёС‡РµРЅРёР№ РЅР° РјРёРЅРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР°
     std::vector<std::pair<size_t, double>> minimum;
-    /// @brief Список ограничений на максимальное значение параметра
+    /// @brief РЎРїРёСЃРѕРє РѕРіСЂР°РЅРёС‡РµРЅРёР№ РЅР° РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР°
     std::vector<std::pair<size_t, double>> maximum;
-    /// @brief Возвращает количество ограничений 
+    /// @brief Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»РёС‡РµСЃС‚РІРѕ РѕРіСЂР°РЅРёС‡РµРЅРёР№ 
     size_t get_constraint_count() const
     {
         return minimum.size() + maximum.size();
@@ -94,7 +94,7 @@ struct fixed_solver_constraints<-1>
     > get_relative_constraints(
         const VectorXd& current_argument) const
     {
-        // ограничения
+        // РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
         auto n = current_argument.size();
 
         std::vector<std::pair<size_t, double>> mins = this->minimum;
@@ -114,7 +114,7 @@ struct fixed_solver_constraints<-1>
     }
 
 
-    /// @brief Ограничения по минимуму и максимум для квадратичного программирования
+    /// @brief РћРіСЂР°РЅРёС‡РµРЅРёСЏ РїРѕ РјРёРЅРёРјСѓРјСѓ Рё РјР°РєСЃРёРјСѓРј РґР»СЏ РєРІР°РґСЂР°С‚РёС‡РЅРѕРіРѕ РїСЂРѕРіСЂР°РјРјРёСЂРѕРІР°РЅРёСЏ
     static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors_dense(
         size_t argument_dimension,
         const std::vector<std::pair<size_t, double>>& boundaries)
@@ -131,16 +131,16 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, b);
     }
 
-    /// @brief Учитывает только minimum, maximum
+    /// @brief РЈС‡РёС‚С‹РІР°РµС‚ С‚РѕР»СЊРєРѕ minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints_dense(const size_t argument_size) const
     {
-        // ограничения
+        // РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
         const auto n = argument_size;
         MatrixXd A = MatrixXd::Zero(get_constraint_count(), n);
         VectorXd B = VectorXd::Zero(get_constraint_count());
 
         size_t offset = 0;
-        // максимальное значение
+        // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
         {
             auto [a, b] = get_inequalities_constraints_vectors_dense(n, maximum);
 
@@ -148,7 +148,7 @@ struct fixed_solver_constraints<-1>
             B.segment(offset, b.size()) = b;
             offset += a.rows();
         }
-        // минимальное значение
+        // РјРёРЅРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
         {
             auto [a, b] = get_inequalities_constraints_vectors_dense(n, minimum);
 
@@ -159,7 +159,7 @@ struct fixed_solver_constraints<-1>
         return std::make_pair(A, B);
     }
 
-    /// @brief Обрезание по приращению
+    /// @brief РћР±СЂРµР·Р°РЅРёРµ РїРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ
     void trim_relative(VectorXd& increment) const
     {
         using std::max;
@@ -177,8 +177,8 @@ struct fixed_solver_constraints<-1>
             increment /= factor;
         }
     }
-    /// @brief Проверяет наличие параметров аргумента, находящихся на ограничениях min или max
-    /// Но не relative, т.к. на это ограничение можно попасть только 
+    /// @brief РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ РїР°СЂР°РјРµС‚СЂРѕРІ Р°СЂРіСѓРјРµРЅС‚Р°, РЅР°С…РѕРґСЏС‰РёС…СЃСЏ РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏС… min РёР»Рё max
+    /// РќРѕ РЅРµ relative, С‚.Рє. РЅР° СЌС‚Рѕ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РјРѕР¶РЅРѕ РїРѕРїР°СЃС‚СЊ С‚РѕР»СЊРєРѕ 
     /// @param argument 
     /// @return 
     bool has_active_constraints(const VectorXd& argument) const {
@@ -199,7 +199,7 @@ public:
     std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const VectorXd& current_argument) const
     {
-        // ограничения
+        // РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
         auto n = current_argument.size();
 
         size_t row_index = 0;
@@ -230,7 +230,7 @@ public:
         return std::make_pair(std::move(A_matrix), std::move(b));
     }
 
-    /// @brief Обрезание по максимуму
+    /// @brief РћР±СЂРµР·Р°РЅРёРµ РїРѕ РјР°РєСЃРёРјСѓРјСѓ
     void trim_max(VectorXd& argument, VectorXd& increment) const
     {
         using std::max;
@@ -240,9 +240,9 @@ public:
         {
             if (argument[index] + increment[index] > max_value) {
                 if (std::abs(argument[index] - max_value) < eps_constraints) {
-                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
-                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
-                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    // РџР°СЂР°РјРµС‚СЂ СѓР¶Рµ СЃРµР» РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, allowed_decrement Р±СѓРґРµС‚ РЅСѓР»РµРІРѕР№,
+                    // СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ factor РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ (СЃРј. РІРµС‚РІСЊ "else" РЅРёР¶Рµ)
+                    // РЅРµ СѓС‡РёС‚С‹РІР°РµРј СЌС‚Сѓ РїРµСЂРµРјРµРЅРЅСѓСЋ РїСЂРё СЂР°СЃС‡РµС‚Рµ factor, СЃСЂР°Р·Сѓ РѕР±СЂРµР·Р°РµРј 
                     increment[index] = 0;
                 }
                 else {
@@ -258,7 +258,7 @@ public:
 
     }
 
-    /// @brief Обрезание по минимуму
+    /// @brief РћР±СЂРµР·Р°РЅРёРµ РїРѕ РјРёРЅРёРјСѓРјСѓ
     void trim_min(VectorXd& argument, VectorXd& increment) const
     {
         using std::max;
@@ -268,9 +268,9 @@ public:
         {
             if (argument[index] + increment[index] < min_value) {
                 if (std::abs(argument[index] - min_value) < eps_constraints) {
-                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
-                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
-                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    // РџР°СЂР°РјРµС‚СЂ СѓР¶Рµ СЃРµР» РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, allowed_decrement Р±СѓРґРµС‚ РЅСѓР»РµРІРѕР№,
+                    // СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ factor РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ (СЃРј. РІРµС‚РІСЊ "else" РЅРёР¶Рµ)
+                    // РЅРµ СѓС‡РёС‚С‹РІР°РµРј СЌС‚Сѓ РїРµСЂРµРјРµРЅРЅСѓСЋ РїСЂРё СЂР°СЃС‡РµС‚Рµ factor, СЃСЂР°Р·Сѓ РѕР±СЂРµР·Р°РµРј 
                     increment[index] = 0;
                 }
                 else {
@@ -286,7 +286,7 @@ public:
         }
     }
 
-    /// @brief Обрезание по ограничениям
+    /// @brief РћР±СЂРµР·Р°РЅРёРµ РїРѕ РѕРіСЂР°РЅРёС‡РµРЅРёСЏРј
     void ensure_constraints(VectorXd& argument) const
     {
         VectorXd increment = VectorXd::Zero(argument.size());
@@ -306,17 +306,17 @@ public:
 
 
 
-///@brief Данная структура описывает ограничения солвера фиксированной размерности
+///@brief Р”Р°РЅРЅР°СЏ СЃС‚СЂСѓРєС‚СѓСЂР° РѕРїРёСЃС‹РІР°РµС‚ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ СЃРѕР»РІРµСЂР° С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_constraints
 {
-    /// Псевдоним искомой переменной
+    /// РџСЃРµРІРґРѕРЅРёРј РёСЃРєРѕРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
     typedef typename fixed_system_types<Dimension>::var_type var_type;
-    /// Ограничение по приращению
+    /// РћРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ
     var_type relative_boundary{ fixed_system_types<Dimension>::default_var() };
-    /// Ограничение по минимуму
+    /// РћРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ РјРёРЅРёРјСѓРјСѓ
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
-    /// Ограничение по максимуму
+    /// РћРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ РјР°РєСЃРёРјСѓРјСѓ
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
 
 
@@ -353,10 +353,10 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка шага по минимуму для скалярного случая
+    * \brief РћР±СЂРµР·РєР° С€Р°РіР° РїРѕ РјРёРЅРёРјСѓРјСѓ РґР»СЏ СЃРєР°Р»СЏСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] argument Значение аргумента на текущей итерации
-    * \param [in] increment Значение инкремента на текущей итерации
+    * \param [in] argument Р—РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РёРЅРєСЂРµРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_min(double argument, double& increment) const
     {
@@ -368,10 +368,10 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка шага по минимуму для векторного случая
+    * \brief РћР±СЂРµР·РєР° С€Р°РіР° РїРѕ РјРёРЅРёРјСѓРјСѓ РґР»СЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] argument Значение аргумента на текущей итерации
-    * \param [in] increment Значение инкремента на текущей итерации
+    * \param [in] argument Р—РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РёРЅРєСЂРµРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_min(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
@@ -388,9 +388,9 @@ struct fixed_solver_constraints
 
 
                 if (std::abs(argument[index] - minimum[index]) < eps_constraints) {
-                    // Параметр уже сел на ограничения, allowed_decrement будет нулевой,
-                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
-                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    // РџР°СЂР°РјРµС‚СЂ СѓР¶Рµ СЃРµР» РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, allowed_decrement Р±СѓРґРµС‚ РЅСѓР»РµРІРѕР№,
+                    // СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ factor РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ (СЃРј. РІРµС‚РІСЊ "else" РЅРёР¶Рµ)
+                    // РЅРµ СѓС‡РёС‚С‹РІР°РµРј СЌС‚Сѓ РїРµСЂРµРјРµРЅРЅСѓСЋ РїСЂРё СЂР°СЃС‡РµС‚Рµ factor, СЃСЂР°Р·Сѓ РѕР±СЂРµР·Р°РµРј 
                     increment[index] = 0;
                 }
                 else {
@@ -407,9 +407,9 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Приводит значение аргумента внутрь ограничений мин/макс
+    * \brief РџСЂРёРІРѕРґРёС‚ Р·РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РІРЅСѓС‚СЂСЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ РјРёРЅ/РјР°РєСЃ
     *
-    * \param [in] argument Значение аргумента на текущей итерации
+    * \param [in] argument Р—РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void ensure_constraints(double& argument) const
     {
@@ -472,7 +472,7 @@ struct fixed_solver_constraints
     std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const std::array<double, Dimension>& current_argument) const
     {
-        // ограничения
+        // РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
         auto n = current_argument.size();
 
 
@@ -510,10 +510,10 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка шага по максимуму для скалярного случая
+    * \brief РћР±СЂРµР·РєР° С€Р°РіР° РїРѕ РјР°РєСЃРёРјСѓРјСѓ РґР»СЏ СЃРєР°Р»СЏСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] argument Значение аргумента на текущей итерации
-    * \param [in] increment Значение инкремента на текущей итерации
+    * \param [in] argument Р—РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РёРЅРєСЂРµРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_max(double argument, double& increment) const
     {
@@ -526,10 +526,10 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка шага по максимуму для векторного случая
+    * \brief РћР±СЂРµР·РєР° С€Р°РіР° РїРѕ РјР°РєСЃРёРјСѓРјСѓ РґР»СЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] argument Значение аргумента на текущей итерации
-    * \param [in] increment Значение инкремента на текущей итерации
+    * \param [in] argument Р—РЅР°С‡РµРЅРёРµ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РёРЅРєСЂРµРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_max(const array<double, Dimension>& argument,
         array<double, Dimension>& increment) const
@@ -544,9 +544,9 @@ struct fixed_solver_constraints
 
             if (argument[index] + increment[index] > maximum[index]) {
                 if (std::abs(argument[index] - maximum[index]) < eps_constraints) {
-                    // Параметр уже сел на ограничения, allowed_increment будет нулевой,
-                    // соответственно factor получается бесконечный (см. ветвь "else" ниже)
-                    // не учитываем эту переменную при расчете factor, сразу обрезаем 
+                    // РџР°СЂР°РјРµС‚СЂ СѓР¶Рµ СЃРµР» РЅР° РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, allowed_increment Р±СѓРґРµС‚ РЅСѓР»РµРІРѕР№,
+                    // СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ factor РїРѕР»СѓС‡Р°РµС‚СЃСЏ Р±РµСЃРєРѕРЅРµС‡РЅС‹Р№ (СЃРј. РІРµС‚РІСЊ "else" РЅРёР¶Рµ)
+                    // РЅРµ СѓС‡РёС‚С‹РІР°РµРј СЌС‚Сѓ РїРµСЂРµРјРµРЅРЅСѓСЋ РїСЂРё СЂР°СЃС‡РµС‚Рµ factor, СЃСЂР°Р·Сѓ РѕР±СЂРµР·Р°РµРј 
                     increment[index] = 0;
                 }
                 else {
@@ -562,9 +562,9 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка по приращению для скларяного случая
+    * \brief РћР±СЂРµР·РєР° РїРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ РґР»СЏ СЃРєР»Р°СЂСЏРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] increment Значение приращения аргумента на текущей итерации
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РїСЂРёСЂР°С‰РµРЅРёСЏ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_relative(double& increment) const
     {
@@ -578,9 +578,9 @@ struct fixed_solver_constraints
     }
 
     /*!
-    * \brief Обрезка по приращению для векторного случая
+    * \brief РћР±СЂРµР·РєР° РїРѕ РїСЂРёСЂР°С‰РµРЅРёСЋ РґР»СЏ РІРµРєС‚РѕСЂРЅРѕРіРѕ СЃР»СѓС‡Р°СЏ
     *
-    * \param [in] increment Значение приращения аргумента на текущей итерации
+    * \param [in] increment Р—РЅР°С‡РµРЅРёРµ РїСЂРёСЂР°С‰РµРЅРёСЏ Р°СЂРіСѓРјРµРЅС‚Р° РЅР° С‚РµРєСѓС‰РµР№ РёС‚РµСЂР°С†РёРё
     */
     void trim_relative(array<double, Dimension>& increment) const
     {
@@ -605,42 +605,42 @@ struct fixed_solver_constraints
 };
 
 
-///@brief Линейные ограничения - произвольная размерность
+///@brief Р›РёРЅРµР№РЅС‹Рµ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ - РїСЂРѕРёР·РІРѕР»СЊРЅР°СЏ СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊ
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints;
 
 
-///@brief Специализация отсутствия линейных ограничений 
+///@brief РЎРїРµС†РёР°Р»РёР·Р°С†РёСЏ РѕС‚СЃСѓС‚СЃС‚РІРёСЏ Р»РёРЅРµР№РЅС‹С… РѕРіСЂР°РЅРёС‡РµРЅРёР№ 
 template <std::ptrdiff_t Dimension>
 struct fixed_linear_constraints<Dimension, 0> {
 
-    /// Псевдоним искомой переменной
+    /// РџСЃРµРІРґРѕРЅРёРј РёСЃРєРѕРјРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
     typedef typename fixed_system_types<Dimension>::var_type var_type;
 
-    /// Функция trim ничего не делает, ее просто можно вызвать
+    /// Р¤СѓРЅРєС†РёСЏ trim РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµС‚, РµРµ РїСЂРѕСЃС‚Рѕ РјРѕР¶РЅРѕ РІС‹Р·РІР°С‚СЊ
     inline void trim(const var_type& argument, var_type& increment) const
     {
     }
 };
 
-///@brief Специализация для систем второго порядка, одно ограничение
+///@brief РЎРїРµС†РёР°Р»РёР·Р°С†РёСЏ РґР»СЏ СЃРёСЃС‚РµРј РІС‚РѕСЂРѕРіРѕ РїРѕСЂСЏРґРєР°, РѕРґРЅРѕ РѕРіСЂР°РЅРёС‡РµРЅРёРµ
 template <>
 struct fixed_linear_constraints<2, 1> {
-    /// @brief Тип аргумента
+    /// @brief РўРёРї Р°СЂРіСѓРјРµРЅС‚Р°
     typedef typename fixed_system_types<2>::var_type var_type;
-    /// @brief Тип матрицы системы
+    /// @brief РўРёРї РјР°С‚СЂРёС†С‹ СЃРёСЃС‚РµРјС‹
     typedef typename fixed_system_types<2>::matrix_type matrix_type;
 
-    /// Коэффициенты a (левая часть ax <= b)
+    /// РљРѕСЌС„С„РёС†РёРµРЅС‚С‹ a (Р»РµРІР°СЏ С‡Р°СЃС‚СЊ ax <= b)
     var_type a{ std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN() };
 
-    /// Коэффициенты b (правой часть ax <= b)
+    /// РљРѕСЌС„С„РёС†РёРµРЅС‚С‹ b (РїСЂР°РІРѕР№ С‡Р°СЃС‚СЊ ax <= b)
     double b{ std::numeric_limits<double>::quiet_NaN() };
 
     /*!
-    * \brief Проверка, что приближение x не нарушает ограничения
+    * \brief РџСЂРѕРІРµСЂРєР°, С‡С‚Рѕ РїСЂРёР±Р»РёР¶РµРЅРёРµ x РЅРµ РЅР°СЂСѓС€Р°РµС‚ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
     *
-    * \param [in] x Текущее приближение
+    * \param [in] x РўРµРєСѓС‰РµРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
     */
     bool check_constraint_satisfaction(const var_type& x) const {
         if (std::isfinite(b))
@@ -650,9 +650,9 @@ struct fixed_linear_constraints<2, 1> {
     }
 
     /*!
-    * \brief Проверка, что приближение x находится на границе ограничений
+    * \brief РџСЂРѕРІРµСЂРєР°, С‡С‚Рѕ РїСЂРёР±Р»РёР¶РµРЅРёРµ x РЅР°С…РѕРґРёС‚СЃСЏ РЅР° РіСЂР°РЅРёС†Рµ РѕРіСЂР°РЅРёС‡РµРЅРёР№
     *
-    * \param [in] x Текущее приближение
+    * \param [in] x РўРµРєСѓС‰РµРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
     */
     bool check_constraint_border(const var_type& x) const {
         if (std::isfinite(b))
@@ -661,18 +661,18 @@ struct fixed_linear_constraints<2, 1> {
             return true;
     }
 
-    /// @brief На основе канонического уравления прямой отдает коэффициенты уравнения
+    /// @brief РќР° РѕСЃРЅРѕРІРµ РєР°РЅРѕРЅРёС‡РµСЃРєРѕРіРѕ СѓСЂР°РІР»РµРЅРёСЏ РїСЂСЏРјРѕР№ РѕС‚РґР°РµС‚ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ СѓСЂР°РІРЅРµРЅРёСЏ
     /// ax = b
-    /// @param p1 Первая точка
-    /// @param p2  Вторая точка
-    /// @return Пара вектор, скаляр: (a, b)
+    /// @param p1 РџРµСЂРІР°СЏ С‚РѕС‡РєР°
+    /// @param p2  Р’С‚РѕСЂР°СЏ С‚РѕС‡РєР°
+    /// @return РџР°СЂР° РІРµРєС‚РѕСЂ, СЃРєР°Р»СЏСЂ: (a, b)
     static std::pair<var_type, double> get_line_coeffs(const var_type& p1, const var_type& p2) {
         double x1 = p1[0];
         double y1 = p1[1];
         double x2 = p2[0];
         double y2 = p2[1];
 
-        // Это в виде y = kx + b
+        // Р­С‚Рѕ РІ РІРёРґРµ y = kx + b
         double k = (y2 - y1) / (x2 - x1);
         double b = y1 - k * x1;
 
@@ -681,9 +681,9 @@ struct fixed_linear_constraints<2, 1> {
         return make_pair(var_type{ -k, 1.0 }, b);
     }
 
-    /// @brief Режет по линейным ограниченями a'x <= b
-    /// @param argument Текущее значение
-    /// @param increment Приращение
+    /// @brief Р РµР¶РµС‚ РїРѕ Р»РёРЅРµР№РЅС‹Рј РѕРіСЂР°РЅРёС‡РµРЅСЏРјРё a'x <= b
+    /// @param argument РўРµРєСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ
+    /// @param increment РџСЂРёСЂР°С‰РµРЅРёРµ
     void trim(const var_type& x, var_type& dx) const
     {
         if (!std::isfinite(b))
@@ -696,7 +696,7 @@ struct fixed_linear_constraints<2, 1> {
             return;
 
         if (check_constraint_border(p1)) {
-            // Тут что-то понять можно только по рисунку
+            // РўСѓС‚ С‡С‚Рѕ-С‚Рѕ РїРѕРЅСЏС‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РїРѕ СЂРёСЃСѓРЅРєСѓ
             double k = -a[0] / a[1];
             double alpha = atan(k);
             double p = sqrt(dx[0] * dx[0] + dx[1] * dx[1]);
@@ -716,8 +716,8 @@ struct fixed_linear_constraints<2, 1> {
     }
 };
 
-/// @brief Заглушка для ограничений, не даст собраться методу Ньютона, 
-/// т.к. отсутствует метод trim
+/// @brief Р—Р°РіР»СѓС€РєР° РґР»СЏ РѕРіСЂР°РЅРёС‡РµРЅРёР№, РЅРµ РґР°СЃС‚ СЃРѕР±СЂР°С‚СЊСЃСЏ РјРµС‚РѕРґСѓ РќСЊСЋС‚РѕРЅР°, 
+/// С‚.Рє. РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РјРµС‚РѕРґ trim
 template <std::ptrdiff_t Dimension, std::ptrdiff_t Count>
 struct fixed_linear_constraints
 {
