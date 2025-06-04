@@ -19,8 +19,21 @@ VectorXd solve_quadprog_box(const SparseMatrix<double>& H, const VectorXd& f,
     const std::vector<std::pair<size_t, double>>& maximum
 )
 {
-    VectorXd b;
-    MatrixXd A;
+    VectorXd b(minimum.size() + maximum.size());
+    MatrixXd A = MatrixXd::Zero(minimum.size() + maximum.size(), f.size());
+
+    size_t row = 0;
+    for (const auto& [index, min_bound] : minimum) {
+        A(row, index) = -1;
+        b(row) = -min_bound;
+        row++;
+    }
+    for (const auto& [index, max_bound] : maximum) {
+        A(row, index) = 1;
+        b(row) = max_bound;
+        row++;
+    }
+
 
     VectorXd estimation = VectorXd::Zero(f.size());
     MatrixXd CE(estimation.size(), 0); 

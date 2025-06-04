@@ -326,7 +326,30 @@ struct fixed_solver_constraints
     > get_relative_constraints(
         const var_type& current_argument) const
     {
-        throw std::runtime_error("not impl");
+        if constexpr (Dimension == 1) {
+            throw std::runtime_error("not impl");
+        }
+        else {
+            std::vector<std::pair<size_t, double>> mins;
+            std::vector<std::pair<size_t, double>> maxs;
+            for (size_t index = 0; index < Dimension; ++index) {
+                if (std::isfinite(minimum[index])) {
+                    //x0 + dx > min   ==>   dx > min - x0;
+                    std::pair<size_t, double> min_value{ index, minimum[index] };
+                    min_value.second -= current_argument[index];
+                    mins.emplace_back(std::move(min_value));
+                }
+
+                if (std::isfinite(maximum[index])) {
+                    //x0 + dx < max   ==>   dx < max - x0;
+                    std::pair<size_t, double> max_value{ index, maximum[index] };
+                    max_value.second -= current_argument[index];
+                    maxs.emplace_back(std::move(max_value));
+                }
+            }
+            return std::make_pair(std::move(mins), std::move(maxs));
+        }
+
     }
 
     /*!
