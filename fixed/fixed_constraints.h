@@ -87,7 +87,7 @@ struct fixed_solver_constraints<-1>
     {
         return minimum.size() + maximum.size();
     }
-
+    /// @brief Формирует ограничения на приращения для текущего приближения численого метода
     std::pair<
         std::vector<std::pair<size_t, double>>,
         std::vector<std::pair<size_t, double>>
@@ -112,8 +112,6 @@ struct fixed_solver_constraints<-1>
 
         return std::make_pair(std::move(mins), std::move(maxs));
     }
-
-
     /// @brief Ограничения по минимуму и максимум для квадратичного программирования
     static std::pair<MatrixXd, VectorXd> get_inequalities_constraints_vectors_dense(
         size_t argument_dimension,
@@ -130,7 +128,6 @@ struct fixed_solver_constraints<-1>
         }
         return std::make_pair(A, b);
     }
-
     /// @brief Учитывает только minimum, maximum
     std::pair<MatrixXd, VectorXd> get_inequalities_constraints_dense(const size_t argument_size) const
     {
@@ -196,6 +193,7 @@ struct fixed_solver_constraints<-1>
     }
 
 public:
+    /// @brief Формирует ограничения на приращения для текущего приближения численого метода
     std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const VectorXd& current_argument) const
     {
@@ -318,8 +316,7 @@ struct fixed_solver_constraints
     var_type minimum{ fixed_system_types<Dimension>::default_var() };
     /// Ограничение по максимуму
     var_type maximum{ fixed_system_types<Dimension>::default_var() };
-
-
+    /// @brief Формирует ограничения на приращения для текущего приближения численого метода
     std::pair<
         std::vector<std::pair<size_t, double>>,
         std::vector<std::pair<size_t, double>>
@@ -422,6 +419,7 @@ struct fixed_solver_constraints
             argument = max(argument, minimum);
         }
     }
+    /// @brief Приводит значение аргумента внутрь ограничений мин/макс
     void ensure_constraints(std::array<double, 2>& argument) const
     {
         using std::min;
@@ -436,7 +434,7 @@ struct fixed_solver_constraints
 
         }
     }
-
+    /// @brief Проверяет, есть ли переменные в текущем приближении, находящимися на ограничении
     bool has_active_constraints(const std::array<double, Dimension>& argument) const {
         for (size_t index = 0; index < Dimension; ++index) {
             if (!std::isnan(minimum[index])) {
@@ -452,6 +450,7 @@ struct fixed_solver_constraints
         }
         return false;
     }
+    /// @brief Проверяет, находится ли переменная на ограничении
     bool has_active_constraints(const double& argument) const {
         if (!std::isnan(minimum)) {
             if (std::abs(argument - minimum) < eps_constraints) {
@@ -466,9 +465,7 @@ struct fixed_solver_constraints
         return false;
     }
 
-
-
-
+    /// @brief Формирует ограничения на приращения для текущего приближения численого метода
     std::pair<SparseMatrix<double, Eigen::ColMajor>, VectorXd> get_inequalities_constraints_sparse(
         const std::array<double, Dimension>& current_argument) const
     {
