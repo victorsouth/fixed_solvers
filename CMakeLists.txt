@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.10)
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)

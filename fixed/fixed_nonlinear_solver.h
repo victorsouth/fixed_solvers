@@ -498,6 +498,9 @@ struct fixed_solver_parameters_t
     double argument_increment_norm{ 1e-4 };
     /// @brief Критерий выхода из процедуры (погрешность метода) по норме невязок
     double residuals_norm{ std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Разрешить успешный выход по невязкам, даже если алгоритм неудачно завершился 
+    /// (помогает, когда уперлись в ограничение аргумента)
+    bool residuals_norm_allow_force_success{ false };
     /// @brief Проверять векторный шага после регулировки или перед ней
     bool step_criteria_assuming_search_step{ false };
     /// @brief Действие при ошибке регулировки шага
@@ -1076,6 +1079,15 @@ public:
             {
                 result->result_code = numerical_result_code_t::NotConverged;
                 result->score = convergence_score_t::Poor;
+            }
+            else {
+                if (solver_parameters.residuals_norm_allow_force_success) {
+                    result->result_code = numerical_result_code_t::Converged;
+                    int score = std::max(
+                        static_cast<int>(result->score),
+                        static_cast<int>(convergence_score_t::Satisfactory));
+                    result->score = static_cast<convergence_score_t>(score);
+                }
             }
         }
     }
