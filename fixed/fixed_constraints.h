@@ -454,7 +454,7 @@ struct fixed_solver_constraints
 
 
         std::vector<Eigen::Triplet<double>> A;
-        vector<double> b;
+        std::vector<double> b;
 
         auto add_constraints = [&](const var_type& boundaries, double sign) {
             for (size_t var_index = 0; var_index < Dimension; ++var_index) {
