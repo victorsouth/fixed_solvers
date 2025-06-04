@@ -4,6 +4,7 @@
 using std::array;
 
 
+/// @brief Итерация рекрусии
 template<typename T, std::size_t N, int Idx = N>
 struct array_maker {
     template<typename... Ts>
@@ -12,6 +13,7 @@ struct array_maker {
     }
 };
 
+/// @brief Начало рекурсии
 template<typename T, std::size_t N>
 struct array_maker<T, N, 1> {
     template<typename... Ts>
@@ -20,6 +22,7 @@ struct array_maker<T, N, 1> {
     }
 };
 
+/// @brief Конец рекурсии
 template<typename T>
 struct array_maker<T, 0, -1> {
     template<typename... Ts>
@@ -29,7 +32,7 @@ struct array_maker<T, 0, -1> {
 };
 
 
-
+/// @brief Вычитание для векторов фиксированной размерности
 template <typename DataType, size_t Dimension>
 inline array<DataType, Dimension> operator - (
     const array<DataType, Dimension>& v1, const array<DataType, Dimension>& v2)
@@ -41,6 +44,7 @@ inline array<DataType, Dimension> operator - (
     return result;
 }
 
+/// @brief Сложение для векторов фиксированной размерности
 template <typename DataType, size_t Dimension>
 inline array<DataType, Dimension> operator + (
     const array<DataType, Dimension>& v1, const array<DataType, Dimension>& v2)
@@ -52,6 +56,7 @@ inline array<DataType, Dimension> operator + (
     return result;
 }
 
+/// @brief Сложения скаляра с вектором фиксированной размерности
 template <typename DataType, size_t Dimension>
 inline array<DataType, Dimension> operator * (
     double scalar, const array<DataType, Dimension>& v1)
