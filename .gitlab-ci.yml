@@ -1,6 +1,7 @@
 stages:
   - Static_test
   - Build
+  - Unit_Testing
 
 #Проверка кодировки файлов с расширением .m .cpp .h на соответствие UTF-8
 Unicode:
@@ -95,3 +96,22 @@ MinGW_build:
     paths:
       - pipeline/pipeline_result/build_mingw_result
       - Libs/MinGW
+
+# Запуск тестов с использованием GTest
+fs_tests:
+  stage: Unit_Testing
+  tags:
+    - docker
+  image: $DOCKER_REGISTRY/$DOCKER_REPO/gcc_cmake_boost_eigen_gtest:latest
+  script:
+    - bash pipeline/pipeline_scripts/tests_start.sh GCC fs_tests
+  needs: [GCC_build]
+  dependencies: [GCC_build]
+  allow_failure: false
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - branches.txt
+      - pipeline/pipeline_result
+      - Libs
