@@ -33,4 +33,9 @@
 /bin
 /build
 /msvc/.vs/*
+<<<<<<< HEAD
+.vs
+out
+=======
 /msvc_cmake
+>>>>>>> remotes/origin/main

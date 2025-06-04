@@ -5,6 +5,8 @@ project(fixed_solvers)
 
 set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+cmake_policy(SET CMP0012 NEW)
+
 
 find_package(Eigen3)
 
@@ -73,5 +75,7 @@ find_package(GTest REQUIRED)
 
 add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
+install(TARGETS fs_tests DESTINATION bin)
+
 
 endif()
