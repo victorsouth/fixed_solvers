@@ -150,7 +150,7 @@ public:
     virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) {
         return jacobian_sparse_numeric(x);
     }
-    virtual vector<sparse_matrix_type> jacobian_sparse_columns(const VectorXd& x) {
+    virtual std::vector<sparse_matrix_type> jacobian_sparse_columns(const VectorXd& x) {
         throw std::runtime_error("Not impl");
     }
     /// @brief Специфический критерий успешного завершения расчета

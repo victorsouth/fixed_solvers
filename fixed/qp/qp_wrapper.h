@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <tuple>
 #include <Eigen/Sparse>
@@ -7,16 +7,16 @@
 
 using Eigen::SparseMatrix;
 
-/// @brief Преобразует разреженную матрицу Eigen в формат CCS
-/// Формат CCS (он же CSC) соответствует ColMajor
-/// Если матрица RowMajor, надо ее сначала преобразовать в ColMajor
-/// https://eigen.tuxfamily.org/dox/group__TutorialSparse.html (раздел  Sparse matrix format)
-/// @param Матрица
+/// @brief РџСЂРµРѕР±СЂР°Р·СѓРµС‚ СЂР°Р·СЂРµР¶РµРЅРЅСѓСЋ РјР°С‚СЂРёС†Сѓ Eigen РІ С„РѕСЂРјР°С‚ CCS
+/// Р¤РѕСЂРјР°С‚ CCS (РѕРЅ Р¶Рµ CSC) СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ ColMajor
+/// Р•СЃР»Рё РјР°С‚СЂРёС†Р° RowMajor, РЅР°РґРѕ РµРµ СЃРЅР°С‡Р°Р»Р° РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ РІ ColMajor
+/// https://eigen.tuxfamily.org/dox/group__TutorialSparse.html (СЂР°Р·РґРµР»  Sparse matrix format)
+/// @param РњР°С‚СЂРёС†Р°
 /// @return [values; rows; col_indices]
-/// values - ненулевые элементы
-/// rows - индексы их строк
-/// col_indices - индексы начала столбцов в values и rows (отличается по размерности от этих массивов)
-/// Пример из Deepseek
+/// values - РЅРµРЅСѓР»РµРІС‹Рµ СЌР»РµРјРµРЅС‚С‹
+/// rows - РёРЅРґРµРєСЃС‹ РёС… СЃС‚СЂРѕРє
+/// col_indices - РёРЅРґРµРєСЃС‹ РЅР°С‡Р°Р»Р° СЃС‚РѕР»Р±С†РѕРІ РІ values Рё rows (РѕС‚Р»РёС‡Р°РµС‚СЃСЏ РїРѕ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё РѕС‚ СЌС‚РёС… РјР°СЃСЃРёРІРѕРІ)
+/// РџСЂРёРјРµСЂ РёР· Deepseek
 /// [2  0  3]
 /// [0  5  0]
 /// [7  0  9]
@@ -53,9 +53,9 @@ inline std::tuple<
 }
 
 
-#ifdef FIXED_CONSTRAINED_EQUATION_SOLVER
-template <typename IndexType>
-VectorXd solve_quadprog_inequalities_swift(
-    const SparseMatrix<double, ColMajor, IndexType>& H, const VectorXd& f,
-    const SparseMatrix<double, ColMajor, IndexType>& A, const VectorXd& b);
+#ifdef FIXED_USE_QP_SOLVER
+Eigen::VectorXd solve_quadprog_box(const SparseMatrix<double>& H, const Eigen::VectorXd& f,
+    const std::vector<std::pair<size_t, double>>& minimum,
+    const std::vector<std::pair<size_t, double>>& maximum
+);
 #endif

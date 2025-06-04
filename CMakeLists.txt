@@ -5,6 +5,11 @@ project(fixed_solvers)
 set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+if(MSVC)
+    add_compile_options("/MP")     # включает многопроцессорную компил€цию
+endif()
+
+
 find_package(Eigen3)
 
 set(HEADERS_LS
@@ -18,6 +23,7 @@ set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
     fixed/fixed_bisection.h
+    fixed/fixed_constraints.h
     fixed/fixed_linear_solver.h
     fixed/fixed_nonlinear_solver.h
     fixed/fixed_optimizer.h
@@ -25,7 +31,7 @@ set(HEADERS
 )
 
 if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
-    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS})
+    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS} ${HEADERS_QP})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()

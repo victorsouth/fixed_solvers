@@ -5,11 +5,35 @@
 #define _VARIADIC_MAX 10 /* for gtest */
 #include "gtest/gtest.h"
 
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
+
+#include "qp/eiquadprog.hpp"
+
+VectorXd solve_quadprog_box(const SparseMatrix<double>& H, const VectorXd& f,
+    const std::vector<std::pair<size_t, double>>& minimum,
+    const std::vector<std::pair<size_t, double>>& maximum
+)
+{
+    VectorXd b;
+    MatrixXd A;
+
+    VectorXd estimation = VectorXd::Zero(f.size());
+    MatrixXd CE(estimation.size(), 0); 
+    VectorXd ce0;
+    MatrixXd CI = -A.transpose();
+
+
+    //*result_argmin = initial_estimation;
+    double result = solve_quadprog(H, f, CE, ce0, CI, b, estimation);
+
+    return estimation;
+}
+
 
 
 int main(int argc, char **argv) {

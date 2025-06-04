@@ -1,4 +1,6 @@
 ﻿#include "gtest/gtest.h"
+
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 
@@ -73,3 +75,137 @@ TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
         ASSERT_EQ(decrements, true);
     }
 }; 
+
+
+
+
+auto prepare_ls_task_dense()
+{
+    // Решаем задачу МНК y = a + b*x
+    MatrixXd X(3, 2);
+    X << 1, 1,
+        1, 2,
+        1, 3;
+
+    VectorXd Y(3);
+    Y << 2.5, 2, 0.5;
+
+    // Решаем задачу квадратичного программирования, аналогичную МНК
+    // Обозначения по матлабу: https://www.mathworks.com/help/optim/ug/quadprog.html
+    MatrixXd H = X.transpose() * X;
+    VectorXd f = -Y.transpose() * X; // странно, что не надо умножать на 2, но ОК!
+
+    MatrixXd A(1, 2);
+    VectorXd b(1);
+    A << 1, 0;
+    b(0) = 2; // заведомо очень большое ограничение сверху на свободный член
+
+
+    return std::make_tuple(X, Y, H, f, A, b);
+}
+
+SparseMatrix<double, Eigen::ColMajor> dense_to_sparse(const MatrixXd& A) {
+    SparseMatrix<double, Eigen::ColMajor> As(A.rows(), A.cols());
+    vector<Eigen::Triplet<double>> Atriplets;
+    for (int i = 0; i < A.rows(); ++i) {
+        for (int j = 0; j < A.cols(); ++j) {
+            Atriplets.emplace_back(i, j, A(i, j));
+        }
+    }
+    As.setFromTriplets(Atriplets.begin(), Atriplets.end());
+    return As;
+}
+
+auto prepare_ls_task_sparse()
+{
+    // Решаем задачу МНК y = a + b*x
+    MatrixXd X(3, 2);
+    X << 1, 1,
+        1, 2,
+        1, 3;
+
+    VectorXd Y(3);
+    Y << 2.5, 2, 0.5;
+
+    // Решаем задачу квадратичного программирования, аналогичную МНК
+    // Обозначения по матлабу: https://www.mathworks.com/help/optim/ug/quadprog.html
+    MatrixXd H = X.transpose() * X;
+    VectorXd f = -Y.transpose() * X; // странно, что не надо умножать на 2, но ОК!
+
+    MatrixXd A(1, 2);
+    VectorXd b(1);
+    A << 1, 0;
+    b(0) = 2;
+
+    auto As = dense_to_sparse(A);
+    auto Hs = dense_to_sparse(H);
+
+    return std::make_tuple(X, Y, Hs, f, As, b);
+}
+
+
+struct simple_equation_fixed : public fixed_system_t<2> {
+    virtual std::array<double, 2> residuals(const std::array<double, 2>& x) {
+        std::array<double, 2> x0{ 4, 5 };
+        return x - x0;
+    }
+};
+
+
+struct simple_equation_var : public fixed_system_t<-1> {
+    virtual VectorXd residuals(const VectorXd& x) {
+        VectorXd x0(2);
+        x0 << 4, 5;
+        return x - x0;
+    }
+};
+
+/// @brief Проверяет способность работы fixed_solvers::newton с квадратичным программированием.
+/// Фикс размерность
+/// (оставляем здесь)
+TEST(Regression, ConstrainedEquations2)
+{
+    simple_equation_fixed eq;
+
+    fixed_solver_parameters_t<2, 0, golden_section_search> parameters;
+    parameters.step_constraint_as_optimization = true;
+    parameters.step_constraint_algorithm = step_constraint_algorithm_t::Quadprog;
+    //parameters.constraints.minimum = { {0, 7} };
+    parameters.constraints.maximum[0] = 3;
+    parameters.constraints.minimum[1] = 8;
+
+    std::array<double, 2> x0{ 0, 0 };
+    parameters.constraints.ensure_constraints(x0);
+
+    fixed_solver_result_t<2> result;
+    fixed_newton_raphson<2>::solve(eq, x0, parameters, &result, nullptr);
+
+    ASSERT_EQ(result.result_code, numerical_result_code_t::Converged);
+    ASSERT_NEAR(result.argument[0], parameters.constraints.maximum[0], 1e-8);
+    ASSERT_NEAR(result.argument[1], parameters.constraints.minimum[1], 1e-8);
+
+}
+
+/// @brief Проверяет способность работы fixed_solvers::newton с квадратичным программированием.
+/// Переменная размерность
+/// (оставляем здесь)
+TEST(Regression, ConstrainedEquations)
+{
+    simple_equation_var eq;
+
+    fixed_solver_parameters_t<-1, 0, golden_section_search> parameters;
+    parameters.step_constraint_as_optimization = true;
+    parameters.step_constraint_algorithm = step_constraint_algorithm_t::Quadprog;
+    //parameters.constraints.minimum = { {0, 7} };
+    parameters.constraints.maximum = { {0, 3} };
+
+    VectorXd initial = VectorXd::Zero(2);
+    parameters.constraints.ensure_constraints(initial);
+
+    fixed_solver_result_t<-1> result;
+    fixed_newton_raphson<-1>::solve(eq, initial, parameters, &result);
+
+
+
+}
+
