@@ -7,6 +7,7 @@ using std::array;
 /// @brief Итерация рекрусии
 template<typename T, std::size_t N, int Idx = N>
 struct array_maker {
+    /// @brief Итерация рекрусии
     template<typename... Ts>
     static std::array<T, N> make_array(const T& v, Ts...tail) {
         return array_maker<T, N, Idx - 1>::make_array(v, v, tail...);
@@ -16,6 +17,7 @@ struct array_maker {
 /// @brief Начало рекурсии
 template<typename T, std::size_t N>
 struct array_maker<T, N, 1> {
+    /// @brief Начало рекурсии
     template<typename... Ts>
     static std::array<T, N> make_array(const T& v, Ts... tail) {
         return std::array<T, N>{v, tail...};
@@ -25,6 +27,7 @@ struct array_maker<T, N, 1> {
 /// @brief Конец рекурсии
 template<typename T>
 struct array_maker<T, 0, -1> {
+    /// @brief Конец рекурсии
     template<typename... Ts>
     static std::array<T, 0> make_array(const T& v, Ts... tail) {
         return std::array<T, 0>{};

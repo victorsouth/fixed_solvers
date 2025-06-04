@@ -150,6 +150,7 @@ public:
     virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) {
         return jacobian_sparse_numeric(x);
     }
+    /// @brief Колонка разреженного якобиана
     virtual std::vector<sparse_matrix_type> jacobian_sparse_columns(const VectorXd& x) {
         throw std::runtime_error("Not impl");
     }
@@ -162,6 +163,7 @@ public:
         return false;
     }
 protected:
+    /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const VectorXd& x) {
         std::vector<Eigen::Triplet<double>> result;
         VectorXd arg = x;
@@ -212,6 +214,7 @@ public:
     virtual matrix_value jacobian_dense(const var_type& x) {
         return jacobian_dense_numeric(x);
     }
+    /// @brief Якобиан системы уравнений
     virtual sparse_matrix_type jacobian_sparse(const var_type& x) {
         return jacobian_sparse_numeric(x);
     }
@@ -227,6 +230,7 @@ public:
 protected:
     /// @brief Численный расчет плотного якобиана
     matrix_value jacobian_dense_numeric(const var_type& x);
+    /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const var_type& x) {
 
         if constexpr (Dimension > 1) {
@@ -266,26 +270,7 @@ inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
     double result = two_sided_derivative(f,  x, epsilon);
     return result;
 
-    //double e = epsilon * std::max(1.0, abs(x));
-    //function_type f_plus = residuals(x + e);
-    //function_type f_minus = residuals(x - e);
-    //function_type J = (f_plus - f_minus) / (2 * e);
-    //return J;
-
 }
-
-//template <>
-//inline vector<Eigen::Triplet<double>> fixed_system_t<1>::jacobian_sparse_numeric(const double& x)
-//{
-//    // по идее, вообще не нужна эта функция
-//    vector<Eigen::Triplet<double>> result;
-//    throw std::runtime_error("Please, implement");
-//    /*auto f = [&](double x) { return residuals(x); };
-//    double result = two_sided_derivative(f, x, epsilon);
-//    return result;*/
-//
-//}
-
 
 /// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
 /// @tparam Dimension Размерность решаемой системы уравнений
