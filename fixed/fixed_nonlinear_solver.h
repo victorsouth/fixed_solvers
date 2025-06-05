@@ -453,9 +453,7 @@ private:
     )
     {
         if constexpr (Dimension == -1) {
-
-            vector<vector<Eigen::Triplet<double>>> Js = residuals.jacobian_sparse_columns(argument);
-            const vector<Eigen::Triplet<double>>& Jcol = Js[var_index];
+            vector<Eigen::Triplet<double>> Jcol = residuals.jacobian_sparse_column(argument, var_index);
 
             SparseMatrix<double> J(current_residuals_value.size(), 1);
             J.setFromTriplets(Jcol.begin(), Jcol.end());
@@ -465,8 +463,17 @@ private:
             VectorXd var_result = svd_solver.solve(-current_residuals_value);
             return var_result(0);
         }
+        else if constexpr (Dimension > 1) {
+            function_type Jcol = residuals.jacobian_column(argument, var_index);
+            MatrixXd J = MatrixXd::Map(&Jcol[0], Dimension, 1);
+            Eigen::JacobiSVD<MatrixXd> svd_solver(
+                J, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+            VectorXd var_result = svd_solver.solve(-VectorXd::Map(&current_residuals_value[0], Dimension));
+            return var_result(0);
+        }
         else {
-            throw std::runtime_error("Not implemented");
+            throw std::runtime_error("Coordinate descent for dimension = 1 is senseless");
         }
 
 
@@ -678,7 +685,15 @@ private:
         return argument_increment_criteria;
     }
 
-
+    /// @brief 
+    /// @tparam LineSearch 
+    /// @tparam LinearConstraintsCount 
+    /// @param solver_parameters 
+    /// @param residuals 
+    /// @param result 
+    /// @param analysis 
+    /// @return Истина, если расчет надо завершать 
+    /// Успешно или наоборот, ошибка расчета, но завершать
     template <std::ptrdiff_t LinearConstraintsCount, typename LineSearch>
     static bool perform_coodinate_descent_step(
         const fixed_solver_parameters_t<Dimension, LinearConstraintsCount, LineSearch>& solver_parameters,
@@ -698,6 +713,9 @@ private:
         var_type p;
         if constexpr (Dimension == -1) {
             p = VectorXd::Zero(argument.size());
+        }
+        else if (Dimension > 1) {
+            std::for_each(p.begin(), p.end(), [](double& value) { value = 0; });
         }
 
         argument_increment_metric = 0; // обнуляем, т.к. в этой переменной накапливаем максимум по приращениям всех переменных
@@ -790,6 +808,13 @@ private:
 
         result->residuals_norm = residuals.objective_function(r);
 
+        argument_increment_criteria =
+            argument_increment_metric < solver_parameters.argument_increment_norm;
+        if (argument_increment_criteria) {
+            result->result_code = numerical_result_code_t::Converged;
+            return true;
+        }
+
         if (has_succeded_search_step == false) {
             switch (solver_parameters.line_search_fail_action)
             {
@@ -806,9 +831,7 @@ private:
         }
         else {
             result->result_code = numerical_result_code_t::InProgress;
-            argument_increment_criteria =
-                argument_increment_metric < solver_parameters.argument_increment_norm;
-            return argument_increment_criteria;
+            return false;
         }
 
     }

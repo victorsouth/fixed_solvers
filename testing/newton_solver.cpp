@@ -46,6 +46,32 @@ TEST(NewtonRaphson, HandlesConstrainedEquationsFixed)
 
 }
 
+
+/// @brief Проверяет способность работы fixed_solvers::newton с квадратичным программированием.
+/// Фиксированная размерность
+TEST(NewtonRaphson, HandlesConstrainedEquationsCoordinateDescent)
+{
+    simple_equation_fixed eq;
+
+    fixed_solver_parameters_t<2, 0, golden_section_search> parameters;
+    parameters.step_constraint_as_optimization = true;
+    parameters.step_constraint_algorithm = step_constraint_algorithm_t::CoordinateDescent;
+    parameters.constraints.maximum[0] = 3;
+    parameters.constraints.minimum[1] = 8;
+
+    std::array<double, 2> x0{ 0, 0 };
+    parameters.constraints.ensure_constraints(x0);
+
+    fixed_solver_result_t<2> result;
+    fixed_newton_raphson<2>::solve(eq, x0, parameters, &result, nullptr);
+
+    ASSERT_EQ(result.result_code, numerical_result_code_t::Converged);
+    ASSERT_NEAR(result.argument[0], parameters.constraints.maximum[0], 1e-8);
+    ASSERT_NEAR(result.argument[1], parameters.constraints.minimum[1], 1e-8);
+
+}
+
+
 /// @brief Проверяет способность работы fixed_solvers::newton с квадратичным программированием.
 TEST(NewtonRaphson, HandlesConstrainedEquationsVar)
 {

@@ -150,9 +150,20 @@ public:
     virtual sparse_matrix_type jacobian_sparse(const VectorXd& x) {
         return jacobian_sparse_numeric(x);
     }
-    /// @brief Колонка разреженного якобиана
-    virtual std::vector<sparse_matrix_type> jacobian_sparse_columns(const VectorXd& x) {
-        throw std::runtime_error("Not impl");
+    /// @brief Колонка разреженного якобиана 
+    /// Очень примитивная реализация через исходный разреженный якобиан
+    virtual sparse_matrix_type jacobian_sparse_column(const VectorXd& reduced, size_t desired_col_index) {
+        std::vector<Eigen::Triplet<double>> J = jacobian_sparse(reduced);
+        std::vector<Eigen::Triplet<double>> result;
+        for (const Eigen::Triplet<double>& triplet : J) {
+            Eigen::Triplet<double> new_triplet(triplet.row(), 0, triplet.value());
+            size_t col_index = triplet.col();
+            if (desired_col_index == col_index) {
+                result.push_back(new_triplet);
+            }
+        }
+
+        return result;
     }
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
@@ -219,6 +230,26 @@ public:
     virtual sparse_matrix_type jacobian_sparse(const var_type& x) {
         return jacobian_sparse_numeric(x);
     }
+    /// @brief Колонка разреженного якобиана 
+    virtual function_type jacobian_column(const var_type& x, size_t desired_col_index) {
+        if constexpr (Dimension == 1) {
+            throw std::runtime_error("Jacobian column for dimension = 1 is sensless");
+        }
+        else {
+            var_type arg = x;
+
+            double e = numeric_derivative_delta(arg[desired_col_index], epsilon);
+            arg[desired_col_index] = x[desired_col_index] + e;
+            function_type f_plus = residuals(arg);
+            arg[desired_col_index] = x[desired_col_index] - e;
+            function_type f_minus = residuals(arg);
+            arg[desired_col_index] = x[desired_col_index];
+
+            function_type Jcol = (f_plus - f_minus) / (2 * e);
+            return Jcol;
+        }
+    }
+
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
@@ -230,7 +261,34 @@ public:
 
 protected:
     /// @brief Численный расчет плотного якобиана
-    matrix_value jacobian_dense_numeric(const var_type& x);
+    matrix_value jacobian_dense_numeric(const var_type& x) {
+        if constexpr (Dimension == 1) {
+            auto f = [&](double x) { return residuals(x); };
+            double result = two_sided_derivative(f, x, epsilon);
+            return result;
+        }
+        else {
+            var_type arg = x;
+
+            matrix_value J;
+
+            for (int component = 0; component < x.size(); ++component) {
+                double e = numeric_derivative_delta(arg[component], epsilon);
+                arg[component] = x[component] + e;
+                function_type f_plus = residuals(arg);
+                arg[component] = x[component] - e;
+                function_type f_minus = residuals(arg);
+                arg[component] = x[component];
+
+                function_type Jcol = (f_plus - f_minus) / (2 * e);
+                for (size_t row = 0; row < static_cast<size_t>(x.size()); ++row) {
+                    J[row][component] = Jcol[row];
+                }
+            }
+            return J;
+
+        }
+    }
     /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const var_type& x) {
 
@@ -260,45 +318,6 @@ protected:
 
     }
 };
-
-/// @brief Численный расчет Якобиана методом двусторонней разности для скалярного случая
-/// @param x Текущее значение аргумента
-/// @return Значение Якобиана
-template <>
-inline double fixed_system_t<1>::jacobian_dense_numeric(const double& x)
-{
-    auto f = [&](double x) { return residuals(x); };
-    double result = two_sided_derivative(f,  x, epsilon);
-    return result;
-
-}
-
-/// @brief Численный расчет Якобиана методом двусторонней разности для векторного случая
-/// @tparam Dimension Размерность решаемой системы уравнений
-/// @param x Текущее значение аргумента
-/// @return Значение Якобиана
-template <std::ptrdiff_t Dimension>
-inline typename fixed_system_t<Dimension>::matrix_value fixed_system_t<Dimension>::jacobian_dense_numeric(const var_type& x)
-{
-    var_type arg = x;
-
-    matrix_value J;
-
-    for (int component = 0; component < x.size(); ++component) {
-        double e = numeric_derivative_delta(arg[component], epsilon);
-        arg[component] = x[component] + e;
-        function_type f_plus = residuals(arg);
-        arg[component] = x[component] - e;
-        function_type f_minus = residuals(arg);
-        arg[component] = x[component];
-
-        function_type Jcol = (f_plus - f_minus) / (2 * e);
-        for (size_t row = 0; row < static_cast<size_t>(x.size()); ++row) {
-            J[row][component] = Jcol[row];
-        }
-    }
-    return J;
-}
 
 /// @brief Расчет целевой функции для скалярного случая (сумма квадратов)
 template <>

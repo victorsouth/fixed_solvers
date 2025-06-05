@@ -94,9 +94,6 @@ struct fixed_solver_constraints<-1>
     > get_relative_constraints(
         const VectorXd& current_argument) const
     {
-        // ограничения
-        auto n = current_argument.size();
-
         std::vector<std::pair<size_t, double>> mins = this->minimum;
         std::vector<std::pair<size_t, double>> maxs = this->maximum;
 
