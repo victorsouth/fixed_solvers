@@ -487,6 +487,10 @@ private:
     {
 
         if constexpr (Dimension == -1) {
+#ifndef FIXED_USE_QP_SOLVER
+            throw std::runtime_error("Compiled without QP support");
+#endif
+#ifdef FIXED_USE_QP_SOLVER
             vector<Eigen::Triplet<double>> J_triplets = residuals.jacobian_sparse(argument);
 
             SparseMatrix<double> J(argument.size(), argument.size());
@@ -499,6 +503,7 @@ private:
 
             VectorXd result = solve_quadprog_box(H, f, min, max);
             return result;
+#endif
         }
         else if constexpr (Dimension != 1) {
 #ifndef FIXED_USE_QP_SOLVER
