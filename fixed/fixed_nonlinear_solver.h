@@ -719,7 +719,7 @@ private:
         if constexpr (Dimension == -1) {
             p = VectorXd::Zero(argument.size());
         }
-        else if (Dimension > 1) {
+        else if constexpr (Dimension > 1) {
             std::for_each(p.begin(), p.end(), [](double& value) { value = 0; });
         }
 
