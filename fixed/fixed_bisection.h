@@ -141,7 +141,10 @@ private:
     /// @param x2 Верхняя граница диапазона поиска
     /// @return Истина, если диапазон настолько узок, что попал в машинный эпсилон - дальше улучшить не выйдет
     static bool is_within_machine_epsilon(double x1, double x2) {
-        return std::abs(x1 - x2) <= std::max(std::abs(x2), std::abs(x1)) * std::numeric_limits<double>::epsilon();
+        using std::max;
+        return 
+            std::abs(x1 - x2) <= 
+            max(std::abs(x2), std::abs(x1)) * std::numeric_limits<double>::epsilon();
     }
 
     /// \brief выдаёт следующее приближение аргумента в зависимости от типа расчета solver_parameters.solution_type

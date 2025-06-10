@@ -11,11 +11,11 @@ protected:
     double epsilon{ 1e-6 };
 public:
     /// @brief Тип аргумента
-    typedef VectorXd argument_type;
+    typedef Eigen::VectorXd argument_type;
     /// @brief Тип невязок
-    typedef VectorXd residuals_type;
+    typedef Eigen::VectorXd residuals_type;
     /// @brief Тип матрицы (для якобиана)
-    typedef MatrixXd matrix_type;
+    typedef Eigen::MatrixXd matrix_type;
 
 public:
     /// @brief Расчет целевой функции по невязкам (без вызова residuals)
@@ -37,12 +37,13 @@ public:
     /// @brief Численный расчет якобиана
     matrix_type jacobian_dense_numeric(const argument_type& x)
     {
+        using std::max;
         argument_type arg = x;
 
         matrix_type J;
 
         for (int arg_index = 0; arg_index < x.size(); ++arg_index) {
-            double e = epsilon * std::max(1.0, abs(arg[arg_index]));
+            double e = epsilon * max(1.0, abs(arg[arg_index]));
             arg[arg_index] = x[arg_index] + e;
             residuals_type f_plus = residuals(arg);
             arg[arg_index] = x[arg_index] - e;
@@ -81,8 +82,8 @@ class rosenbrock_function_t : public fixed_least_squares_function_t
 {
 public:
     /// @brief Невязки r = (x1 - 2)^2 + (x2 - 1)^2 
-    VectorXd residuals(const VectorXd& x) {
-        VectorXd result(2);
+    Eigen::VectorXd residuals(const Eigen::VectorXd& x) {
+        Eigen::VectorXd result(2);
         result[0] = 10 * (x(1) - x(0) * x(0));
         result[1] = 1 - x(0);
         return result;
@@ -94,11 +95,11 @@ public:
 class fixed_optimize_gauss_newton {
 public:
     /// @brief Тип аргумента
-    typedef VectorXd argument_type;
+    typedef Eigen::VectorXd argument_type;
     /// @brief Тип невязок
-    typedef VectorXd residuals_type;
+    typedef Eigen::VectorXd residuals_type;
     /// @brief Тип матрицы (для якобиана)
-    typedef MatrixXd matrix_type;
+    typedef Eigen::MatrixXd matrix_type;
 private:
     /// @brief Проверка значения на Nan/infinite для скалярного случая
     /// @param value Проверяемое значение
@@ -193,14 +194,14 @@ public:
         }
 
         result->argument = initial_argument;
-        VectorXd& argument = result->argument;
-        VectorXd& r = result->residuals;
+        Eigen::VectorXd& argument = result->argument;
+        Eigen::VectorXd& r = result->residuals;
 
         if (analysis != nullptr && solver_parameters.analysis.argument_history) {
             analysis->argument_history.push_back(argument);
         }
 
-        VectorXd argument_increment, search_direction;
+        Eigen::VectorXd argument_increment, search_direction;
 
         r = function.residuals(argument);
         result->residuals_norm = function.objective_function(r);
@@ -216,25 +217,25 @@ public:
 
         for (size_t iteration = 0; iteration < solver_parameters.iteration_count; ++iteration)
         {
-            MatrixXd J = function.jacobian_dense(argument);
+            Eigen::MatrixXd J = function.jacobian_dense(argument);
 
             /*       if (solver_parameters.optimize_quadprog) {
                        // для сравнения
-                       JacobiSVD<MatrixXd> svd_solver(J, ComputeThinU | ComputeThinV);
-                       VectorXd search_direction_unconstrained = svd_solver.solve(-r);
+                       JacobiSVD<Eigen::MatrixXd> svd_solver(J, ComputeThinU | ComputeThinV);
+                       Eigen::VectorXd search_direction_unconstrained = svd_solver.solve(-r);
                        callback.after_search_direction(iteration, &argument, &r, &Jsparse, &search_direction_unconstrained);
 
-                       MatrixXd H = J.transpose() * J;
-                       VectorXd f = r.transpose() * J;
+                       Eigen::MatrixXd H = J.transpose() * J;
+                       Eigen::VectorXd f = r.transpose() * J;
 
-                       MatrixXd A;  VectorXd b;
+                       Eigen::MatrixXd A;  Eigen::VectorXd b;
                        solver_parameters.constraints.get_inequalities_constraints(argument, &A, &b);
 
                        // см. формулы в "Идентификация - quadprog.docx"
-                       MatrixXd A_increment = A;
-                       VectorXd b_increment = -A * argument + b;
+                       Eigen::MatrixXd A_increment = A;
+                       Eigen::VectorXd b_increment = -A * argument + b;
                        solve_quadprog_inequalities(H, f, A_increment, b_increment,
-                           VectorXd::Zero(argument.size()), &search_direction);
+                           Eigen::VectorXd::Zero(argument.size()), &search_direction);
 
                        trim_increment(solver_parameters.constraints.boundaries, search_direction);
                        trim_increment_relative(solver_parameters.constraints.relative_boundaries, search_direction);
@@ -249,7 +250,7 @@ public:
                 // линеаризованная задача МНК выглядит так: ||r(x0) + J(x0)dx|| -> min по dx
                 // Алгоритм JacobiSVD подразумевает задачу  ||Y - Ax|| -> min по x
                 // В итоге, либо передавать -J, либо -r. Последнее вычислительно быстрее
-                Eigen::JacobiSVD<MatrixXd> svd_solver(J, Eigen::ComputeThinU | Eigen::ComputeThinV);
+                Eigen::JacobiSVD<Eigen::MatrixXd> svd_solver(J, Eigen::ComputeThinU | Eigen::ComputeThinV);
                 search_direction = svd_solver.solve(-r);
 
                 //trim_increment_min(solver_parameters.constraints.minimum, argument, search_direction);
@@ -307,7 +308,7 @@ public:
 /// @param initial Начальное приближение
 /// @return Результат оптимизации
 template <typename ResidualFunction>
-inline VectorXd optimize_gauss_newton(ResidualFunction& function, const VectorXd& initial)
+inline Eigen::VectorXd optimize_gauss_newton(ResidualFunction& function, const Eigen::VectorXd& initial)
 {
     fixed_solver_parameters_t<-1, 0, golden_section_search> parameters;
     fixed_solver_result_t<-1> result;
