@@ -1,4 +1,6 @@
 ﻿#include "gtest/gtest.h"
+
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 
@@ -9,15 +11,15 @@ TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
     class simple_sum_of_squares_function : public fixed_least_squares_function_t
     {
     public:
-        VectorXd residuals(const VectorXd& x) {
-            VectorXd result(2);
+        Eigen::VectorXd residuals(const Eigen::VectorXd& x) {
+            Eigen::VectorXd result(2);
             result[0] = x(0) - 2.0;
             result[1] = x(1) - 1.0;
             return result;
         }
     };
 
-    VectorXd initial = VectorXd::Zero(2);
+    Eigen::VectorXd initial = Eigen::VectorXd::Zero(2);
     simple_sum_of_squares_function function;
 
     fixed_optimizer_parameters_t parameters;
@@ -34,7 +36,7 @@ TEST(OptimizeGaussNewton, ConvergesSimpleFunction)
 /// @brief Проверяет сходимость к верному результату для функции Розенброка
 TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
 {
-    VectorXd initial = VectorXd::Zero(2);
+    Eigen::VectorXd initial = Eigen::VectorXd::Zero(2);
     rosenbrock_function_t function;
 
     fixed_optimizer_parameters_t parameters;
@@ -50,7 +52,7 @@ TEST(OptimizeGaussNewton, ConvergesRosenbrokFunction)
 /// Проверяется снижение целевой функции на каждом шаге расчета
 TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
 {
-    VectorXd initial = VectorXd::Zero(2);
+    Eigen::VectorXd initial = Eigen::VectorXd::Zero(2);
     rosenbrock_function_t function;
 
     fixed_optimizer_parameters_t parameters;
@@ -64,7 +66,7 @@ TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
     fixed_optimize_gauss_newton::optimize(function, initial, parameters, &result, &analysis);
     ASSERT_EQ(result.result_code, numerical_result_code_t::Converged);
 
-    vector<double> learning_curve = analysis.get_learning_curve();
+    std::vector<double> learning_curve = analysis.get_learning_curve();
 
     ASSERT_EQ(learning_curve.empty(), false);
 
@@ -73,3 +75,5 @@ TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
         ASSERT_EQ(decrements, true);
     }
 }; 
+
+

@@ -8,16 +8,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 cmake_policy(SET CMP0012 NEW)
 
 
+if(MSVC)
+    add_compile_options("/MP")     # включает многопроцессорную компил€цию
+endif()
+
+
 find_package(Eigen3)
 
 set(HEADERS_LS
     fixed/line_search/divider.h
     fixed/line_search/golden_section.h
 )
+set(HEADERS_QP
+    fixed/qp/qp_wrapper.h
+)
 set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
     fixed/fixed_bisection.h
+    fixed/fixed_constraints.h
     fixed/fixed_linear_solver.h
     fixed/fixed_nonlinear_solver.h
     fixed/fixed_optimizer.h
@@ -25,7 +34,7 @@ set(HEADERS
 )
 
 if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
-    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS})
+    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS} ${HEADERS_QP})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
@@ -64,6 +73,7 @@ install(FILES
 
 install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
+install(FILES ${HEADERS_QP} DESTINATION include/fixed_solvers/fixed/qp)
 endif()
 
 option(FIXED_SOLVERS_BUILD_TESTS "" OF)
@@ -73,7 +83,7 @@ if(FIXED_SOLVERS_BUILD_TESTS)
 find_package(Threads)
 find_package(GTest REQUIRED)
 
-add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp)
+add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp testing/newton_solver.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
 install(TARGETS fs_tests DESTINATION bin)
 
