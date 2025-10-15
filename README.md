@@ -156,5 +156,5 @@ fixed_newton_raphson<2>::solve_dense(test, { 0, 0 }, parameters, & result);
 </center><h2>Сборка</h2></center>
 </div>
 
-Для работы с данной бибилиотекой необходимо собрать её при помощи CMake. Инструкция для сборки под MSVC находится по пути(msvc_cmake/readme.txt)
+Для работы с данной бибилиотекой необходимо собрать её при помощи CMake. Инструкция для сборки под MSVC находится по пути [msvc_cmake/readme.txt](msvc_cmake/readme.txt)
 
