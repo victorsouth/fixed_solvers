@@ -11,6 +11,8 @@
 */
 
 #pragma once
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include "line_search/golden_section.h"
 #include "line_search/divider.h"
@@ -453,7 +455,8 @@ private:
             J.setFromTriplets(Jcol.begin(), Jcol.end());
 
             Eigen::JacobiSVD<Eigen::MatrixXd> svd_solver(
-                J, Eigen::ComputeThinU | Eigen::ComputeThinV);
+                Eigen::MatrixXd(J), Eigen::ComputeThinU | Eigen::ComputeThinV);
+
             Eigen::VectorXd var_result = svd_solver.solve(-current_residuals_value);
             return var_result(0);
         }
