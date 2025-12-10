@@ -25,9 +25,9 @@ cmake --install . --config Debug
 - Eigen Release
 - Gtest Release
 
-При всех собранных зависимостях используем типовую команду (запускать из fixed_solvers/msvc_cmake)
+При всех собранных зависимостях используем команду (запускать из fixed_solvers/msvc_cmake)
 
-cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/googletest-distribution"  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_BUILD_TYPE=Release
+cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/googletest-distribution"  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_BUILD_TYPE=Release -DFIXED_SOLVERS_BUILD_TESTS=ON
 
 В папке fixed_solvers/msvc_cmake будет создано решение MSVC (.sln). Его открываем, работаем с ним как обычно.
 
