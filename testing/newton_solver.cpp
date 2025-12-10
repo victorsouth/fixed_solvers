@@ -95,3 +95,42 @@ TEST(NewtonRaphson, HandlesConstrainedEquationsVar)
 
 }
 
+/// @brief Простое кубическое уравнение
+struct cubic_equation_fixed : public fixed_system_t<1> {
+    /// @brief Невязки
+    virtual double residuals(const double& x) override {
+        double x0 = 3;
+        double r = std::pow(x - x0, 3.0);
+        return r;
+    }
+    /// @brief Переопределяем целевую функцию, чтобы был модуль невязок
+    virtual double objective_function(const double& r) const override {
+        return std::abs(r);
+    }
+};
+
+/// @brief Проверят способность учесть ограничения по точности по невязке
+TEST(NewtonRaphson, HandlesResidualsNorm) {
+
+    // Arrange
+    cubic_equation_fixed equation;
+
+    fixed_solver_parameters_t<1, 0, golden_section_search> parameters;
+    parameters.residuals_norm = 1.5; // допускаем невязку целевой функции до 1.5
+    parameters.residuals_norm_allow_early_exit = true;
+
+    // Act
+    // начальное приближение берем далеко от решения x = 3.0, чтобы изначально была невязка
+    double initial_x = 10; 
+    fixed_solver_result_t<1> result;
+    fixed_newton_raphson<1>::solve(equation, initial_x, parameters, &result);
+
+    // Assert - проверяем, что процесс сошелся, но невязкам, а не по приращению аргумента
+    double norm = equation(result.argument);
+    ASSERT_LE(norm, parameters.residuals_norm); // невязки действительно не превышают
+    ASSERT_EQ(result.result_code, numerical_result_code_t::Converged); // сошелся
+    ASSERT_FALSE(result.argument_increment_criteria); // критерий приращения не удовлетоврен
+    ASSERT_TRUE(result.residuals_norm_criteria); // критерий по невязке удовлетворен
+    
+
+}

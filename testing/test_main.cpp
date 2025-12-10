@@ -52,7 +52,9 @@ Eigen::VectorXd solve_quadprog_box(const Eigen::SparseMatrix<double>& H, const E
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 #ifdef _WIN32
+#ifndef __MINGW32__
     std::wcout.imbue(std::locale("rus_rus.866"));
+#endif
 #endif
 int res= RUN_ALL_TESTS();
     return res;
