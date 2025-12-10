@@ -10,6 +10,8 @@ cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/
 
 В папке fixed_solvers/msvc_cmake будет создано решение MSVC (.sln). Его открываем, работаем с ним как обычно.
 
+Если в момент выполнения "cmake -G" отсутствует сборка GoogleTest в release-конфигурации, то graph_solvers подтянет зависимость gtestd.lib и далее при линковке будет ошибка несовместимости graph_solvers release и gtest debug
+
 Для установки с целью использования в другом зависимом проекте (pde_solvers и др.):
 
 cmake --build . --config Debug -j 8
@@ -23,9 +25,9 @@ cmake --install . --config Debug
 - Eigen Release
 - Gtest Release
 
-При всех собранных зависимостях используем типовую команду (запускать из fixed_solvers/msvc_cmake)
+При всех собранных зависимостях используем команду (запускать из fixed_solvers/msvc_cmake)
 
-cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/googletest-distribution"  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_BUILD_TYPE=Release
+cmake .. -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files (x86)/googletest-distribution"  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_BUILD_TYPE=Release -DFIXED_SOLVERS_BUILD_TESTS=ON
 
 В папке fixed_solvers/msvc_cmake будет создано решение MSVC (.sln). Его открываем, работаем с ним как обычно.
 

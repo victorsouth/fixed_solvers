@@ -72,13 +72,16 @@ struct fixed_solver_parameters_t
     size_t iteration_count{ 100 };
     /// @brief Критерий выхода из процедуры (погрешность метода) по приращению аргумента 
     double argument_increment_norm{ 1e-4 };
+    /// @brief Проверять векторный шаг после регулировки или перед ней
+    bool step_criteria_assuming_search_step{ false };
+    // TODO: Плохая логика опций невязок. Переработать в проектах, использующих критерий по невязке
     /// @brief Критерий выхода из процедуры (погрешность метода) по норме невязок
     double residuals_norm{ std::numeric_limits<double>::quiet_NaN() };
+    /// @brief Использовать критерий невязок для раннего выхода (если false - проверка только в конце)
+    bool residuals_norm_allow_early_exit{ false };
     /// @brief Разрешить успешный выход по невязкам, даже если алгоритм неудачно завершился 
     /// (помогает, когда уперлись в ограничение аргумента)
     bool residuals_norm_allow_force_success{ false };
-    /// @brief Проверять векторный шага после регулировки или перед ней
-    bool step_criteria_assuming_search_step{ false };
 };
 
 /// @brief Результат расчета Ньютона - Рафсона
@@ -226,7 +229,8 @@ constexpr double small_step_threshold{ 0.1 };
 
 
 
-/// @brief Результат расчета численного метода
+/// @brief Результат расчета численного метода. 
+/// Инициализируется значениями, соответствующими состоянию ДО запуска численного метода
 template <std::ptrdiff_t Dimension>
 struct fixed_solver_result_t {
     /// @brief Тип аргумента
@@ -246,6 +250,9 @@ struct fixed_solver_result_t {
     function_type residuals{ fixed_system_types<Dimension>::default_var() };
     /// @brief Норма остаточной невязки по окончании численного метода
     double residuals_norm{0};
+    /// @brief Показывает, что достигнуто минимальное приращение спуска
+    bool residuals_norm_criteria{ false };
+
     /// @brief Искомый аргумент по окончании численного метода
     var_type argument{ fixed_system_types<Dimension>::default_var()};
     /// @brief Количество выполненных итераций
@@ -665,6 +672,15 @@ private:
             r = residuals.residuals(argument); // для отладки
             result->result_code = numerical_result_code_t::NumericalNanValues;
             return true;
+        }
+        if (solver_parameters.residuals_norm_allow_early_exit && 
+            std::isfinite(solver_parameters.residuals_norm)) 
+        {
+            if (result->residuals_norm < solver_parameters.residuals_norm) {
+                result->residuals_norm_criteria = true;
+                result->result_code = numerical_result_code_t::Converged;
+                return true;
+            }
         }
 
         bool custom_criteria = residuals.custom_success_criteria(r, argument);

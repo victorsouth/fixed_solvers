@@ -69,7 +69,6 @@ TEST(OptimizeGaussNewton, PerformsLearningCurveAnalysis)
     std::vector<double> learning_curve = analysis.get_learning_curve();
 
     ASSERT_EQ(learning_curve.empty(), false);
-
     for (size_t index = 1; index < learning_curve.size(); ++index) {
         bool decrements = learning_curve[index] < learning_curve[index - 1];
         ASSERT_EQ(decrements, true);

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+п»їcmake_minimum_required(VERSION 3.10)
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)
@@ -9,9 +9,11 @@ cmake_policy(SET CMP0012 NEW)
 
 
 if(MSVC)
-    add_compile_options("/MP")     # включает многопроцессорную компиляцию
+    add_compile_options("/MP")     # РІРєР»СЋС‡Р°РµС‚ РјРЅРѕРіРѕРїСЂРѕС†РµСЃСЃРѕСЂРЅСѓСЋ РєРѕРјРїРёР»СЏС†РёСЋ
 endif()
-
+if(MINGW)
+    add_compile_options("-Wa,-mbig-obj")
+endif()
 
 find_package(Eigen3)
 
