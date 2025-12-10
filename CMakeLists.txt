@@ -11,7 +11,7 @@ cmake_policy(SET CMP0012 NEW)
 if(MSVC)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
 endif()
-if (MINGW)
+if(MINGW)
     add_compile_options("-Wa,-mbig-obj")
 endif()
 
