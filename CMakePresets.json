@@ -20,7 +20,7 @@
             "name": "Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)",
             "displayName": "Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)",
             "description": "Using compilers: C = C:\\msys64\\ucrt64\\bin\\clang.exe, CXX = C:\\msys64\\ucrt64\\bin\\clang++.exe",
-            "generator": "MinGW Makefiles",
+            "generator": "Ninja",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
