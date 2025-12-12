@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Test LLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+			"preLaunchTask": "CMake: Build Clang",
+            "setupCommands": []
+        },
+        {
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
