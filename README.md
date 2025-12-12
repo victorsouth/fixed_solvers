@@ -17,6 +17,9 @@
 
  Для работы с данной бибилиотекой необходимо собрать её при помощи CMake. Инструкция для сборки под MSVC находится по пути [msvc_cmake/readme.txt](msvc_cmake/readme.txt)
 
+ Дополнительно для работы Eigen pretty printer нужно разместить скрипты из `eigen\debug\gdb` по пути
+ `C:\msys64\ucrt64\bin\eigen-pretty-printers`
+
 ## Назначение библиотеки
 
 ### Метод Ньютона - Рафсона
