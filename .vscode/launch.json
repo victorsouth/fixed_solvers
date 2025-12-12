@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Test LLDB",
+            "name": "(lldb + clang) Launch",
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
@@ -15,7 +15,7 @@
             "setupCommands": []
         },
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb + clang) Launch",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
@@ -46,7 +46,7 @@
             ]
         },
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb + gcc) Launch",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/out/build/GCC 15.2.0 x86_64-w64-mingw32/fs_tests.exe",
