@@ -5,7 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Clang",
+            "name": "(lldb + clang) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+			"preLaunchTask": "CMake: Build Clang",
+            "setupCommands": []
+        },
+        {
+            "name": "(gdb + clang) Launch",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
@@ -36,7 +46,7 @@
             ]
         },
         {
-            "name": "(gdb) GCC",
+            "name": "(gdb + gcc) Launch",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/out/build/GCC 15.2.0 x86_64-w64-mingw32/fs_tests.exe",
