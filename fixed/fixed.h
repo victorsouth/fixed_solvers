@@ -11,6 +11,7 @@
 
 #include "helpers/math_helpers.h"
 #include "helpers/string_helpers.h"
+#include "helpers/ranged_functions.h"
 
 namespace fixed_solvers {
 ;
