@@ -26,6 +26,7 @@ set(HEADERS_QP
 )
 set(HEADERS_HELPERS
     fixed/helpers/math_helpers.h
+    fixed/helpers/string_helpers.h
 )
 set(HEADERS
     fixed/array_ext.h
