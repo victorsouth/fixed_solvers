@@ -24,6 +24,9 @@ set(HEADERS_LS
 set(HEADERS_QP
     fixed/qp/qp_wrapper.h
 )
+set(HEADERS_HELPERS
+    fixed/helpers/math_helpers.h
+)
 set(HEADERS
     fixed/array_ext.h
     fixed/fixed.h
@@ -36,7 +39,7 @@ set(HEADERS
 )
 
 if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
-    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS} ${HEADERS_QP})
+    add_library(${PROJECT_NAME} INTERFACE ${HEADERS} ${HEADERS_LS} ${HEADERS_QP} ${HEADERS_HELPERS})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
@@ -76,6 +79,7 @@ install(FILES
 install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
 install(FILES ${HEADERS_QP} DESTINATION include/fixed_solvers/fixed/qp)
+install(FILES ${HEADERS_HELPERS} DESTINATION include/fixed_solvers/fixed/helpers)
 endif()
 
 option(FIXED_SOLVERS_BUILD_TESTS "" OF)
