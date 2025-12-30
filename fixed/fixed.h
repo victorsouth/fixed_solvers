@@ -6,6 +6,13 @@
 #define _USE_MATH_DEFINES // подключить константы
 #include <cmath>
 #include <numeric>
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+#include <utility>
+#include <cstddef>
+#include <limits>
+#include <iterator>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
