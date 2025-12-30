@@ -3,6 +3,11 @@
 #include <string>
 #include <locale>
 #include <algorithm>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <boost/type_index.hpp>
 
 namespace fixed_solvers {
 
@@ -111,6 +116,60 @@ inline void string_replace(std::string& str, const std::string& from, const std:
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
+}
+
+/// @brief Получает имя класса из типа объекта
+/// @param t объект для определения типа
+/// @return строка с именем класса
+#ifdef _MSC_VER
+template<typename T>
+inline std::string __CLASS__(const T& t) {
+    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
+    auto ppos = str.find_last_of(" \t");
+    if (ppos != str.npos)str = str.substr(ppos + 1);
+    return str;
+}
+#else
+#undef __CLASS__  // Убираем макрос, если он был определен ранее
+template<typename T>
+inline std::string __CLASS__(const T& t) {
+    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
+    return str;
+}
+#endif
+
+/// @brief Сохраняет вектор в поток
+/// @param os выходной поток
+/// @param v вектор для сохранения
+/// @return ссылка на поток
+template <typename T>
+inline std::ostream& save_vector(std::ostream& os, const std::vector<T>& v) {
+    os << v.size() << '\n';
+    for (auto val : v) {
+        os << val << '\n';
+    }
+    return os << '\n';
+}
+
+/// @brief Загружает вектор из потока
+/// @param is входной поток
+/// @param v вектор для загрузки
+/// @return ссылка на поток
+template <typename T>
+inline std::istream& load_vector(std::istream& is, std::vector<T>& v) {
+    size_t v_size;
+    is >> v_size;
+    if (is.fail()) {
+        throw std::runtime_error("bad v_size");
+    }
+    v.resize(v_size);
+    for (auto& val : v) {
+        is >> val;
+    }
+    if (is.fail()) {
+        throw std::runtime_error("v read error");
+    }
+    return is;
 }
 
 

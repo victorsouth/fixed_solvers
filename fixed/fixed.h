@@ -9,8 +9,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-#include "fixed/helpers/math_helpers.h"
-#include "fixed/helpers/string_helpers.h"
+#include "helpers/math_helpers.h"
+#include "helpers/string_helpers.h"
 
 namespace fixed_solvers {
 ;
