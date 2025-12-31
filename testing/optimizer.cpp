@@ -1,8 +1,7 @@
-﻿#include "gtest/gtest.h"
-
-#define FIXED_USE_QP_SOLVER
+﻿#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
+#include "gtest/gtest.h"
 
 /// @brief Проверяет сходимость простой функции
 /// J(x1, x2) = (x1 - 2)^2 + (x2 - 1)^2 

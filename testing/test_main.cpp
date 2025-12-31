@@ -1,12 +1,13 @@
-﻿
+﻿#define FIXED_USE_QP_SOLVER
+#include <fixed/fixed.h>
+
+
 #define GTEST_BREAK_ON_FAILURE 1
 #define GTEST_CATCH_EXCEPTIONS 0
 #define GTEST_HAS_SEH 0
 #define _VARIADIC_MAX 10 /* for gtest */
 #include "gtest/gtest.h"
 
-#define FIXED_USE_QP_SOLVER
-#include <fixed/fixed.h>
 
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"

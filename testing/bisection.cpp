@@ -1,7 +1,9 @@
 
+#include <fixed/fixed_bisection.h>
+
+
 #define FIXED_USE_QP_SOLVER
 #include "gtest/gtest.h"
-#include <fixed/fixed_bisection.h>
 
 
 /// \brief линейное уравнение

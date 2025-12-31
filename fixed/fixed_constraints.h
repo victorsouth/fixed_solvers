@@ -160,7 +160,7 @@ struct fixed_solver_constraints<-1>
         double factor = 1;
         for (const auto& kvp : relative_boundary)
         {
-            int sign = sgn(increment(kvp.first));
+            int sign = fixed_solvers::sgn(increment(kvp.first));
             if (sign * increment(kvp.first) > kvp.second) {
                 double current_factor = sign * increment(kvp.first) / kvp.second;
                 factor = max(factor, current_factor);
