@@ -12,10 +12,6 @@
 
 #pragma once
 
-#include <numeric>
-
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 
 /// @brief Расчет приращения для численного расчета производной на основе относительного отклонения

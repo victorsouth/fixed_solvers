@@ -3,21 +3,24 @@
 #ifndef __FIXED_H__
 #define __FIXED_H__
 
-#ifndef __COMMON_CUDA__
-
-/// @brief Возвращает знак числа
-/// @return для отрицательных -1, для положительных +1
-template <typename T> inline int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
-/// @brief Возведение вещественной переменной в квадрат
-inline double sqr(double x) {
-    return x * x;
-}
-#endif
-
+#define _USE_MATH_DEFINES // подключить константы
+#include <cmath>
+#include <numeric>
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+#include <utility>
+#include <cstddef>
+#include <limits>
+#include <iterator>
 #include <iomanip>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+
+#include "helpers/math_helpers.h"
+#include "helpers/string_helpers.h"
+#include "helpers/ranged_functions.h"
+
 #include "fixed/qp/qp_wrapper.h"
 #include "fixed/array_ext.h"
 #include "fixed/fixed_system.h"

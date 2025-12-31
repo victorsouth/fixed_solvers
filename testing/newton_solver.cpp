@@ -1,7 +1,8 @@
-﻿#include "gtest/gtest.h"
-
-#define FIXED_USE_QP_SOLVER
+﻿#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
+
+#include "gtest/gtest.h"
+
 
 /// @brief Простейшая система уравнений 2x2 фиксированной размерности
 struct simple_equation_fixed : public fixed_system_t<2> {
