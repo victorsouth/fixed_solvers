@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <limits>
 #include <iterator>
+#include <iomanip>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
@@ -20,12 +21,6 @@
 #include "helpers/string_helpers.h"
 #include "helpers/ranged_functions.h"
 
-namespace fixed_solvers {
-;
-
-}
-
-#include <iomanip>
 #include "fixed/qp/qp_wrapper.h"
 #include "fixed/array_ext.h"
 #include "fixed/fixed_system.h"

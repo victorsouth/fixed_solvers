@@ -121,22 +121,17 @@ inline void string_replace(std::string& str, const std::string& from, const std:
 /// @brief Получает имя класса из типа объекта
 /// @param t объект для определения типа
 /// @return строка с именем класса
+template<typename T>
+inline std::string get_class_as_string(const T& t) {
+    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
 #ifdef _MSC_VER
-template<typename T>
-inline std::string __CLASS__(const T& t) {
-    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
     auto ppos = str.find_last_of(" \t");
-    if (ppos != str.npos)str = str.substr(ppos + 1);
-    return str;
-}
-#else
-#undef __CLASS__  // Убираем макрос, если он был определен ранее
-template<typename T>
-inline std::string __CLASS__(const T& t) {
-    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
-    return str;
-}
+    if (ppos != str.npos)
+        str = str.substr(ppos + 1);
 #endif
+    return str;
+}
+
 
 /// @brief Сохраняет вектор в поток
 /// @param os выходной поток
