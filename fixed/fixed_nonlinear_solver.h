@@ -598,6 +598,17 @@ private:
         double& argument_increment_metric = result->argument_increment_metric;
         bool& argument_increment_criteria = result->argument_increment_criteria;
 
+        if (solver_parameters.residuals_norm_allow_early_exit &&
+            std::isfinite(solver_parameters.residuals_norm))
+        {
+            // Полезно, если нет выхода по приращению, а при этом невязки сразу небольшие
+            if (result->residuals_norm < solver_parameters.residuals_norm) {
+                result->residuals_norm_criteria = true;
+                result->result_code = numerical_result_code_t::Converged;
+                return true;
+            }
+        }
+
         var_type p = optimization_step
             ? solve_quadprog(solver_parameters, residuals, r, argument)
             : solve_newton(residuals, r, argument);
@@ -883,12 +894,14 @@ public:
         }
 
         r = residuals.residuals(argument);
+        result->residuals_norm = residuals.objective_function(r);
         if (has_not_finite(r)) {
             r = residuals.residuals(argument); // для отладки
             result->result_code = numerical_result_code_t::NumericalNanValues;
             result->score = convergence_score_t::Error;
             return;
         }
+
 
         result->result_code = numerical_result_code_t::NotConverged;
         result->score = convergence_score_t::Excellent;
