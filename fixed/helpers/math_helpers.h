@@ -141,6 +141,21 @@ double polyval(const Coefficients& poly_coeffs, double x)
     return result;
 }
 
+/// @brief Возвращает коэффициенты полинома, полученного дифференцированием исходного полинома poly_coeffs
+template <typename Coefficients>
+Coefficients poly_differentiate(const Coefficients& poly_coeffs)
+{
+    std::vector<double> derivative(poly_coeffs.size() - 1);
+
+    for (size_t index = 0; index < derivative.size(); ++index) {
+        double k = static_cast<double>(index + 1);
+        double a = poly_coeffs[index + 1];
+
+        derivative[index] = a * k;
+    }
+    return derivative;
+}
+
 inline bool has_not_finite(const double value)
 {
     return !std::isfinite(value);
