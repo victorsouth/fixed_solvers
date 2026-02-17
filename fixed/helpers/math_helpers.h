@@ -5,6 +5,77 @@
 namespace fixed_solvers {
 ;
 
+/// @brief Булевый тип с возможностью не задавать значение
+enum class nullable_bool_t {
+    True = 0b1, False = 0b0, Undefined = 0b10
+};
+
+/// @brief Преобразование bool в nullable bool
+inline nullable_bool_t to_nullable_bool(bool value)
+{
+    return value
+        ? nullable_bool_t::True
+        : nullable_bool_t::False;
+}
+
+/// @brief Вывод в поток для nullable bool
+inline std::ostream& operator<<(std::ostream& o, nullable_bool_t x) {
+	switch (x)
+	{
+	case nullable_bool_t::True:
+		o << "True";
+		break;
+	case nullable_bool_t::False:
+		o << "False";
+		break;
+	case nullable_bool_t::Undefined:
+		o << "Undefined";
+		break;
+	default:
+		o << "unknown nullable bool value";
+		break;
+	}
+	return o;
+}
+
+
+/// @brief Вывод в widestring-поток для nullable bool
+inline std::wostream& operator<<(std::wostream& o, nullable_bool_t x) {
+	switch (x)
+	{
+	case nullable_bool_t::True:
+		o << L"True";
+		break;
+	case nullable_bool_t::False:
+		o << L"False";
+		break;
+	case nullable_bool_t::Undefined:
+		o << L"Undefined";
+		break;
+	default:
+		o << L"unknown nullable bool value";
+		break;
+	}
+	return o;
+}
+
+
+/// @brief Преобразует nullable_bool в строку
+inline std::string nullable_bool_to_str(nullable_bool_t nb) {
+    std::string str_value;
+    if (nb == nullable_bool_t::True) {
+        str_value = "True";
+    }
+    else if (nb == nullable_bool_t::False) {
+        str_value = "False";
+    }
+    else {
+        str_value = "Undefined";
+    }
+    return str_value;
+}
+
+
 template <typename T> inline int pseudo_sgn(T val) {
     return 2 * (val >= T(0)) - 1;
 }
