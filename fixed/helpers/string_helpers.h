@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <boost/type_index.hpp>
+#include <codecvt>
 
 namespace fixed_solvers {
 
@@ -29,7 +30,7 @@ inline std::wstring UTF8_to_wchar(const char* in)
         if (ch <= 0x7f)
             codepoint = ch;
         else if (ch <= 0xbf)
-            codepoint = (ch << 6) | (ch & 0x3f);
+            codepoint = (codepoint << 6) | (ch & 0x3f);
         else if (ch <= 0xdf)
             codepoint = ch & 0x1f;
         else if (ch <= 0xef)
@@ -52,6 +53,49 @@ inline std::wstring UTF8_to_wchar(const char* in)
     }
     return out;
 }
+// Source - https://stackoverflow.com/a/148766
+// Posted by Mark Ransom, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-02-11, License - CC BY-SA 4.0
+inline std::string wchar_to_UTF8(const wchar_t * in)
+{
+    std::string out;
+    unsigned int codepoint = 0;
+    for (in;  *in != 0;  ++in)
+    {
+        if (*in >= 0xd800 && *in <= 0xdbff)
+            codepoint = ((*in - 0xd800) << 10) + 0x10000;
+        else
+        {
+            if (*in >= 0xdc00 && *in <= 0xdfff)
+                codepoint |= *in - 0xdc00;
+            else
+                codepoint = *in;
+
+            if (codepoint <= 0x7f)
+                out.append(1, static_cast<char>(codepoint));
+            else if (codepoint <= 0x7ff)
+            {
+                out.append(1, static_cast<char>(0xc0 | ((codepoint >> 6) & 0x1f)));
+                out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+            }
+            else if (codepoint <= 0xffff)
+            {
+                out.append(1, static_cast<char>(0xe0 | ((codepoint >> 12) & 0x0f)));
+                out.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+                out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+            }
+            else
+            {
+                out.append(1, static_cast<char>(0xf0 | ((codepoint >> 18) & 0x07)));
+                out.append(1, static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f)));
+                out.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
+                out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
+            }
+            codepoint = 0;
+        }
+    }
+    return out;
+}
 
 
 /// @brief Преобразует стандартную строку (std::string) в широкую строку (std::wstring).
@@ -62,7 +106,7 @@ inline std::wstring UTF8_to_wchar(const char* in)
 /// @return std::wstring — преобразованная строка с символами wchar_t.
 inline std::wstring string2wide(const std::string& str)
 {
-#ifndef __GNUC__
+#ifndef __GNUC__ //мы не можем хранить имена в разных локалях. пересмотреть использование функции
     try {
         std::wstring wstr(str.size(), 0);
         std::use_facet<std::ctype<wchar_t> >(std::locale("rus_rus.1251")).widen
@@ -83,10 +127,7 @@ inline std::wstring string2wide(const std::string& str)
 
 inline std::string wide2string(const std::wstring& str)
 {
-    std::string ascii_string(str.size(), '\0');
-    std::transform(str.begin(), str.end(), ascii_string.begin(),
-        [](wchar_t s) { return static_cast<char>(s); });
-    return ascii_string;
+    return wchar_to_UTF8(str.c_str());
 }
 
 
