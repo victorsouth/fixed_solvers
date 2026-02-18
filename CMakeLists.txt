@@ -16,6 +16,7 @@ if(MINGW)
 endif()
 
 find_package(Eigen3)
+find_package(Boost REQUIRED headers)
 
 set(HEADERS_LS
     fixed/line_search/divider.h
@@ -45,7 +46,7 @@ if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
-target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen Boost::headers)
 target_include_directories(${PROJECT_NAME}
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -53,9 +54,6 @@ target_include_directories(${PROJECT_NAME}
 )
 add_library(fixed_solvers::fixed_solvers ALIAS fixed_solvers)
 
-option(FIXED_SOLVERS_INSTALL "" ON)
-
-if(FIXED_SOLVERS_INSTALL)
     include(CMakePackageConfigHelpers)
     include(GNUInstallDirs)
     install(TARGETS fixed_solvers
@@ -82,7 +80,6 @@ install(FILES ${HEADERS} DESTINATION include/fixed_solvers/fixed)
 install(FILES ${HEADERS_LS} DESTINATION include/fixed_solvers/fixed/line_search)
 install(FILES ${HEADERS_QP} DESTINATION include/fixed_solvers/fixed/qp)
 install(FILES ${HEADERS_HELPERS} DESTINATION include/fixed_solvers/fixed/helpers)
-endif()
 
 option(FIXED_SOLVERS_BUILD_TESTS "" OF)
 
