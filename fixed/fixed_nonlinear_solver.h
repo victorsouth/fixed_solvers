@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 * \file
 * \brief В данном .h файле реализован решатель Ньютона - Рафсона
 * 
@@ -35,7 +35,7 @@ struct fixed_solver_analysis_parameters_t {
     bool objective_function_history{ false };
     ///@brief Собирает значения шага в методе Ньютона-Рафсона
     bool steps{false};
-    ///@brief Выполнятся исследование целевой функции на каждом шаге
+    ///@brief Выполнятся исследование целевой функции (базовое) и пользовательское исследование на каждом шаге
     bool line_search_explore{ false };
 };
 
@@ -389,7 +389,8 @@ private:
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
 private:
-    /// @brief Расчет целевой функции при регулировке шага в диапазоне [0, 1]
+    /// @brief Расчет целевой функции (и других метрик) при регулировке шага в диапазоне [0, 1]
+    /// @details Полный перечень метрик определяется в residuals.on_line_search_sample()
     /// @param residuals Векторная функция невязок 
     /// @param argument Текущее значение аргумента
     /// @param p Значение приращения по методу Ньютона
@@ -399,17 +400,16 @@ private:
         const var_type& argument,
         const var_type& p)
     {
-        auto directed_function = [&](double step) {
-            return residuals(argument + step * p);
-            };
-
         size_t research_step_count = 100;
         std::vector<double> target_function;
-        target_function.reserve(research_step_count);
+        target_function.reserve(research_step_count + 1);
         for (size_t index = 0; index <= research_step_count; ++index) {
             double alpha = 1.0 * index / research_step_count;
-            double norm = directed_function(alpha);
+            var_type step_argument = argument + alpha * p;
+            double norm = residuals(step_argument);
             target_function.emplace_back(norm);
+            // Расширенная диагностика
+            residuals.custom_line_search_sample(alpha, step_argument);
         }
 
         return target_function;
@@ -633,6 +633,7 @@ private:
 
         // Информация о том, как изменялась целевая функция по траектории шага
         if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
+            residuals.custom_line_search_start();
             analysis->target_function.push_back(perform_step_research(residuals, argument, p));
         }
 
@@ -767,6 +768,7 @@ private:
 
             // Информация о том, как изменялась целевая функция по траектории шага
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
+                residuals.custom_line_search_start();
                 analysis->target_function.push_back(perform_step_research(residuals, argument, p));
             }
 

@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 * \file
 * \brief В данном .h файле реализовано описание систем различной
 размерности для решателя Ньютона - Рафсона
@@ -163,6 +163,14 @@ public:
     {
         return false;
     }
+    /// @brief Вызывается на каждой итеации численного метода перед исследованием траектории шага
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_start() {}
+    /// @brief Вызывается для каждой точки траектории шага
+    /// @param alpha Текущий шаг вдоль направления спуска
+    /// @param x_alpha Аргумент системы при данном значении alpha
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_sample(double alpha, const Eigen::VectorXd& x_alpha) {}
 protected:
     /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const Eigen::VectorXd& x) {
@@ -248,6 +256,14 @@ public:
     {
         return false;
     }
+    /// @brief Вызывается на каждой итерации численного метода перед исследованием траектории шага
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_start() {}
+    /// @brief Вызывается для каждой точки траектории шага
+    /// @param alpha Текущий шаг вдоль направления спуска
+    /// @param x_alpha Аргумент системы при данном значении alpha
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_sample(double alpha, const var_type& x_alpha) {}
 
 protected:
     /// @brief Численный расчет плотного якобиана

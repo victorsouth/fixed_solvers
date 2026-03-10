@@ -1,4 +1,4 @@
-﻿#define FIXED_USE_QP_SOLVER
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 #include "gtest/gtest.h"
@@ -94,6 +94,59 @@ TEST(NewtonRaphson, HandlesConstrainedEquationsVar)
     ASSERT_NEAR(result.argument(0), parameters.constraints.maximum.front().second, 1e-8);
     ASSERT_NEAR(result.residuals(1), 0.0, 1e-8);
 
+}
+
+/// @brief Простая система переменной размерности с диагностикой исследования шага
+struct diagnostic_equation_var : public fixed_system_t<-1> {
+    /// @brief Собранные значения alpha по шагам Ньютона-Рафсона
+    std::vector<std::vector<double>> alphas_per_step;
+
+    /// @brief Невязки
+    virtual Eigen::VectorXd residuals(const Eigen::VectorXd& x) override {
+        Eigen::VectorXd x0(2);
+        x0 << 1.0, -2.0;
+        return x - x0;
+    }
+
+    /// @brief Добавляет структуру под исследование на новой итерации метода
+    virtual void custom_line_search_start() override {
+        alphas_per_step.emplace_back();
+    }
+
+    /// @brief Обработка точки траектории шага - запоминает пришедший смещение alpha
+    virtual void custom_line_search_sample(double alpha, const Eigen::VectorXd& step_argument) override {
+        alphas_per_step.back().push_back(alpha);
+    }
+};
+
+/// @brief Проверяет возможность сбора базовой и пользовательской диагностики 
+/// при исследовании траектории шага метода Ньютона-Рафсона
+TEST(NewtonRaphson, HandlesLineSearchCustomDiagnostics)
+{
+    // Arrange - Создание системы с пользовательской диагностикой. Включение диагностики.
+    diagnostic_equation_var eq;
+
+    fixed_solver_parameters_t<-1, 0, golden_section_search> parameters;
+    parameters.analysis.line_search_explore = true;
+
+    Eigen::VectorXd initial = Eigen::VectorXd::Zero(2);
+
+    fixed_solver_result_t<-1> result;
+    fixed_solver_result_analysis_t<-1> analysis;
+
+    // Act - Расчет с активным флагом исследования
+    fixed_newton_raphson<-1>::solve(eq, initial, parameters, &result, &analysis);
+
+    // Arrange - должен быть хотя бы один шаг с исследованием
+    ASSERT_FALSE(analysis.target_function.empty());
+    ASSERT_FALSE(eq.alphas_per_step.empty());
+
+    // Количество шагов совпадает в общей и в кастомной диагностике
+    ASSERT_EQ(analysis.target_function.size(), eq.alphas_per_step.size());
+
+    // Для первого шага количество элементов в общей и кастомной диагностике совпадает
+    ASSERT_EQ(analysis.target_function.front().size(), eq.alphas_per_step.front().size());
+    ASSERT_GT(eq.alphas_per_step.front().size(), 0u);
 }
 
 /// @brief Простое кубическое уравнение
