@@ -135,3 +135,27 @@ TEST(NewtonRaphson, HandlesResidualsNorm) {
     
 
 }
+
+
+/// @brief Простейшая система уравнений 2x2 фиксированной размерности
+struct bad_conditioned_equation : public fixed_system_t<2> {
+    /// @brief Невязки
+    virtual std::array<double, 2> residuals(const std::array<double, 2>& x) {
+        std::array<double, 2> F;
+        F[0] = 1e9 * std::pow((x[0] - 1), 3) + std::pow((x[1] - 1), 3);
+        F[1] = std::pow((x[0] - 1), 3) + 1e-8 * std::pow((x[1] - 1), 3);
+
+        return F;
+    }
+};
+
+TEST(NewtonRaphson, BadConditioned) {
+    bad_conditioned_equation eq;
+
+    fixed_solver_parameters_t<2, 0, golden_section_search> parameters;
+
+    std::array<double, 2> x0{ 0, 0 };
+
+    fixed_solver_result_t<2> result;
+    fixed_newton_raphson<2>::solve(eq, x0, parameters, &result, nullptr);
+}
