@@ -108,14 +108,17 @@ struct diagnostic_equation_var : public fixed_system_t<-1> {
         return x - x0;
     }
 
-    /// @brief Добавляет структуру под исследование на новой итерации метода
-    virtual void custom_line_search_start() override {
+    /// @brief Пользовательское исследование траектории шага - запоминает сетку alpha
+    virtual void custom_line_research(const Eigen::VectorXd& argument, const Eigen::VectorXd& argument_increment) override {
+        (void)argument;
+        (void)argument_increment;
         alphas_per_step.emplace_back();
-    }
-
-    /// @brief Обработка точки траектории шага - запоминает пришедший смещение alpha
-    virtual void custom_line_search_sample(double alpha, const Eigen::VectorXd& step_argument) override {
-        alphas_per_step.back().push_back(alpha);
+        auto& alphas = alphas_per_step.back();
+        size_t research_step_count = 100;
+        for (size_t index = 0; index <= research_step_count; ++index) {
+            double alpha = 1.0 * index / research_step_count;
+            alphas.push_back(alpha);
+        }
     }
 };
 

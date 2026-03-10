@@ -389,8 +389,7 @@ private:
     static double argument_increment_factor(
         const var_type& argument, const var_type& argument_increment);
 private:
-    /// @brief Расчет целевой функции (и других метрик) при регулировке шага в диапазоне [0, 1]
-    /// @details Полный перечень метрик определяется в residuals.on_line_search_sample()
+    /// @brief Расчет целевой функции при регулировке шага в диапазоне [0, 1]
     /// @param residuals Векторная функция невязок 
     /// @param argument Текущее значение аргумента
     /// @param p Значение приращения по методу Ньютона
@@ -408,8 +407,6 @@ private:
             var_type step_argument = argument + alpha * p;
             double norm = residuals(step_argument);
             target_function.emplace_back(norm);
-            // Расширенная диагностика
-            residuals.custom_line_search_sample(alpha, step_argument);
         }
 
         return target_function;
@@ -633,8 +630,9 @@ private:
 
         // Информация о том, как изменялась целевая функция по траектории шага
         if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
-            residuals.custom_line_search_start();
             analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+            // Пользовательская диагностика по траектории шага (если переопределена)
+            residuals.custom_line_research(argument, p);
         }
 
         // Расчет корректироки шага с помощью Рафсона
@@ -768,8 +766,9 @@ private:
 
             // Информация о том, как изменялась целевая функция по траектории шага
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
-                residuals.custom_line_search_start();
                 analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+                // Пользовательская диагностика по траектории шага (если переопределена)
+                residuals.custom_line_research(argument, p);
             }
 
             // Расчет корректироки шага с помощью Рафсона

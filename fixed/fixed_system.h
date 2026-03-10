@@ -163,14 +163,11 @@ public:
     {
         return false;
     }
-    /// @brief Вызывается на каждой итеации численного метода перед исследованием траектории шага
+    /// @brief Пользовательское исследование траектории шага
+    /// @param argument Текущее значение аргумента
+    /// @param argument_increment Приращение аргумента по методу Ньютона-Рафсона
     /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
-    virtual void custom_line_search_start() {}
-    /// @brief Вызывается для каждой точки траектории шага
-    /// @param alpha Текущий шаг вдоль направления спуска
-    /// @param x_alpha Аргумент системы при данном значении alpha
-    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
-    virtual void custom_line_search_sample(double alpha, const Eigen::VectorXd& x_alpha) {}
+    virtual void custom_line_research(const Eigen::VectorXd& argument, const Eigen::VectorXd& argument_increment) {}
 protected:
     /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const Eigen::VectorXd& x) {
@@ -256,6 +253,11 @@ public:
     {
         return false;
     }
+    /// @brief Пользовательское исследование траектории шага (например, для расширенной диагностики)
+    /// @param argument Текущее значение аргумента
+    /// @param argument_increment Приращение аргумента по методу Ньютона-Рафсона
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_research(const var_type& argument, const var_type& argument_increment) {}
     /// @brief Вызывается на каждой итерации численного метода перед исследованием траектории шага
     /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
     virtual void custom_line_search_start() {}
