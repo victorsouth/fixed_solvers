@@ -12,6 +12,7 @@
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
+#include "test_helpers.h"
 
 #include "qp/eiquadprog.hpp"
 

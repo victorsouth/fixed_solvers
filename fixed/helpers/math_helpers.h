@@ -80,6 +80,15 @@ template <typename T> inline int pseudo_sgn(T val) {
     return 2 * (val >= T(0)) - 1;
 }
 
+/// @brief Возвращает абсолютное значение, не меньшее заданного порога epsilon
+template <typename T>
+inline T ensure_abs_epsilon_value(T value, T epsilon = static_cast<T>(1e-6)) {
+    T abs_value = std::abs(value);
+    if (abs_value >= epsilon)
+        return value;
+    return pseudo_sgn(value) * epsilon;
+}
+
 inline Eigen::VectorXd invVectorXd(const Eigen::VectorXd& _v)
 {
     Eigen::VectorXd v = _v;
