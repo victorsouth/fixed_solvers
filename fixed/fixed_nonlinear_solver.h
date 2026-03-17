@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 * \file
 * \brief В данном .h файле реализован решатель Ньютона - Рафсона
 * 
@@ -35,7 +35,7 @@ struct fixed_solver_analysis_parameters_t {
     bool objective_function_history{ false };
     ///@brief Собирает значения шага в методе Ньютона-Рафсона
     bool steps{false};
-    ///@brief Выполнятся исследование целевой функции на каждом шаге
+    ///@brief Выполнятся исследование целевой функции (базовое) и пользовательское исследование на каждом шаге
     bool line_search_explore{ false };
 };
 
@@ -399,16 +399,13 @@ private:
         const var_type& argument,
         const var_type& p)
     {
-        auto directed_function = [&](double step) {
-            return residuals(argument + step * p);
-            };
-
         size_t research_step_count = 100;
         std::vector<double> target_function;
-        target_function.reserve(research_step_count);
+        target_function.reserve(research_step_count + 1);
         for (size_t index = 0; index <= research_step_count; ++index) {
             double alpha = 1.0 * index / research_step_count;
-            double norm = directed_function(alpha);
+            var_type step_argument = argument + alpha * p;
+            double norm = residuals(step_argument);
             target_function.emplace_back(norm);
         }
 
@@ -634,6 +631,8 @@ private:
         // Информация о том, как изменялась целевая функция по траектории шага
         if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
             analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+            // Пользовательская диагностика по траектории шага (если переопределена)
+            residuals.custom_line_research(argument, p);
         }
 
         // Расчет корректироки шага с помощью Рафсона
@@ -768,6 +767,8 @@ private:
             // Информация о том, как изменялась целевая функция по траектории шага
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
                 analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+                // Пользовательская диагностика по траектории шага (если переопределена)
+                residuals.custom_line_research(argument, p);
             }
 
             // Расчет корректироки шага с помощью Рафсона
