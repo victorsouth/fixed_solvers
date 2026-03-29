@@ -158,8 +158,9 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const Eigen::VectorXd& r, const Eigen::VectorXd& x)
+    virtual bool custom_success_criteria(const Eigen::VectorXd& r, const Eigen::VectorXd& x, const Eigen::VectorXd& p)
     {
         return false;
     }
@@ -248,8 +249,9 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const var_type& r, const var_type& x)
+    virtual bool custom_success_criteria(const var_type& r, const var_type& x, const var_type& p)
     {
         return false;
     }

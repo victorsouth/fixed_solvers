@@ -610,13 +610,17 @@ private:
             ? solve_quadprog(solver_parameters, residuals, r, argument)
             : solve_newton(residuals, r, argument);
 
-        // Проверка критерия выхода по малому относительному приращению
+        
         if (solver_parameters.step_criteria_assuming_search_step == false)
         {
+            // Проверка критерия выхода по малому относительному приращению
             argument_increment_metric = argument_increment_factor(argument, p);
             argument_increment_criteria =
                 argument_increment_metric < solver_parameters.argument_increment_norm;
-            if (argument_increment_criteria) {
+            // Проверка кастомного критерия
+            bool custom_criteria = residuals.custom_success_criteria(r, argument, p);
+            
+            if (argument_increment_criteria || custom_criteria) {
                 result->result_code = numerical_result_code_t::Converged;
                 return true;
             }
@@ -693,7 +697,7 @@ private:
             }
         }
 
-        bool custom_criteria = residuals.custom_success_criteria(r, argument);
+        bool custom_criteria = residuals.custom_success_criteria(r, argument, argument_increment);
         if (custom_criteria) {
             result->result_code = numerical_result_code_t::Converged;
             return true;
@@ -816,7 +820,7 @@ private:
                 return true;
             }
 
-            bool custom_criteria = residuals.custom_success_criteria(r, argument);
+            bool custom_criteria = residuals.custom_success_criteria(r, argument, argument_increment);
             if (custom_criteria) {
                 result->result_code = numerical_result_code_t::Converged;
                 return true;

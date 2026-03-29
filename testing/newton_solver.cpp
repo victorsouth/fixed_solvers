@@ -191,3 +191,49 @@ TEST(NewtonRaphson, HandlesResidualsNorm) {
     
 
 }
+
+/// @brief Система уравнений с кастомным критерием остановки
+struct simple_equation_with_custom_criteria : public fixed_system_t<-1> {
+    /// @brief Невязки
+    virtual Eigen::VectorXd residuals(const Eigen::VectorXd& x) {
+        Eigen::VectorXd x0(2);
+        x0 << 4, 5;
+        return x - x0;
+    }
+    /// @brief Кастомный критерий относительно наибольшего приращения компонентов аргумента
+    virtual bool custom_success_criteria(const Eigen::VectorXd& r, const Eigen::VectorXd& x, const Eigen::VectorXd& p) {
+        const double max_abs_increment = p.cwiseAbs().maxCoeff();
+        return (max_abs_increment < 1e-6);
+    }
+    /// @brief Возвращает аналитическое решение системы уравнений (для тестов)
+    Eigen::VectorXd get_solution_for_testing() {
+        Eigen::VectorXd x0(2);
+        x0 << 4, 5;
+        return x0;
+    }
+};
+
+/// @brief Проверяет возможность остановки расчета только по кастомному критерию  
+TEST(NewtonRaphson, HandlesStopByCustomCriteria_WhenOtherCriteriaDisabled) {
+
+    // Arrange - система с кастомным критерием остановки. 
+    simple_equation_with_custom_criteria equation;
+
+    // Отключаем остальные критерии остановки, кроме кастомного
+    fixed_solver_parameters_t<-1, 0, golden_section_search> parameters;
+    parameters.residuals_norm = std::numeric_limits<double>::quiet_NaN();
+    parameters.argument_increment_norm = std::numeric_limits<double>::quiet_NaN();
+    parameters.step_criteria_assuming_search_step = false;
+
+    Eigen::VectorXd initial = Eigen::VectorXd::Zero(2);
+    fixed_solver_result_t<-1> result;
+
+    // Act - Решение системы уравнений
+    fixed_newton_raphson<-1>::solve(equation, initial, parameters, &result);
+
+    // Arrange - численный метод должен сойтись к истинному решению
+    ASSERT_EQ(result.result_code, numerical_result_code_t::Converged);
+    Eigen::VectorXd solution = equation.get_solution_for_testing();
+    ASSERT_NEAR(result.argument(0), solution(0), 1e-8);
+    ASSERT_NEAR(result.argument(1), solution(1), 1e-8);
+}

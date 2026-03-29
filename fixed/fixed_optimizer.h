@@ -64,8 +64,10 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const residuals_type& r, const argument_type& x)
+    virtual bool custom_success_criteria(const residuals_type& r, const argument_type& x, 
+        const argument_type& p)
     {
         return true;
     }
@@ -209,8 +211,8 @@ public:
             analysis->target_function.push_back({ result->residuals_norm });
         }
 
-        bool custom_stop_criteria = function.custom_success_criteria(r, argument);
-        /*if (custom_stop_criteria) {
+        /*bool custom_stop_criteria = function.custom_success_criteria(r, argument);
+        if (custom_stop_criteria) {
             result->result_code = numerical_result_code_t::Converged;
             return;
         }*/

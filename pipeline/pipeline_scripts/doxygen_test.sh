@@ -45,13 +45,13 @@ done
 # Вызываем команду doxygen
 doxygen ${Doxyfile} > doxygen_out.log 2>&1
 cp "${SCRIPT_DIR}/../../doxygen_out.log" "${SCRIPT_DIR}/../pipeline_result/doxygen_out"
-cp "${SCRIPT_DIR}/../../doxygen_test_out" "${SCRIPT_DIR}/../pipeline_result/doxygen_test_out"
+grep -i "not documented" "${SCRIPT_DIR}/../../doxygen_test_out" > "${SCRIPT_DIR}/../pipeline_result/doxygen_test_out"
 
 # Записываем результат в doxygen_test_out.txt и выводим его, если не пустой
 
-if [ -s ${SCRIPT_DIR}/../../doxygen_test_out ]; then
+if [ -s "${SCRIPT_DIR}/../pipeline_result/doxygen_test_out" ]; then
 	echo -e "\033[33m----------Warnings----------"
-	tac ${SCRIPT_DIR}/../../doxygen_test_out | sort
+	tac "${SCRIPT_DIR}/../pipeline_result/doxygen_test_out" | sort
     exit 1;
 else
 	echo -e "\033[32m--------No-comment-warnings---------"
