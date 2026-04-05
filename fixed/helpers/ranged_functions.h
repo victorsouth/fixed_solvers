@@ -1,5 +1,13 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <math.h>
+#include <stdexcept>
+#include <vector>
 
+#include "helpers/cubic_equation_functions.h"
 
 
 namespace fixed_solvers {
@@ -122,81 +130,6 @@ public:
             );
     }
 };
-
-/// @brief Решение кубического уравнения методом Виета.
-/// @details Использует тригонометрическую формулу Виета для нахождения действительных корней.
-/// @param _poly_coeffs Коэффициенты полинома (индекс = степень).
-/// @return Вектор действительных корней уравнения.
-inline std::vector<double> solve_realpoly3_vieta(const std::vector<double>& _poly_coeffs)
-{
-    std::vector<double> poly_coeffs = _poly_coeffs;
-
-    using std::pow;
-    // https://ru.wikipedia.org/wiki/Тригонометрическая_формула_Виета
-
-    // 1. Делаем коэффициент при старшей степени единичным 
-    // c + b*x + a*x^2 + x^3 = 0
-    double higher_order_coeff = poly_coeffs.back();
-    for (double& coeff : poly_coeffs) {
-        coeff /= higher_order_coeff;
-    }
-    double a = poly_coeffs[2];
-    double b = poly_coeffs[1];
-    double c = poly_coeffs[0];
-
-    // 2. Определение количества действительных корней
-    double Q = (a * a - 3 * b) / 9;
-    double R = (2 * pow(a, 3) - 9 * a * b + 27 * c) / 54;
-    double S = pow(Q, 3) - R * R;
-
-    // 3. Расчет корней
-    if (fabs(S) < std::numeric_limits<double>::epsilon())//epsilon_S)
-    {
-        //Ю.П. 2022.05.26
-        //if(0)std::cerr<<"two roots:"<<-2.*cbrt(R) - a/3.<<'\t'<<cbrt(R) - a/3.<<std::endl;
-        return {
-            -2. * cbrt(R) - a / 3.,
-            cbrt(R) - a / 3.
-        };
-        //throw logic_error("3rd order polynom singular case (S = 0), not implemented");
-    }
-    else if (S > 0)
-    {
-        // проверено, работает 27.12.2018
-        // 3 действительных корня
-        double phi = 1.0 / 3.0 * acos(R / pow(Q, 1.5));
-        return {
-            -2 * sqrt(Q) * cos(phi) - a / 3,
-            -2 * sqrt(Q) * cos(phi + 2.0 / 3.0 * M_PI) - a / 3,
-            -2 * sqrt(Q) * cos(phi - 2.0 / 3.0 * M_PI) - a / 3,
-        };
-    }
-    else // S < 0
-    {
-        // 1 действительный корень, 2 комплексных
-        if (fabs(Q) < std::numeric_limits<double>::epsilon()) {
-            //Ю.П. 2022.05.26
-            return{ -cbrt(c - (a * a * a) / 27.) - a / 3. };
-            //throw logic_error("3rd order polynom singular case (Q = 0), not implemented");
-        }
-        else if (Q > 0)
-        {
-            // проверено, работает 27.12.2018
-            double phi = 1.0 / 3.0 * acosh(fabs(R) / pow(Q, 1.5)); // квадратный корень из Q в кубе!
-            return {
-                -2.0 * pseudo_sgn(R) * sqrt(Q) * cosh(phi) - a / 3
-            };
-        }
-        else // Q < 0
-        {
-            // проверено, работает 6.02.2019
-            double phi = 1.0 / 3.0 * asinh(fabs(R) / pow(fabs(Q), 1.5));
-            return {
-                -2.0 * pseudo_sgn(R) * sqrt(fabs(Q)) * sinh(phi) - a / 3
-            };
-        }
-    }
-}
 
 /// @brief Класс для работы с кусочно-заданными полиномами на диапазонах.
 /// @details Представляет полиномиальную аппроксимацию функции, заданную на множестве диапазонов.
@@ -350,7 +283,7 @@ public:
         {
             auto equation = range.coefficients;
             equation[0] -= y; // слева полином с коэффициентами, а справа значение y
-            roots = solve_realpoly3_vieta(equation);
+            roots = solve_cubic_equation(equation);
             break;
         }
         default:
