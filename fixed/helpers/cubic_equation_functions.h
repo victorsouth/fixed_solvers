@@ -141,6 +141,15 @@ inline std::vector<double> solve_monic_three_real_roots(double a, double Q, doub
     };
 }
 
+/// @brief Скаляр Кардано (p/3)^3 + (q/2)^2 для монического x^3 + a*x^2 + b*x + c = 0
+/// после перехода к приведённому виду (те же p_dep, q_dep, что в ветке одного вещественного корня).
+inline double monic_depressed_cubic_cardano_Q(double a, double b, double c)
+{
+    const double p_dep = b - a * a / 3.0;
+    const double q_dep = c - a * b / 3.0 + 2.0 * a * a * a / 27.0;
+    return std::pow(p_dep / 3.0, 3) + std::pow(q_dep / 2.0, 2);
+}
+
 /// @brief Ветвь S < 0: один действительный корень (депрессивный куб + Кардано).
 inline std::vector<double> solve_monic_one_real_depressed_cardano(double a, double b, double c)
 {
@@ -208,6 +217,12 @@ inline std::vector<double> solve_cubic_equation(const std::vector<double>& poly_
     const double b = coeffs[1];
     const double c = coeffs[0];
     return cubic_detail::solve_monic(a, b, c);
+}
+
+/// @brief Скаляр Кардано (p/3)^3 + (q/2)^2 для монического x^3 + a*x^2 + b*x + c = 0.
+inline double monic_cubic_cardano_Q(double a, double b, double c)
+{
+    return cubic_detail::monic_depressed_cubic_cardano_Q(a, b, c);
 }
 
 } // namespace fixed_solvers
