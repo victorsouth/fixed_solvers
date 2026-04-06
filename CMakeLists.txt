@@ -26,6 +26,7 @@ set(HEADERS_QP
     fixed/qp/qp_wrapper.h
 )
 set(HEADERS_HELPERS
+    fixed/helpers/cubic_equation_functions.h
     fixed/helpers/math_helpers.h
     fixed/helpers/string_helpers.h
     fixed/helpers/ranged_functions.h
