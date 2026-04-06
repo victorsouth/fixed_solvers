@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "helpers/cubic_equation_functions.h"
+#include "cubic_equation_functions.h"
 
 
 namespace fixed_solvers {
