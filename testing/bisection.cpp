@@ -35,6 +35,18 @@ public:
     const fixed_system_t<1>::var_type expectet_solution() const { return std::sqrt(3.5);}
 };
 
+/// @brief линейное уравнение с возрастающей невязкой
+struct increasing_linear : public fixed_system_t<1> {
+public:
+    /// @brief функция вычисления невязки
+    virtual function_type residuals(const var_type &x) override
+    {
+        return x-2.75;
+    }
+    /// @brief ожидаемое решение
+    constexpr fixed_system_t<1>::var_type expectet_solution() const { return 2.75;}
+};
+
 /// \brief
 /// тест проверки работоспособности метода бисекции в случае
 /// линейного уравнения
@@ -61,7 +73,32 @@ TEST(Bisection, SolvesLinearEquation){
     }
 };
 
-/// \brief
+/// @brief Проверяет работоспособность метода бисекции в случае
+/// возрастающей невязки
+TEST(Bisection, SolvesIncreasingResidualEquation){
+    increasing_linear eqn;
+    fixed_bisectional_parameters_t p;
+    p.argument_limit_min=0;
+    p.argument_limit_max=7.8;
+    p.argument_history = true;
+    p.solution_type = fixed_bisectional_solution_type::Combined;
+    p.secant_treshhold_max =0.01;
+    p.secant_treshhold_min =0.001;
+    p.verbose=false;
+    fixed_bisection_result_t<1> res;
+    fixed_bisection_result_analysis_t<1> ana;
+    fixed_bisectional<1>::solve(p, eqn, &res, &ana);
+
+    EXPECT_NEAR(res.argument,eqn.expectet_solution(),p.residual_precision);
+    if(p.verbose){
+        std::cout<<res.argument<<'\t'<<res.result_code<<'\t'<<res.score<<'\t'<<res.iteration_count<<std::endl;
+        for(auto a:ana.argument_history){
+            std::cout<<'\t'<<a<<std::endl;
+        }
+    }
+};
+
+/// @brief
 /// тест проверки работоспособности метода бисекции в случае
 /// квадратного уравнения
 TEST(Bisection, SolvesQuadraticEquation){
