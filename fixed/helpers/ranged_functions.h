@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "cubic_equation_functions.h"
-#define CUBIC_SOVER_USE_REALPOLY3_VIETA
+//#define CUBIC_SOVER_USE_REALPOLY3_VIETA
 
 namespace fixed_solvers {
 ;
