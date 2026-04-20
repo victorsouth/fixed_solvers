@@ -126,12 +126,6 @@ public:
     /// использования
     typedef typename fixed_system_types<Dimension>::right_party_type function_type;
 private:
-    /// @brief Проверяет, что знак функции при x1 и x2 одинаковый
-    static bool have_same_sign(double x1, double x2)
-    {
-        return (x1 > 0 && x2 > 0) || (x1 < 0 && x2 < 0);
-    }
-
     /// @brief Возвращает количество итераций, нужных чтобы при делении пополам 
     /// изначальный отрезок initial_delta уменьшился до величины требуемой точности argument_precision
     /// Отрезок длинной initial_delta можно делить пополам 2^get_max_allowed_iterations раз, 
@@ -331,7 +325,7 @@ private:
                 return;
             }
 
-            if (have_same_sign(y1, y3)) {
+            if (y3 > 0) {
                 x1 = x3;
                 y1 = y3;
                 if (use_secant && solver_parameters.use_Illinois && previous_residual_sign == +1) {
@@ -341,7 +335,7 @@ private:
                 }
                 previous_residual_sign = +1;
             }
-            else {
+            else if (y3 < 0) {
                 x2 = x3;
                 y2 = y3;
                 if (use_secant && solver_parameters.use_Illinois && previous_residual_sign == -1)
@@ -441,19 +435,13 @@ public:
 
         // Проверка сходимости по невязкам на границах интервала поиска
         // todo: (подумал - это неверно) Раз тут уже считаются невязки, значения miny, minx стоит передавать в solve_limited
-        var_type miny = residuals.residuals(minx);
-        var_type maxy = residuals.residuals(maxx);
         if(solver_parameters.check_boundary_before){
+            var_type miny = residuals.residuals(minx);
+            var_type maxy = residuals.residuals(maxx);
             if (residual_exit_criterium(solver_parameters, miny, minx, analysis, result))
                 return;
             if (residual_exit_criterium(solver_parameters, maxy, maxx, analysis, result))
                 return;
-        }
-
-        if (have_same_sign(miny, maxy)) {
-            result->result_code = numerical_result_code_t::CustomCriteriaFailed;
-            result->score = convergence_score_t::Error;
-            return;
         }
 
         // Проверка сходимости по невязкам в точке начального приближения
@@ -462,9 +450,9 @@ public:
         if (residual_exit_criterium(solver_parameters, r, argument, analysis, result)) 
             return;
 
-        if (have_same_sign(miny, r))
+        if (r > 0)
             minx = argument;
-        else
+        if (r < 0)
             maxx = argument;
 
         // Запуск расчета методом бисекции
