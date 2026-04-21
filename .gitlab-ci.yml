@@ -1,7 +1,7 @@
 stages:
-  - Static_test
   - Build
   - Unit_Testing
+  - Static_test
 
 #Проверка кодировки файлов с расширением .m .cpp .h на соответствие UTF-8
 Unicode:
@@ -28,7 +28,7 @@ Doxygen:
   script:
     - mkdir -p pipeline/pipeline_result
     - bash ./pipeline/pipeline_scripts/doxygen_test.sh
-  allow_failure: true
+  allow_failure: false
   artifacts:
     expire_in: 48 hour
     when: always
