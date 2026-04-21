@@ -1,6 +1,14 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <math.h>
+#include <stdexcept>
+#include <vector>
 
-
+#include "cubic_equation_functions.h"
+//#define CUBIC_SOVER_USE_REALPOLY3_VIETA
 
 namespace fixed_solvers {
 ;
@@ -17,6 +25,8 @@ inline bool value_in_range(double value, double range_begin, double range_end)
 
     return value >= range_begin && value <= range_end;
 }
+//*****************************************************************************
+
 
 /// @brief Вычисляет коэффициенты интеграла полинома.
 /// @details НЕ используется формат Matlab! В отличие от функции,
@@ -39,6 +49,8 @@ inline std::vector<double> poly_integral_coefficients(const Coefficients& poly_c
     }
     return result;
 }
+//*****************************************************************************
+
 
 /// @brief Структура, описывающая диапазон функции и её коэффициенты.
 /// @details Используется для задания кусочно-определённых функций, где каждый диапазон 
@@ -53,6 +65,8 @@ struct function_range_t {
     /// @brief Коэффициенты, определяющие поведение функции на данном диапазоне.
     Coeffs coefficients;
 };
+//*****************************************************************************
+
 
 /// @brief Базовый класс для работы с функциями, заданными на множестве диапазонов.
 /// @details Хранит набор диапазонов с соответствующими коэффициентами и предоставляет 
@@ -122,6 +136,8 @@ public:
             );
     }
 };
+//*****************************************************************************
+
 
 /// @brief Решение кубического уравнения методом Виета.
 /// @details Использует тригонометрическую формулу Виета для нахождения действительных корней.
@@ -197,6 +213,8 @@ inline std::vector<double> solve_realpoly3_vieta(const std::vector<double>& _pol
         }
     }
 }
+//*****************************************************************************
+
 
 /// @brief Класс для работы с кусочно-заданными полиномами на диапазонах.
 /// @details Представляет полиномиальную аппроксимацию функции, заданную на множестве диапазонов.
@@ -350,7 +368,11 @@ public:
         {
             auto equation = range.coefficients;
             equation[0] -= y; // слева полином с коэффициентами, а справа значение y
+#ifdef CUBIC_SOVER_USE_REALPOLY3_VIETA
             roots = solve_realpoly3_vieta(equation);
+#else
+            roots = solve_cubic_equation(equation);
+#endif
             break;
         }
         default:
