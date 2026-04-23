@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)
@@ -16,7 +16,7 @@ if(MINGW)
 endif()
 
 find_package(Eigen3)
-find_package(Boost REQUIRED headers)
+#find_package(Boost REQUIRED headers)
 
 set(HEADERS_LS
     fixed/line_search/divider.h

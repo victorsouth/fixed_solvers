@@ -7,7 +7,6 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <boost/type_index.hpp>
 #include <codecvt>
 
 namespace fixed_solvers {
@@ -158,21 +157,6 @@ inline void string_replace(std::string& str, const std::string& from, const std:
         start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
 }
-
-/// @brief Получает имя класса из типа объекта
-/// @param t объект для определения типа
-/// @return строка с именем класса
-template<typename T>
-inline std::string get_class_as_string(const T& t) {
-    std::string str = boost::typeindex::type_id<decltype(t)>().pretty_name();
-#ifdef _MSC_VER
-    auto ppos = str.find_last_of(" \t");
-    if (ppos != str.npos)
-        str = str.substr(ppos + 1);
-#endif
-    return str;
-}
-
 
 /// @brief Сохраняет вектор в поток
 /// @param os выходной поток
