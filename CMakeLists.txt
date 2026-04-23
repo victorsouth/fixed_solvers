@@ -47,7 +47,7 @@ if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
-target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen Boost::headers)
+target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 target_include_directories(${PROJECT_NAME}
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
