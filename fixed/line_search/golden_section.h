@@ -1,4 +1,7 @@
-﻿#pragma once
+#pragma once
+
+/// @brief Исключение - выход за область определения функции
+struct domain_violation {};
 
 /// @brief Настройки поиска золотого сечения
 struct golden_section_parameters {
@@ -169,6 +172,215 @@ public:
                 parameters.iteration_count + 1
             };
         }
+    }
+
+    /// @brief Оптимизация методом золотого сечения с обработкой выхода за область определения функции
+    /// @details Выход за ООФ маркируется исключением domain_violation
+    /// @return [величина спуска; количество итераций]
+    /// величина спуска = nan, если произошел сбой регулировки
+    template <typename Function>
+    static inline std::pair<double, size_t> search_domain_based(
+        const golden_section_parameters& parameters,
+        Function& function,
+        double a, double b,
+        double f_a, double f_b
+    )
+    {
+        struct evaluation_t {
+            bool in_domain{ false };
+            bool has_nan{ false };
+            double value{ std::numeric_limits<double>::quiet_NaN() };
+        };
+
+        auto check_convergence = [&](double f_min, double f_0) {
+            return parameters.decrement_factor_criteria(f_min, f_0)
+                || parameters.target_value_criteria(f_min);
+        };
+
+        // Оценка функции в точке
+        auto evaluate = [&](double x) {
+            evaluation_t result;
+            try {
+                result.value = function(x);
+                result.in_domain = true;
+                result.has_nan = !std::isfinite(result.value);
+            }
+            catch (const domain_violation&) {
+                result.in_domain = false;
+            }
+            return result;
+        };
+
+        auto fail_result = [&]() {
+            return std::make_pair(
+                std::numeric_limits<double>::quiet_NaN(),
+                parameters.iteration_count + 1
+            );
+        };
+
+        if (!std::isfinite(f_a)) {
+            // Левая граница всегда должна быть в ООФ
+            return fail_result();
+        }
+
+        // Если f_b известна, переиспользуем ее. Иначе пробуем вычислить.
+        auto b_eval = std::isfinite(f_b)
+            ? evaluation_t{ true, false, f_b }
+            : evaluate(b);
+        if (b_eval.has_nan) {
+            // Случайный nan, нет выхода за ООФ.
+            return fail_result();
+        }
+        if (b_eval.in_domain) {
+            f_b = b_eval.value;
+        }
+
+        double f_0 = f_a;
+        auto [x_min, f_min] = (b_eval.in_domain && b_eval.value < f_a)
+            ? std::make_pair(b, b_eval.value)
+            : std::make_pair(a, f_a);
+
+        if (check_convergence(f_min, f_0)) {
+            return { x_min, 0 };
+        }
+
+        double alpha = get_alpha(a, b);
+        double beta = get_beta(a, b);
+
+        auto alpha_eval = evaluate(alpha);
+        auto beta_eval = evaluate(beta);
+        if (alpha_eval.has_nan || beta_eval.has_nan) {
+            return fail_result();
+        }
+
+        auto check_local_max = [&]() {
+            if (alpha_eval.in_domain && beta_eval.in_domain) {
+                // Проверка унимодальности только по доступным точкам.
+                if (alpha_eval.value > f_a && alpha_eval.value > beta_eval.value) {
+                    throw std::logic_error("non-unimodal function detected, f_alpha is max");
+                }
+                if (b_eval.in_domain && beta_eval.value > alpha_eval.value && beta_eval.value > b_eval.value) {
+                    throw std::logic_error("non-unimodal function detected, f_beta is max");
+                }
+            }
+        };
+
+        auto update_minimum = [&]() {
+            const bool defined_alpha = alpha_eval.in_domain;
+            const bool defined_beta = beta_eval.in_domain;
+
+            if (!defined_alpha) {
+                if (defined_beta) {
+                    // a в ООФ, alpha вне ООФ, beta в ООФ. Разрыв ООФ.
+                    throw std::logic_error("domain discontinuity");
+                }
+                // alpha и beta вне ООФ. Рекорд остается у a.
+                std::tie(x_min, f_min) = std::make_pair(a, f_a);
+            }
+            else if (!defined_beta) {
+                // beta вне ООФ. Сравниваем только alpha и a.
+                std::tie(x_min, f_min) = (alpha_eval.value < f_a)
+                    ? std::make_pair(alpha, alpha_eval.value)
+                    : std::make_pair(a, f_a);
+            }
+            else {
+                // alpha и beta в ООФ.
+                if (alpha_eval.value < beta_eval.value) {
+                    std::tie(x_min, f_min) = (alpha_eval.value < f_a)
+                        ? std::make_pair(alpha, alpha_eval.value)
+                        : std::make_pair(a, f_a);
+                }
+                else if (b_eval.in_domain) {
+                    // Текущий рекорд либо beta, либо b
+                    std::tie(x_min, f_min) = (b_eval.value < beta_eval.value)
+                        ? std::make_pair(b, b_eval.value)
+                        : std::make_pair(beta, beta_eval.value);
+                }
+                else {
+                    // Рекорд остается у beta.
+                    std::tie(x_min, f_min) = std::make_pair(beta, beta_eval.value);
+                }
+            }
+        };
+
+        check_local_max();
+        update_minimum();
+        if (check_convergence(f_min, f_0)) {
+            return { x_min, 1 };
+        }
+
+        for (size_t index = 1; index < parameters.iteration_count; ++index) {
+            const bool defined_alpha = alpha_eval.in_domain;
+            const bool defined_beta = beta_eval.in_domain;
+
+            if (!defined_alpha) {
+                if (defined_beta) {
+                    // разрыв ООФ. Локализация невозможна.
+                    return fail_result();
+                }
+
+                // Полагаем, что [alpha, b] не в ООФ. Ищем минимум в [a, alpha]
+                b = alpha;
+                b_eval = alpha_eval;
+                alpha = get_alpha(a, b);
+                alpha_eval = evaluate(alpha);
+                beta = get_beta(a, b);
+                beta_eval = evaluate(beta);
+            }
+
+            else {
+                if (!defined_beta) {
+                    // Полагаем, что [beta, b] не в ООФ. Ищем минимум в [a, beta]
+                    b = beta;
+                    b_eval = beta_eval;
+                    beta = alpha;
+                    beta_eval = alpha_eval;
+                    alpha = get_alpha(a, b);
+                    alpha_eval = evaluate(alpha);
+                }
+                else {
+                    // alpha и beta в ООФ. Стандартная итерация ЗС.
+                    if (alpha_eval.value < beta_eval.value) {
+                        // минимум в [a, beta]
+                        b = beta;
+                        if (b_eval.in_domain) {
+                            f_b = b_eval.value;
+                        }
+                        b_eval = beta_eval;
+                        beta = alpha;
+                        beta_eval = alpha_eval;
+                        alpha = get_alpha(a, b);
+                        alpha_eval = evaluate(alpha);
+                    }
+                    else {
+                        // минимум в [alpha, b]
+                        a = alpha;
+                        f_a = alpha_eval.value;
+                        alpha = beta;
+                        alpha_eval = beta_eval;
+                        beta = get_beta(a, b);
+                        beta_eval = evaluate(beta);
+                    }
+                }
+            }
+
+            if (alpha_eval.has_nan || beta_eval.has_nan) {
+                return fail_result();
+            }
+
+            check_local_max();
+            update_minimum();
+
+            if (check_convergence(f_min, f_0)) {
+                return { x_min, index + 1 };
+            }
+        }
+
+        if (f_min < f_0) {
+            return { x_min, parameters.iteration_count + 1 };
+        }
+        
+        return fail_result();
     }
 };
 

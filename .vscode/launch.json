@@ -5,6 +5,42 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(lldb + clang) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "CMake: Build Clang",
+            "setupCommands": []
+        },
+        {
+            "name": "(gdb + clang) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/out/build/Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)/fs_tests.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+            "preLaunchTask": "CMake: Build Clang",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
@@ -16,6 +52,7 @@
             "externalConsole": false,
             "MIMode": "gdb",
             "miDebuggerPath": "C:/mingw64/bin/gdb.exe",
+            "preLaunchTask": "CMake: Build GCC",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",

@@ -1,4 +1,4 @@
-﻿#define FIXED_USE_QP_SOLVER
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 
@@ -12,6 +12,8 @@
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
+#include "test_golden_section_domain_based.h"
+#include "test_newton_domain_violation.h"
 #include "test_helpers.h"
 
 #include "qp/eiquadprog.hpp"

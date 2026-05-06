@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clang: Update Compile Commands",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset",
+                "Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build Clang",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "--preset",
+                "Clang 21.1.7 x86_64-w64-windows-gnu (ucrt64)"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

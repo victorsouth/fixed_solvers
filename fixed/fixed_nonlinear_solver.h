@@ -606,9 +606,17 @@ private:
             }
         }
 
-        var_type p = optimization_step
-            ? solve_quadprog(solver_parameters, residuals, r, argument)
-            : solve_newton(residuals, r, argument);
+        var_type p;
+        try {
+            p = optimization_step
+                ? solve_quadprog(solver_parameters, residuals, r, argument)
+                : solve_newton(residuals, r, argument);
+        }
+        catch (const domain_violation&) {
+            // TODO: Особый код в случае выхода за ООФ для Якобиана?
+            result->result_code = numerical_result_code_t::NumericalNanValues;
+            return true;
+        }
 
         
         if (solver_parameters.step_criteria_assuming_search_step == false)
@@ -679,7 +687,7 @@ private:
             analysis->argument_history.push_back(argument);
         }
 
-        // Расчет невязок
+        // Расчет невязок. Здесь argument точно в ООФ.
         r = residuals.residuals(argument);
         result->residuals_norm = residuals.objective_function(r);
         if (has_not_finite(r)) {
@@ -757,7 +765,13 @@ private:
             }
 
             double& var_p = p[substep];
-            var_p = solve_coodinate_descent(solver_parameters, residuals, r, argument, substep);
+            try {
+                var_p = solve_coodinate_descent(solver_parameters, residuals, r, argument, substep);
+            }
+            catch (const domain_violation&) {
+                result->result_code = numerical_result_code_t::NumericalNanValues;
+                return true;
+            }
 
             // Корректировка шага в соответствии с ограничениями
             solver_parameters.linear_constraints.trim(argument, p);
@@ -812,7 +826,7 @@ private:
                 analysis->argument_history.push_back(argument);
             }
 
-            // Расчет невязок
+            // Расчет невязок. Здесь argument точно в ООФ.
             r = residuals.residuals(argument);
             if (has_not_finite(r)) {
                 r = residuals.residuals(argument); // для отладки
@@ -898,7 +912,15 @@ public:
             analysis->argument_history.push_back(argument);
         }
 
-        r = residuals.residuals(argument);
+        try {
+            r = residuals.residuals(argument);
+        }
+        catch (const domain_violation&) {
+            // TODO: особый код для стартовой точки вне ООФ?
+            result->result_code = numerical_result_code_t::NumericalNanValues;
+            result->score = convergence_score_t::Error;
+            return;
+        }
         result->residuals_norm = residuals.objective_function(r);
         if (has_not_finite(r)) {
             r = residuals.residuals(argument); // для отладки
