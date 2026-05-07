@@ -271,11 +271,16 @@ public:
 
             if (!defined_alpha) {
                 if (defined_beta) {
-                    // a в ООФ, alpha вне ООФ, beta в ООФ. Разрыв ООФ.
-                    throw std::logic_error("domain discontinuity");
+                    // разрывная ООФ. Для выбора стороны сравниваем f(beta) и f(a).
+                    // Если beta не хуже a, рекорд переносим в beta, иначе оставляем у a.
+                    std::tie(x_min, f_min) = (beta_eval.value <= f_a)
+                        ? std::make_pair(beta, beta_eval.value)
+                        : std::make_pair(a, f_a);
                 }
+                else {
                 // alpha и beta вне ООФ. Рекорд остается у a.
                 std::tie(x_min, f_min) = std::make_pair(a, f_a);
+                }
             }
             else if (!defined_beta) {
                 // beta вне ООФ. Сравниваем только alpha и a.
@@ -315,8 +320,22 @@ public:
 
             if (!defined_alpha) {
                 if (defined_beta) {
-                    // разрыв ООФ. Локализация невозможна.
-                    return fail_result();
+                    // Разрыв ООФ. Эвристика минимума функции
+                    // 1) если f(beta) <= f(a), переходим в [beta, b];
+                    // 2) иначе переходим в [a, alpha].
+                    if (beta_eval.value <= f_a) {
+                        a = beta;
+                        f_a = beta_eval.value;
+                    }
+                    else {
+                        b = alpha;
+                        b_eval = alpha_eval;
+                    }
+                    alpha = get_alpha(a, b);
+                    alpha_eval = evaluate(alpha);
+                    beta = get_beta(a, b);
+                    beta_eval = evaluate(beta);
+                    continue;
                 }
 
                 // Полагаем, что [alpha, b] не в ООФ. Ищем минимум в [a, alpha]

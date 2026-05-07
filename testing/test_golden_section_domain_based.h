@@ -17,7 +17,7 @@ TEST(GoldenSectionDomainBased, HandlesCase1AllPointsInDomain)
     double b = 1.0;
 
     // Act: запускаем domain-based поиск.
-    auto [step, iterations] = golden_section_search::search_domain_based(
+    auto [step, iterations] = golden_section_search::search(
         parameters, function, a, b, function(a), function(b));
 
     // Assert: шаг конечен, итерации выполнены, найдено положение минимума.
@@ -47,7 +47,7 @@ TEST(GoldenSectionDomainBased, HandlesCase2WhenRightBorderOutOfDomain)
     double b = 1.0;
 
     // Act: запускаем поиск при неизвестном f(b).
-    auto [step, iterations] = golden_section_search::search_domain_based(
+    auto [step, iterations] = golden_section_search::search(
         parameters, function, a, b, function(a), std::numeric_limits<double>::quiet_NaN());
 
     // Assert: найден корректный конечный шаг внутри ООФ.
@@ -77,7 +77,7 @@ TEST(GoldenSectionDomainBased, HandlesCase3WhenBetaOutOfDomain)
     double b = 1.0;
 
     // Act: выполняем поиск при недоступной правой части интервала.
-    auto [step, iterations] = golden_section_search::search_domain_based(
+    auto [step, iterations] = golden_section_search::search(
         parameters, function, a, b, function(a), std::numeric_limits<double>::quiet_NaN());
 
     // Assert: шаг остается в ООФ и близок к ожидаемому минимуму.
@@ -87,10 +87,10 @@ TEST(GoldenSectionDomainBased, HandlesCase3WhenBetaOutOfDomain)
     ASSERT_NEAR(step, 0.35, 2e-2);
 }
 
-/// @brief Проверяет, что при разрывной ООФ поиск сигнализирует о невозможности локализации.
+/// @brief Проверяет случай, когда при разрывной ООФ выбирается правый интервал [beta, b].
 TEST(GoldenSectionDomainBased, HandlesCase4AsDisconnectedDomainFailure)
 {
-    // Arrange: формируем несвязную ООФ двумя раздельными интервалами.
+    // Arrange: формируем несвязную ООФ и делаем f(beta) <= f(a) для перехода вправо.
     golden_section_parameters parameters;
     parameters.iteration_count = 12;
     parameters.function_decrement_factor = std::numeric_limits<double>::quiet_NaN();
@@ -109,12 +109,47 @@ TEST(GoldenSectionDomainBased, HandlesCase4AsDisconnectedDomainFailure)
     double b = 1.0;
 
     // Act: запускаем поиск на интервале с разрывом ООФ.
-    // Assert: ожидаем исключение о разрыве области определения.
-    EXPECT_THROW(
-        golden_section_search::search_domain_based(
-            parameters, function, a, b, function(a), function(b)),
-        std::logic_error
-    );
+    auto [step, iterations] = golden_section_search::search(
+        parameters, function, a, b, function(a), function(b));
+
+    // Assert: поиск выбирает правую связную часть и дает конечный шаг.
+    ASSERT_TRUE(std::isfinite(step));
+    ASSERT_GT(iterations, 0u);
+    ASSERT_GT(step, 0.6);
+}
+
+/// @brief Проверяет случай, когда при разрывной ООФ выбирается левый интервал [a, alpha].
+TEST(GoldenSectionDomainBased, HandlesCase4WhenLeftIntervalChosen)
+{
+    // Arrange: формируем несвязную ООФ и делаем f(beta) > f(a) для перехода влево.
+    golden_section_parameters parameters;
+    parameters.iteration_count = 12;
+    parameters.function_decrement_factor = std::numeric_limits<double>::quiet_NaN();
+    parameters.function_target_value = std::numeric_limits<double>::quiet_NaN();
+
+    auto function = [](double x) {
+        bool in_left = (x >= 0.0 && x < 0.2);
+        bool in_right = (x > 0.6 && x <= 1.0);
+        if (!in_left && !in_right) {
+            throw domain_violation{};
+        }
+        if (in_left) {
+            return std::pow(x - 0.05, 2.0);
+        }
+        return 10.0 + std::pow(x - 0.9, 2.0);
+    };
+
+    double a = 0.0;
+    double b = 1.0;
+
+    // Act: запускаем поиск на интервале с разрывом ООФ.
+    auto [step, iterations] = golden_section_search::search(
+        parameters, function, a, b, function(a), function(b));
+
+    // Assert: поиск выбирает левую связную часть и дает конечный шаг.
+    ASSERT_TRUE(std::isfinite(step));
+    ASSERT_GT(iterations, 0u);
+    ASSERT_LT(step, 0.2);
 }
 
 /// @brief Проверяет сценарий, когда обе внутренние точки alpha и beta вне ООФ.
@@ -138,7 +173,7 @@ TEST(GoldenSectionDomainBased, HandlesCase5WhenAlphaAndBetaOutOfDomain)
     double b = 1.0;
 
     // Act: запускаем поиск и даем алгоритму сузиться к левой доступной части.
-    auto [step, iterations] = golden_section_search::search_domain_based(
+    auto [step, iterations] = golden_section_search::search(
         parameters, function, a, b, function(a), std::numeric_limits<double>::quiet_NaN());
 
     // Assert: получаем конечный шаг внутри ООФ.
@@ -167,7 +202,7 @@ TEST(GoldenSectionDomainBased, TreatsFunctionNanAsSearchFailure)
     double b = 1.0;
 
     // Act: запускаем поиск при неизвестном f(b).
-    auto [step, iterations] = golden_section_search::search_domain_based(
+    auto [step, iterations] = golden_section_search::search(
         parameters, function, a, b, function(a), std::numeric_limits<double>::quiet_NaN());
 
     // Assert: получаем fail-контракт поиска.
@@ -195,7 +230,7 @@ TEST(GoldenSectionDomainBased, ThrowsOnNonUnimodalFunction)
     // Act: выполняем поиск на неунимодальной функции.
     // Assert: ожидаем исключение о нарушении предположения унимодальности.
     EXPECT_THROW(
-        golden_section_search::search_domain_based(
+        golden_section_search::search(
             parameters, non_unimodal, a, b, non_unimodal(a), non_unimodal(b)),
         std::logic_error
     );
