@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)
@@ -23,6 +26,7 @@ endif()
 
 if(MSVC)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 if(MINGW)
     add_compile_options("-Wa,-mbig-obj")
@@ -100,7 +104,7 @@ option(FIXED_SOLVERS_BUILD_TESTS "" OF)
 if(FIXED_SOLVERS_BUILD_TESTS)
 
 find_package(Threads)
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 
 add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp testing/newton_solver.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
