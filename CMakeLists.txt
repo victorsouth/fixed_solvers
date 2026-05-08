@@ -112,6 +112,7 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp testing/newton_solver.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
+install(TARGETS fs_tests DESTINATION bin)
 
 
 endif()
