@@ -12,7 +12,11 @@ cmake_policy(SET CMP0012 NEW)
 
 set(EIGEN_PRINTERS_ROOT "$ENV{EIGEN_PRINTERS_ROOT}" CACHE PATH "Path to shared Eigen pretty-printers root")
 if(NOT EIGEN_PRINTERS_ROOT)
-    set(EIGEN_PRINTERS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../eigen-pretty-printers" CACHE PATH "Path to shared Eigen pretty-printers root" FORCE)
+    if(WIN32)
+        set(EIGEN_PRINTERS_ROOT "C:/install/eigen-pretty-printers" CACHE PATH "Path to shared Eigen pretty-printers root" FORCE)
+    else()
+        set(EIGEN_PRINTERS_ROOT "$ENV{HOME}/install/eigen-pretty-printers" CACHE PATH "Path to shared Eigen pretty-printers root" FORCE)
+    endif()
 endif()
 set(EIGEN_NATVIS_FILE "${EIGEN_PRINTERS_ROOT}/natvis/Eigen.natvis" CACHE FILEPATH "Path to Eigen.natvis")
 if(MSVC AND CMAKE_GENERATOR MATCHES "Visual Studio")
@@ -108,7 +112,6 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp testing/newton_solver.cpp)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
-install(TARGETS fs_tests DESTINATION bin)
 
 
 endif()
