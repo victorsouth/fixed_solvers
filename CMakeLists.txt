@@ -10,24 +10,6 @@ set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 cmake_policy(SET CMP0012 NEW)
 
-set(EIGEN_PRINTERS_ROOT "$ENV{EIGEN_PRINTERS_ROOT}" CACHE PATH "Path to shared Eigen pretty-printers root")
-if(NOT EIGEN_PRINTERS_ROOT)
-    if(WIN32)
-        set(EIGEN_PRINTERS_ROOT "C:/install/eigen-pretty-printers" CACHE PATH "Path to shared Eigen pretty-printers root" FORCE)
-    else()
-        set(EIGEN_PRINTERS_ROOT "$ENV{HOME}/install/eigen-pretty-printers" CACHE PATH "Path to shared Eigen pretty-printers root" FORCE)
-    endif()
-endif()
-set(EIGEN_NATVIS_FILE "${EIGEN_PRINTERS_ROOT}/natvis/Eigen.natvis" CACHE FILEPATH "Path to Eigen.natvis")
-if(MSVC AND CMAKE_GENERATOR MATCHES "Visual Studio")
-    if(EXISTS "${EIGEN_NATVIS_FILE}")
-        set(CMAKE_VS_NATVIS_PATH "${EIGEN_NATVIS_FILE}")
-    else()
-        message(STATUS "Eigen natvis file not found: ${EIGEN_NATVIS_FILE}")
-    endif()
-endif()
-
-
 if(MSVC)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
