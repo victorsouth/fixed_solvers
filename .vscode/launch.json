@@ -5,7 +5,7 @@
             "name": "Windows MSVC Debug (fs_tests)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-msvc-debug/Debug/fs_tests.exe",
+            "program": "${workspaceFolder}/out/windows-msvc-debug/Debug/fs_tests.exe",
             "args": [
                 
             ],
@@ -18,7 +18,7 @@
             "name": "Windows GCC Debug (fs_tests)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-gcc-debug/fs_tests.exe",
+            "program": "${workspaceFolder}/out/windows-gcc-debug/fs_tests.exe",
             "args": [
                 
             ],
@@ -56,7 +56,7 @@
             "name": "Windows Clang Debug (gdb, fs_tests)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-clang-debug/fs_tests.exe",
+            "program": "${workspaceFolder}/out/windows-clang-debug/fs_tests.exe",
             "args": [
                 
             ],
@@ -94,7 +94,7 @@
             "name": "Windows Clang Debug (lldb, fs_tests)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/windows-clang-debug/fs_tests.exe",
+            "program": "${workspaceFolder}/out/windows-clang-debug/fs_tests.exe",
             "args": [
                 
             ],
@@ -117,7 +117,7 @@
             "name": "Linux GCC Debug (fs_tests)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/linux-gcc-debug/fs_tests",
+            "program": "${workspaceFolder}/out/linux-gcc-debug/fs_tests",
             "args": [
                 
             ],
@@ -150,7 +150,7 @@
             "name": "Linux Clang Debug (fs_tests)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/linux-clang-debug/fs_tests",
+            "program": "${workspaceFolder}/out/linux-clang-debug/fs_tests",
             "args": [
                 
             ],
@@ -173,7 +173,7 @@
             "name": "macOS Clang Debug (fs_tests)",
             "type": "lldb-dap",
             "request": "launch",
-            "program": "${workspaceFolder}/out/build/macos-clang-debug/fs_tests",
+            "program": "${workspaceFolder}/out/macos-clang-debug/fs_tests",
             "args": [
                 
             ],
