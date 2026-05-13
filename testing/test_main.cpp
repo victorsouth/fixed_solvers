@@ -12,7 +12,7 @@
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
-#include "test_golden_section_domain_based.h"
+#include "test_golden_section_domain_discovery.h"
 #include "test_newton_domain_violation.h"
 #include "test_helpers.h"
 
