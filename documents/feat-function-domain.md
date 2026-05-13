@@ -188,6 +188,14 @@
 
 Нужно на основе метода `golden_section_search::search` создать метод `golden_section_search_domain_discovery::search` (параметры — `golden_section_domain_discovery_parameters`), который с помощью перехвата исключений `domain_violation` обрабатывает описанные выше случаи случаев. 
 
+Для управления поведением введён enum `domain_discovery_mode_t` в параметрах `golden_section_domain_discovery_parameters`:
+1. `domain_discovery_mode_t::forbid_exit` — не разрешать выход за область определения:
+   - если где-то функция не определена (брошено `domain_violation`), то исключение оборачивается в `std::exception`-совместимое исключение и поиск немедленно прерывается;
+2. `domain_discovery_mode_t::require_connected_domain` — разрешать только связную область определения:
+   - если в ходе поиска выявлено, что область определения несвязна (после выхода за ООФ поиск снова попадает в ООФ), то выбрасывается `std::logic_error` о несвязной ООФ;
+3. `domain_discovery_mode_t::allow_disconnected_domain` — разрешать несвязную область определения:
+   - при недостаточности инвариантов унимодальности используется эвристика ООФ (как описано выше в таблице правил), поиск продолжается без дополнительного исключения о несвязной ООФ.
+
 ## Тестирование нового функционала
 
 Нужно написать тесты для `golden_section_search_domain_discovery::search`.

@@ -3,6 +3,16 @@
 /// @brief Исключение - выход за область определения функции
 struct domain_violation {};
 
+/// @brief Режимы обработки области определения при поиске золотого сечения
+enum class domain_discovery_mode_t {
+    /// @brief Не разрешать выход за область определения
+    forbid_exit,
+    /// @brief Требовать связную область определения
+    require_connected_domain,
+    /// @brief Разрешать несвязную область определения (использовать эвристику ООФ)
+    allow_disconnected_domain
+};
+
 /// @brief Настройки поиска золотого сечения
 struct golden_section_parameters {
     /// @brief Максимальный шаг расчета
@@ -178,8 +188,8 @@ public:
 
 /// @brief Параметры поиска золотого сечения с учётом области определения.
 struct golden_section_domain_discovery_parameters : golden_section_parameters {
-    /// @brief Разрешает использовать эвристику несвязной ООФ
-    bool use_continuous_domain_based_proposal{ false };
+    /// @brief Режим обработки области определения
+    domain_discovery_mode_t mode{ domain_discovery_mode_t::require_connected_domain };
 };
 
 class golden_section_search_domain_discovery {
@@ -210,6 +220,8 @@ public:
                 || parameters.target_value_criteria(f_min);
         };
 
+        bool seen_domain_gap = false;
+
         // Оценка функции в точке
         auto evaluate = [&](double x) {
             evaluation_t result;
@@ -219,7 +231,18 @@ public:
                 result.has_nan = !std::isfinite(result.value);
             }
             catch (const domain_violation&) {
+                if (parameters.mode == domain_discovery_mode_t::forbid_exit) {
+                    throw std::runtime_error("domain violation detected in forbid_exit mode");
+                }
                 result.in_domain = false;
+                if (parameters.mode == domain_discovery_mode_t::require_connected_domain) {
+                    if (x > a) {
+                        if (seen_domain_gap) {
+                            throw std::logic_error("disconnected domain detected");
+                        }
+                        seen_domain_gap = true;
+                    }
+                }
             }
             return result;
         };
@@ -310,77 +333,80 @@ public:
             const bool defined_beta = beta_eval.in_domain;
 
             // Выбор нового интервала согласно псевдокоду.
+            const bool allow_heuristic =
+                parameters.mode == domain_discovery_mode_t::allow_disconnected_domain;
+
             if (!defined_alpha && !defined_beta) {
-                // строки 15, 16 — нет информации из унимодальности
-                if (!parameters.use_continuous_domain_based_proposal) {
+                // случаи 15, 16 — нет информации из унимодальности
+                if (!allow_heuristic) {
                     return fail_result();
                 }
                 b = alpha;
                 b_eval = alpha_eval;
             }
             else if (!defined_alpha) {
-                // defined_beta = true, строки 8-10
+                // defined_beta = true, случаи 8-10
                 if (defined_b && (beta_eval.value > b_eval.value)) {
-                    // строка 8
+                    // случай 8
                     a = beta;
                     f_a = beta_eval.value;
                 }
                 else if (beta_eval.value < f_a) {
-                    // строка 9: новый отрезок [a, beta]
+                    // случай 9: новый отрезок [a, beta]
                     b = beta;
                     b_eval = beta_eval;
                 }
                 else {
-                    // строка 10
+                    // случай 10
                     throw std::logic_error("minimum is not in [a, b]");
                 }
             }
             else if (!defined_beta) {
                 if (!defined_b) {
-                    // строки 11-14: эвристика зависит от флага.
-                    // При отключенной эвристике (строка 12) нужно запускать полное исследование ООФ.
+                    // случаи 11-14: эвристика зависит от флага.
+                    // При отключенной эвристике (случай 12) нужно запускать полное исследование ООФ.
                     // В текущем контракте метода это отражаем fail-результатом.
-                    if (!parameters.use_continuous_domain_based_proposal) {
+                    if (!allow_heuristic) {
                         return fail_result();
                     }
                     if (alpha_eval.value < f_a) {
-                        // строка 13: новый отрезок [a, beta]
+                        // случай 13: новый отрезок [a, beta]
                         b = beta;
                         b_eval = beta_eval;
                     }
                     else {
-                        // строка 11: новый отрезок [a, alpha]
+                        // случай 11: новый отрезок [a, alpha]
                         b = alpha;
                         b_eval = alpha_eval;
                     }
                 }
                 else {
-                    // defined_b = true, строки 5-7
+                    // defined_b = true, случаи 5-7
                     if (alpha_eval.value < f_a) {
-                        // строка 5
+                        // случай 5
                         b = alpha;
                         b_eval = alpha_eval;
                     }
                     else if (alpha_eval.value > b_eval.value) {
-                        // строка 6
+                        // случай 6
                         a = alpha;
                         f_a = alpha_eval.value;
                     }
                     else {
-                        // строка 7
+                        // случай 7
                         throw std::logic_error("minimum is not in [a, b]");
                     }
                 }
             }
             else {
-                // defined_alpha = true, defined_beta = true, строки 1-4
+                // defined_alpha = true, defined_beta = true, случаи 1-4
                 if (alpha_eval.value < beta_eval.value) {
-                    // строки 1, 3
+                    // случаи 1, 3
                     b = beta;
                     b_eval = beta_eval;
                 }
                 else {
-                    // строки 2, 4
+                    // случаи 2, 4
                     a = alpha;
                     f_a = alpha_eval.value;
                 }
