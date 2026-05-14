@@ -186,7 +186,7 @@
 
 - новый отрезок ЗС $[a, \alpha]$
 
-Нужно на основе метода `golden_section_search::search` создать метод `golden_section_search_domain_discovery::search` (параметры — `golden_section_domain_discovery_parameters`), который с помощью перехвата исключений `domain_violation` обрабатывает описанные выше случаи случаев. 
+Нужно на основе метода `golden_section_search::search` создать метод `golden_section_search_domain_discovery::search` (параметры — `golden_section_domain_discovery_parameters`), который с помощью перехвата исключений `domain_violation` обрабатывает описанные выше случаи случаев. Параметр $f(b)$ опционален: по умолчанию `quiet_NaN`; если значение не конечно, $f(b)$ получают внутри `search` (вызовом `function(b)` или через `evaluate(b)`). Так вызывающий код может не оценивать $b$ до входа в поиск и не ловить преждевременный `domain_violation` вне логики поиска. 
 
 Для управления поведением введён enum `domain_discovery_mode_t` в параметрах `golden_section_domain_discovery_parameters`:
 1. `domain_discovery_mode_t::forbid_exit` — не разрешать выход за область определения:
@@ -195,6 +195,17 @@
    - если в ходе поиска выявлено, что область определения несвязна (после выхода за ООФ поиск снова попадает в ООФ), то выбрасывается `std::logic_error` о несвязной ООФ;
 3. `domain_discovery_mode_t::allow_disconnected_domain` — разрешать несвязную область определения:
    - при недостаточности инвариантов унимодальности используется эвристика ООФ (как описано выше в таблице правил), поиск продолжается без дополнительного исключения о несвязной ООФ.
+
+Дополнительно в `golden_section_domain_discovery_parameters` есть флаг `allow_non_unimodal`: при значении `true` проверка на унимодальность по локальному максимуму в `golden_section_search_domain_discovery::search` не выполняется.
+
+## Аналитика `line_search_explore` и ООФ
+
+При включённом `fixed_solver_analysis_parameters_t::line_search_explore` базовое исследование ц.ф. по сетке $\alpha \in [0,1]$ вызывает невязки в точках `argument + alpha * p`. Параметр `line_search_explore_on_domain_violation` задаёт реакцию на `domain_violation` при этих вызовах:
+
+- `line_search_explore_domain_violation_action_t::record_nan` (по умолчанию) — в `fixed_solver_result_analysis_t::target_function` записывается `quiet_NaN`, а индекс узла сетки (0…N) добавляется в соответствующий вектор `line_search_explore_domain_violation_indices` (длина внешнего вектора совпадает с числом шагов с explore, как у `target_function`);
+- `line_search_explore_domain_violation_action_t::rethrow` — исключение пробрасывается (прежнее поведение по смыслу).
+
+Индексы в `line_search_explore_domain_violation_indices` отмечают именно **исключение** `domain_violation`, а не произвольный (случайный) `NaN` в значении функции без исключения.
 
 ## Тестирование нового функционала
 

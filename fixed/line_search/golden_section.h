@@ -71,12 +71,14 @@ public:
     /// @brief Оптимизация методом золотого сечения
     /// @return [величина спуска; количество итераций]
     /// величина спуска = nan, если произошел сбой регулировки
+    /// @param f_b значение f(b); если не конечно (по умолчанию quiet_NaN), f(b) считается вызовом function(b).
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const golden_section_parameters& parameters,
         Function& function,
         double a, double b,
-        double f_a, double f_b
+        double f_a,
+        double f_b = std::numeric_limits<double>::quiet_NaN()
     )
     {
         auto check_convergence = [&](double f_min, double f_0) {
@@ -86,6 +88,9 @@ public:
 
         // Начальное значение ц.ф., по которому смотрим фактор снижения
         double f_0 = f_a;
+        if (!std::isfinite(f_b)) {
+            f_b = function(b);
+        }
 
         // Инициализируем текущий рекорд
         auto [x_min, f_min] = f_b < f_a
@@ -190,6 +195,8 @@ public:
 struct golden_section_domain_discovery_parameters : golden_section_parameters {
     /// @brief Режим обработки области определения
     domain_discovery_mode_t mode{ domain_discovery_mode_t::require_connected_domain };
+    /// @brief Если true, проверка унимодальности по локальному максимуму не выполняется
+    bool allow_non_unimodal{ false };
 };
 
 class golden_section_search_domain_discovery {
@@ -198,7 +205,8 @@ public:
     typedef golden_section_domain_discovery_parameters parameters_type;
 public:
     /// @brief Оптимизация методом золотого сечения с обработкой выхода за область определения функции
-    /// @details Выход за ООФ маркируется исключением domain_violation
+    /// @details Выход за ООФ маркируется исключением domain_violation. Если f(b) передано конечным,
+    /// оно используется без вызова в b; иначе (по умолчанию quiet_NaN) — evaluate(b).
     /// @return [величина спуска; количество итераций]
     /// величина спуска = nan, если произошел сбой регулировки
     template <typename Function>
@@ -206,7 +214,8 @@ public:
         const golden_section_domain_discovery_parameters& parameters,
         Function& function,
         double a, double b,
-        double f_a, double f_b
+        double f_a,
+        double f_b = std::numeric_limits<double>::quiet_NaN()
     )
     {
         struct evaluation_t {
@@ -259,16 +268,18 @@ public:
             return fail_result();
         }
 
-        // Если f_b известна, переиспользуем ее. Иначе пробуем вычислить.
-        evaluation_t b_eval = std::isfinite(f_b)
-            ? evaluation_t{ true, false, f_b }
-            : evaluate(b);
+        evaluation_t b_eval;
+        if (std::isfinite(f_b)) {
+            b_eval.in_domain = true;
+            b_eval.has_nan = false;
+            b_eval.value = f_b;
+        }
+        else {
+            b_eval = evaluate(b);
+        }
         if (b_eval.has_nan) {
             // Случайный nan, нет выхода за ООФ.
             return fail_result();
-        }
-        if (b_eval.in_domain) {
-            f_b = b_eval.value;
         }
 
         const double f_0 = f_a;
@@ -313,7 +324,10 @@ public:
 
             update_minimum(alpha, alpha_eval, beta, beta_eval);
 
-            auto check_local_max = [&]() {
+            auto check_local_max = [&](bool allow_non_unimodal) {
+                if (allow_non_unimodal) {
+                    return;
+                }
                 if (!alpha_eval.in_domain || !beta_eval.in_domain) {
                     return;
                 }
@@ -326,13 +340,12 @@ public:
                 }
             };
 
-            check_local_max();
+            check_local_max(parameters.allow_non_unimodal);
 
             const bool defined_b = b_eval.in_domain;
             const bool defined_alpha = alpha_eval.in_domain;
             const bool defined_beta = beta_eval.in_domain;
 
-            // Выбор нового интервала согласно псевдокоду.
             const bool allow_heuristic =
                 parameters.mode == domain_discovery_mode_t::allow_disconnected_domain;
 

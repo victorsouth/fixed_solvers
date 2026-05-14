@@ -22,10 +22,19 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <limits>
 
 /// @brief Тип алгоритма при обработке системы 
 /// нелинейных уравнений как оптимальной задачи
 enum class step_constraint_algorithm_t { Quadprog, CoordinateDescent };
+
+/// @brief Поведение базового line_search_explore при domain_violation на сетке по alpha
+enum class line_search_explore_domain_violation_action_t {
+    /// @brief В аналитику пишется quiet_NaN, индекс сетки — в line_search_explore_domain_violation_indices
+    record_nan,
+    /// @brief Проброс domain_violation (как при отсутствии перехвата)
+    rethrow
+};
 
 ///@brief Параметры диагностики сходимости
 struct fixed_solver_analysis_parameters_t {
@@ -37,6 +46,15 @@ struct fixed_solver_analysis_parameters_t {
     bool steps{false};
     ///@brief Выполнятся исследование целевой функции (базовое) и пользовательское исследование на каждом шаге
     bool line_search_explore{ false };
+    /// @brief Реакция на domain_violation при оценке ц.ф. на сетке explore (по умолчанию — NaN, без падения)
+    line_search_explore_domain_violation_action_t line_search_explore_on_domain_violation{
+        line_search_explore_domain_violation_action_t::record_nan };
+};
+
+/// @brief Результат одного вызова исследования ц.ф. по сетке alpha (один шаг солвера)
+struct step_line_search_explore_result_t {
+    std::vector<double> values;
+    std::vector<size_t> domain_violation_indices;
 };
 
 ///@brief Действия при неудачной регулировке шага
@@ -279,6 +297,9 @@ public:
     std::vector<var_type> argument_history;
     /// @brief Величина шагов Ньютона-Рафсона
     std::vector<double> steps;
+    /// @brief Индексы точек сетки explore (0..N), на которых зафиксирован domain_violation;
+    /// длина совпадает с target_function: i-й вектор относится к i-му шагу с той же разметкой по alpha.
+    std::vector<std::vector<size_t>> line_search_explore_domain_violation_indices;
     /// @brief Строит результат на основе собранного в target_function в режиме однократного расчета ц.ф.
     std::vector<double> get_learning_curve() const {
         std::vector<double> result;
@@ -393,23 +414,35 @@ private:
     /// @param residuals Векторная функция невязок 
     /// @param argument Текущее значение аргумента
     /// @param p Значение приращения по методу Ньютона
-    /// @return Результат исследования ц.ф. 
-    static std::vector<double> perform_step_research(
+    /// @param on_domain_violation при record_nan — domain_violation даёт NaN и индекс в domain_violation_indices
+    /// @return Результат исследования ц.ф. - значения ц.ф. по сетке + индексы сетки вне ООФ
+    static step_line_search_explore_result_t perform_step_research(
         fixed_system_t<Dimension>& residuals,
         const var_type& argument,
-        const var_type& p)
+        const var_type& p,
+        line_search_explore_domain_violation_action_t on_domain_violation)
     {
-        size_t research_step_count = 100;
-        std::vector<double> target_function;
-        target_function.reserve(research_step_count + 1);
+        constexpr size_t research_step_count = 100;
+        step_line_search_explore_result_t result;
+        result.values.reserve(research_step_count + 1);
+        result.domain_violation_indices.reserve(research_step_count + 1);
         for (size_t index = 0; index <= research_step_count; ++index) {
-            double alpha = 1.0 * index / research_step_count;
-            var_type step_argument = argument + alpha * p;
-            double norm = residuals(step_argument);
-            target_function.emplace_back(norm);
+            const double alpha = 1.0 * static_cast<double>(index) / static_cast<double>(research_step_count);
+            const var_type step_argument = argument + alpha * p;
+            try {
+                const double norm = residuals(step_argument);
+                result.values.emplace_back(norm);
+            }
+            catch (const domain_violation&) {
+                if (on_domain_violation == line_search_explore_domain_violation_action_t::rethrow) {
+                    throw;
+                }
+                result.values.emplace_back(std::numeric_limits<double>::quiet_NaN());
+                result.domain_violation_indices.push_back(index);
+            }
         }
 
-        return target_function;
+        return result;
     }
 
 
@@ -431,15 +464,14 @@ private:
             return residuals(argument + step * p);
             };
 
-        // Диапазон поиска, значения функции на границах диапазона
+        // Диапазон поиска: f(a) уже есть; f(b) считает LineSearch::search внутри себя.
         double a = 0;
         double b = line_search_parameters.maximum_step;
         double function_a = residuals.objective_function(r); // уже есть рассчитанные невязки, по ним считаем ц.ф.
-        double function_b = directed_function(b);
 
         auto [search_step, elapsed_iterations] = LineSearch::search(
             line_search_parameters,
-            directed_function, a, b, function_a, function_b);
+            directed_function, a, b, function_a);
         return search_step;
     }
     /// @brief Выполняет расчет шага методом координатного спуска для заданной переменной вектора
@@ -642,7 +674,12 @@ private:
 
         // Информация о том, как изменялась целевая функция по траектории шага
         if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
-            analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+            step_line_search_explore_result_t explore = perform_step_research(
+                residuals, argument, p,
+                solver_parameters.analysis.line_search_explore_on_domain_violation);
+            analysis->target_function.push_back(std::move(explore.values));
+            analysis->line_search_explore_domain_violation_indices.push_back(
+                std::move(explore.domain_violation_indices));
             // Пользовательская диагностика по траектории шага (если переопределена)
             residuals.custom_line_research(argument, p);
         }
@@ -784,7 +821,12 @@ private:
 
             // Информация о том, как изменялась целевая функция по траектории шага
             if (analysis != nullptr && solver_parameters.analysis.line_search_explore) {
-                analysis->target_function.push_back(perform_step_research(residuals, argument, p));
+                step_line_search_explore_result_t explore = perform_step_research(
+                    residuals, argument, p,
+                    solver_parameters.analysis.line_search_explore_on_domain_violation);
+                analysis->target_function.push_back(std::move(explore.values));
+                analysis->line_search_explore_domain_violation_indices.push_back(
+                    std::move(explore.domain_violation_indices));
                 // Пользовательская диагностика по траектории шага (если переопределена)
                 residuals.custom_line_research(argument, p);
             }

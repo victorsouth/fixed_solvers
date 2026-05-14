@@ -23,7 +23,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFailContract_WhenAlphaOutOfDomain_AndB
 
     // Act: запускаем поиск, ожидая исчерпание итераций без локализации.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), function(1.0));
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: проверяем fail-контракт по step=NaN и счетчику итераций.
     ASSERT_FALSE(std::isfinite(step));
@@ -51,7 +51,7 @@ TEST(GoldenSectionDomainDiscovery, ThrowsLogicError_WhenDisconnectedDomainDetect
     // Assert: при обнаружении несвязной ООФ ожидаем logic_error.
     EXPECT_THROW(
         golden_section_search_domain_discovery::search(
-            parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN()),
+            parameters, function, 0.0, 1.0, function(0.0)),
         std::logic_error
     );
 }
@@ -78,7 +78,7 @@ TEST(GoldenSectionDomainDiscovery, ThrowsRuntimeError_WhenModeIsForbidExit_AndDo
     // Assert: если b оценивается вне ООФ, ожидаем runtime_error.
     EXPECT_THROW(
         golden_section_search_domain_discovery::search(
-            parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN()),
+            parameters, function, 0.0, 1.0, function(0.0)),
         std::runtime_error
     );
 }
@@ -101,7 +101,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFailContract_WhenFunctionReturnsNan)
 
     // Act: запускаем поиск, ожидая распространения NaN в результат.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: проверяем fail-контракт по step=NaN и счетчику итераций.
     ASSERT_FALSE(std::isfinite(step));
@@ -121,7 +121,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAllInDomain_AndAlphaLes
 
     // Act: запускаем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), function(1.0));
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден и лежит в левой части.
     ASSERT_TRUE(std::isfinite(step));
@@ -142,7 +142,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAllInDomain_AndAlphaGre
 
     // Act: запускаем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), function(1.0));
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден и смещен вправо.
     ASSERT_TRUE(std::isfinite(step));
@@ -168,7 +168,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBOutOfDomain_AndAlphaLe
 
     // Act: запускаем один шаг без известного f(b).
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -193,7 +193,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBOutOfDomain_AndAlphaGr
 
     // Act: запускаем один шаг без известного f(b).
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -203,22 +203,29 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBOutOfDomain_AndAlphaGr
 /// @brief Возвращает конечный шаг для пункта 5: beta вне ООФ и выбирается левая часть.
 TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBetaOutOfDomain_AndSelectsLeftPart_Rule05)
 {
-    // Arrange: beta вне ООФ, b считается определенной через f_b.
+    // Arrange: разрыв ООФ между левой и правой компонентами; beta в разрыве, b в правой; f(alpha)<f(a).
     golden_section_domain_discovery_parameters parameters;
     parameters.iteration_count = 1;
     parameters.function_decrement_factor = std::numeric_limits<double>::quiet_NaN();
     parameters.function_target_value = std::numeric_limits<double>::quiet_NaN();
     parameters.mode = domain_discovery_mode_t::require_connected_domain;
+    const double search_a = 0.0;
+    const double search_b = 0.56;
     auto function = [](double x) {
-        if (x >= 0.5) {
+        const bool in_left = (x >= 0.0) && (x < 0.22);
+        const bool in_right = (x > 0.55) && (x <= 1.0);
+        if (!in_left && !in_right) {
             throw domain_violation{};
         }
-        return std::pow(x - 0.3, 2.0);
+        if (in_left) {
+            return std::pow(x - 0.18, 2.0);
+        }
+        return std::pow(x - 0.9, 2.0);
     };
 
-    // Act: запускаем один шаг с заданным f(b).
+    // Act: один шаг поиска; f(b) считается внутри search.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), 0.01);
+        parameters, function, search_a, search_b, function(search_a));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -228,22 +235,29 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBetaOutOfDomain_AndSele
 /// @brief Возвращает конечный шаг для пункта 6: beta вне ООФ и выбирается правая часть.
 TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBetaOutOfDomain_AndSelectsRightPart_Rule06)
 {
-    // Arrange: beta вне ООФ, b считается определенной и выполняется переход вправо.
+    // Arrange: та же геометрия отрезка, что в Rule05; f(alpha)>f(b) — ветвь случая 6.
     golden_section_domain_discovery_parameters parameters;
     parameters.iteration_count = 1;
     parameters.function_decrement_factor = std::numeric_limits<double>::quiet_NaN();
     parameters.function_target_value = std::numeric_limits<double>::quiet_NaN();
-    parameters.mode = domain_discovery_mode_t::require_connected_domain;
+    parameters.mode = domain_discovery_mode_t::allow_disconnected_domain;
+    const double search_a = 0.0;
+    const double search_b = 0.56;
     auto function = [](double x) {
-        if (x >= 0.5) {
+        const bool in_left = (x >= 0.0) && (x < 0.22);
+        const bool in_right = (x > 0.55) && (x <= 1.0);
+        if (!in_left && !in_right) {
             throw domain_violation{};
         }
-        return std::pow(x - 0.45, 2.0);
+        if (in_left) {
+            return 0.1 * x + 0.2;
+        }
+        return 1e-6;
     };
 
-    // Act: запускаем один шаг с заданным f(b).
+    // Act: один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), 1e-6);
+        parameters, function, search_a, search_b, function(search_a));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -253,24 +267,31 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBetaOutOfDomain_AndSele
 /// @brief Бросает logic_error для пункта 7: beta вне ООФ и минимум не в интервале.
 TEST(GoldenSectionDomainDiscovery, ThrowsLogicError_WhenBetaOutOfDomain_AndMinimumNotInInterval_Rule07)
 {
-    // Arrange: beta вне ООФ и монотонная функция.
+    // Arrange: та же геометрия; на левой компоненте монотонный рост, на правой низкий минимум — ветвь случая 7.
     golden_section_domain_discovery_parameters parameters;
     parameters.iteration_count = 1;
     parameters.function_decrement_factor = std::numeric_limits<double>::quiet_NaN();
     parameters.function_target_value = std::numeric_limits<double>::quiet_NaN();
     parameters.mode = domain_discovery_mode_t::require_connected_domain;
+    const double search_a = 0.0;
+    const double search_b = 0.56;
     auto function = [](double x) {
-        if (x >= 0.5) {
+        const bool in_left = (x >= 0.0) && (x < 0.22);
+        const bool in_right = (x > 0.55) && (x <= 1.0);
+        if (!in_left && !in_right) {
             throw domain_violation{};
         }
-        return 0.1 * x;
+        if (in_left) {
+            return 0.1 * x;
+        }
+        return 1.0 + std::pow(x - 0.9, 2.0);
     };
 
     // Act: выполняем один шаг поиска.
     // Assert: ожидаем logic_error.
     EXPECT_THROW(
         golden_section_search_domain_discovery::search(
-            parameters, function, 0.0, 1.0, function(0.0), 0.1),
+            parameters, function, search_a, search_b, function(search_a)),
         std::logic_error
     );
 }
@@ -295,7 +316,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaOutOfDomain_AndSel
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), function(1.0));
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -325,7 +346,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaOutOfDomain_AndSel
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), function(1.0));
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -357,7 +378,7 @@ TEST(GoldenSectionDomainDiscovery, ThrowsLogicError_WhenAlphaOutOfDomain_AndMini
     // Assert: ожидаем logic_error.
     EXPECT_THROW(
         golden_section_search_domain_discovery::search(
-            parameters, function, 0.0, 1.0, function(0.0), function(1.0)),
+            parameters, function, 0.0, 1.0, function(0.0)),
         std::logic_error
     );
 }
@@ -380,7 +401,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenBetaAndBOutOfDomain_And
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -407,7 +428,7 @@ TEST(GoldenSectionDomainDiscovery, ThrowsLogicError_WhenHeuristicDisabled_Rule12
     // Assert: в режиме связной ООФ при повторном выходе из ООФ ожидаем logic_error.
     EXPECT_THROW(
         golden_section_search_domain_discovery::search(
-            parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN()),
+            parameters, function, 0.0, 1.0, function(0.0)),
         std::logic_error
     );
 }
@@ -435,7 +456,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaAndBOutOfDomain_An
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден.
     ASSERT_TRUE(std::isfinite(step));
@@ -465,7 +486,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaAndBOutOfDomain_An
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден за счет эвристики.
     ASSERT_TRUE(std::isfinite(step));
@@ -495,7 +516,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaAndBetaOutOfDomain
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден за счет эвристики.
     ASSERT_TRUE(std::isfinite(step));
@@ -520,7 +541,7 @@ TEST(GoldenSectionDomainDiscovery, ReturnsFiniteStep_WhenAlphaBetaAndBOutOfDomai
 
     // Act: выполняем один шаг поиска.
     auto [step, iterations] = golden_section_search_domain_discovery::search(
-        parameters, function, 0.0, 1.0, function(0.0), std::numeric_limits<double>::quiet_NaN());
+        parameters, function, 0.0, 1.0, function(0.0));
 
     // Assert: шаг найден за счет эвристики.
     ASSERT_TRUE(std::isfinite(step));
