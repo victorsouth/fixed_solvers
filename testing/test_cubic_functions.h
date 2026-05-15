@@ -1,14 +1,4 @@
-#define GTEST_BREAK_ON_FAILURE 1
-#define GTEST_CATCH_EXCEPTIONS 0
-#define GTEST_HAS_SEH 0
-#define _VARIADIC_MAX 10 /* for gtest */
-#include "gtest/gtest.h"
-
-#include "helpers/cubic_equation_functions.h"
-
-#include <algorithm>
-#include <cmath>
-#include <vector>
+#include "fixed/helpers/cubic_equation_functions.h"
 
 namespace {
 
@@ -254,4 +244,70 @@ TEST(SolveCubicEquation, SortedRootsMatchLinearFactors)
     EXPECT_NEAR(roots[0], 1.0, 1e-9);
     EXPECT_NEAR(roots[1], 2.0, 1e-9);
     EXPECT_NEAR(roots[2], 3.0, 1e-9);
+}
+
+namespace {
+    /// @brief Значение первой производной кубического полинома.
+    double eval_cubic_derivative(const std::vector<double>& k, double x)
+    {
+        return k[1] + x * (2.0 * k[2] + x * (3.0 * k[3]));
+    }
+
+    /// @brief Значение второй производной кубического полинома.
+    double eval_cubic_second_derivative(const std::vector<double>& k, double x)
+    {
+        return 2.0 * k[2] + x * (6.0 * k[3]);
+    }
+} // namespace
+
+/// @brief Два различных экстремума (максимум и минимум).
+TEST(FindCubicExtremums, ReturnsMaxAndMinForTwoStationaryPoints)
+{
+    // Arrange - производная (Q-1)(Q-3) => 3D=1, 2C=-4, B=3
+    const std::vector<double> coeffs{ 0.0, 3.0, -2.0, 1.0 / 3.0 };
+    // Act - поиск экстремумов кубического полинома
+    const auto [Q_max, Q_min] = fixed_solvers::find_cubic_extremums(coeffs);
+    // Assert - экстремумы в точках 1 и 3, производная обращается в ноль, знаки H'' корректны
+    EXPECT_NEAR(Q_max, 1.0, 1e-9);
+    EXPECT_NEAR(Q_min, 3.0, 1e-9);
+    EXPECT_NEAR(eval_cubic_derivative(coeffs, Q_max), 0.0, 1e-9);
+    EXPECT_NEAR(eval_cubic_derivative(coeffs, Q_min), 0.0, 1e-9);
+    EXPECT_LT(eval_cubic_second_derivative(coeffs, Q_max), 0.0);
+    EXPECT_GT(eval_cubic_second_derivative(coeffs, Q_min), 0.0);
+}
+
+/// @brief Отсутствие вещественных экстремумов (дискриминант производной < 0).
+TEST(FindCubicExtremums, ReturnsNaNsForNoRealExtremums)
+{
+    // Arrange - производная Q^2 + 1 = 0 => 3D=1, 2C=0, B=1
+    const std::vector<double> coeffs{ 0.0, 1.0, 0.0, 1.0 / 3.0 };
+    // Act - поиск экстремумов кубического полинома
+    const auto [Q_max, Q_min] = fixed_solvers::find_cubic_extremums(coeffs);
+    // Assert - оба значения NaN, так как вещественных стационарных точек нет
+    EXPECT_TRUE(std::isnan(Q_max));
+    EXPECT_TRUE(std::isnan(Q_min));
+}
+
+/// @brief Вырожденный случай: производная линейная (один экстремум).
+TEST(FindCubicExtremums, ReturnsSingleExtremumForLinearDerivative)
+{
+    // Arrange - D ≈ 0, производная 2C·Q + B = 0. Пусть C=1, B=-2 => корень Q=1
+    const std::vector<double> coeffs{ 0.0, -2.0, 1.0, 1e-12 };
+    // Act - поиск экстремумов кубического полинома
+    const auto [Q_max, Q_min] = fixed_solvers::find_cubic_extremums(coeffs);
+    // Assert - только минимум в точке 1, максимум равен NaN, знак H'' положителен
+    EXPECT_TRUE(std::isnan(Q_max));
+    EXPECT_NEAR(Q_min, 1.0, 1e-7);
+    EXPECT_GT(eval_cubic_second_derivative(coeffs, Q_min), 0.0);
+}
+
+/// @brief Проверка обработки некорректных входных данных.
+TEST(FindCubicExtremums, ThrowsOnInvalidArguments)
+{
+    // Arrange - вектор из трёх коэффициентов и вектор с нулевым старшим коэффициентом
+    const std::vector<double> wrong_size{ 1.0, 2.0, 3.0 };
+    const std::vector<double> zero_lead{ 1.0, 2.0, 3.0, 0.0 };
+    // Act & Assert - вызов с неверным размером и нулевым старшим коэффициентом должен бросать std::invalid_argument
+    ASSERT_THROW(fixed_solvers::find_cubic_extremums(wrong_size), std::runtime_error);
+    ASSERT_THROW(fixed_solvers::find_cubic_extremums(zero_lead), std::runtime_error);
 }

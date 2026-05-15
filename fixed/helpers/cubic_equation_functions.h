@@ -225,4 +225,83 @@ inline double monic_cubic_cardano_Q(double a, double b, double c)
     return cubic_detail::monic_depressed_cubic_cardano_Q(a, b, c);
 }
 
+/// @brief Находит положения максимума и минимума {Q_max, Q_min} кубического полинома ΔH(Q) = A + B·Q + C·Q² + D·Q³
+inline std::pair<double, double> find_cubic_extremums(const std::vector<double>& coeffs)
+{
+    using std::fabs;
+    using std::sqrt;
+
+    // Валидация: паттерн из validated_monic_coeffs_from_poly
+    if (coeffs.size() != 4) {
+        throw std::runtime_error("find_cubic_extremums: expected 4 coefficients");
+    }
+    const double D = coeffs[3];
+    const double D_abs = fabs(D);
+    const double scale_in = std::max({1.0, fabs(coeffs[0]), fabs(coeffs[1]), fabs(coeffs[2])});
+    if (D_abs <= std::numeric_limits<double>::epsilon() * scale_in) {
+        throw std::runtime_error("find_cubic_extremums: leading coefficient is zero");
+    }
+
+    // Коэффициенты производной: H'(Q) = B + 2C·Q + 3D·Q²
+    const double B = coeffs[1];
+    const double C = coeffs[2];
+    const double a_prime = 3.0 * D;   // при Q²
+    const double b_prime = 2.0 * C;   // при Q
+    const double c_prime = B;         // свободный член
+
+    // Переиспользуем существующие пороги из cubic_detail 
+    const double prime_scale = cubic_detail::monic_coefficient_scale(a_prime, b_prime, c_prime);
+    const double tol_degen = cubic_detail::derivative_degenerate_tol_absolute
+                           + cubic_detail::derivative_degenerate_tol_scale_sq_coeff * std::max(prime_scale * prime_scale, 1.0);
+
+    // Вырожденный случай: производная линейная или константа
+    if (fabs(a_prime) <= tol_degen) {
+        if (fabs(b_prime) <= tol_degen) {
+            return {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()};
+        }
+        const double Q = -c_prime / b_prime;
+        // H''(Q) = 2C + 6D·Q; знак определяет тип экстремума
+        const double second_deriv = 2.0 * C + 6.0 * D * Q;
+        if (second_deriv < 0) {
+            return {Q, std::numeric_limits<double>::quiet_NaN()};  // только максимум
+        } else {
+            return {std::numeric_limits<double>::quiet_NaN(), Q};  // только минимум
+        }
+    }
+
+    // Дискриминант квадратного уравнения: Δ = b² - 4ac
+    const double discriminant = b_prime * b_prime - 4.0 * a_prime * c_prime;
+
+    // Переиспользуем порог для дискриминанта (адаптируем под масштаб производной)
+    const double tol_disc = cubic_detail::discriminant_zero_tol_absolute
+                          + cubic_detail::discriminant_zero_tol_scale_cubed_coeff * prime_scale * prime_scale * prime_scale;
+
+    if (discriminant < -tol_disc) {
+        return {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN()};
+    }
+
+    // Корни производной (стационарные точки)
+    const double sqrt_disc = sqrt(std::max(0.0, discriminant));
+    const double Q1 = (-b_prime + sqrt_disc) / (2.0 * a_prime);
+    const double Q2 = (-b_prime - sqrt_disc) / (2.0 * a_prime);
+
+    // Классификация по знаку второй производной
+    const double second_deriv_Q1 = 2.0 * C + 6.0 * D * Q1;
+
+    if (second_deriv_Q1 < 0) {
+        return {Q1, Q2};  // Q1 — максимум, Q2 — минимум
+    } else {
+        return {Q2, Q1};  // Q2 — максимум, Q1 — минимум
+    }
+}
+
+/// @brief Находит точки максимума и минимума {Q_max, Q_min} полинома третьей степени
+/// @details Если экстремум вне положительной области, то вместо него возвращается NaN
+inline std::pair<double, double> find_positive_cubic_extremums(const std::vector<double>& coefficients)
+{
+    auto [Q_max, Q_min] = find_cubic_extremums(coefficients);
+    return {Q_max <= 0.0 ? std::numeric_limits<double>::quiet_NaN() : Q_max,
+        Q_min <= 0.0 ? std::numeric_limits<double>::quiet_NaN() : Q_min};
+}
+
 } // namespace fixed_solvers
