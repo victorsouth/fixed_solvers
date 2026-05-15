@@ -296,8 +296,8 @@ inline std::pair<double, double> find_cubic_extremums(const std::vector<double>&
 }
 
 /// @brief Находит точки максимума и минимума {Q_max, Q_min} полинома третьей степени
-/// @details Если экстремум вне положительной области, то вместо него возвращается NaN    
-static std::pair<double, double> find_positive_cubic_extremums(const std::vector<double>& coefficients)
+/// @details Если экстремум вне положительной области, то вместо него возвращается NaN
+inline std::pair<double, double> find_positive_cubic_extremums(const std::vector<double>& coefficients)
 {
     auto [Q_max, Q_min] = find_cubic_extremums(coefficients);
     return {Q_max <= 0.0 ? std::numeric_limits<double>::quiet_NaN() : Q_max,
