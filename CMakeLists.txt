@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)
@@ -7,9 +10,9 @@ set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 cmake_policy(SET CMP0012 NEW)
 
-
 if(MSVC)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 if(MINGW)
     add_compile_options("-Wa,-mbig-obj")
@@ -87,7 +90,7 @@ option(FIXED_SOLVERS_BUILD_TESTS "" OF)
 if(FIXED_SOLVERS_BUILD_TESTS)
 
 find_package(Threads)
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 
 add_executable(fs_tests
     testing/test_main.cpp
