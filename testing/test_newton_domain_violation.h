@@ -129,11 +129,12 @@ TEST(NewtonRaphsonDomainViolation, RecordsNanAndIndices_WhenLineSearchExploreHit
     residual_domain_violation_var equation;
     equation.upper_bound_for_domain = 1.0;
     equation.linear_residual_root = 1.2;
-    fixed_solver_parameters_t<-1, 0, golden_section_search> parameters;
+    fixed_solver_parameters_t<-1, 0, golden_section_search_domain_discovery> parameters;
     parameters.iteration_count = 3;
     parameters.analysis.line_search_explore = true;
     parameters.analysis.line_search_explore_on_domain_violation =
         line_search_explore_domain_violation_action_t::record_nan;
+    parameters.line_search.mode = domain_discovery_mode_t::allow_disconnected_domain;
     Eigen::VectorXd initial(1);
     initial(0) = 0.95;
     fixed_solver_result_t<-1> result;
