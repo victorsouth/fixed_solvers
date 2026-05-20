@@ -53,7 +53,9 @@ struct fixed_solver_analysis_parameters_t {
 
 /// @brief Результат одного вызова исследования ц.ф. по сетке alpha (один шаг солвера)
 struct step_line_search_explore_result_t {
+    /// @brief Значения целевой функции в узлах сетки по alpha
     std::vector<double> values;
+    /// @brief Индексы узлов сетки (0..N), на которых зафиксирован выход за ООФ
     std::vector<size_t> domain_violation_indices;
 };
 

@@ -199,6 +199,7 @@ struct golden_section_domain_discovery_parameters : golden_section_parameters {
     bool allow_non_unimodal{ false };
 };
 
+/// @brief Оптимизация методом золотого сечения с учётом ограниченной ООФ
 class golden_section_search_domain_discovery {
 public:
     /// @brief Для использования из Ньютона-Рафсона
