@@ -13,6 +13,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <optional>
 
 #include "line_search/golden_section.h"
 #include "line_search/divider.h"

@@ -50,6 +50,29 @@ struct golden_section_parameters {
     bool target_value_criteria(double f_current_min) const {
         return std::isfinite(function_target_value) && (f_current_min < function_target_value);
     }
+    /// @brief Ранний выход по порогу function_target_value на границах отрезка [a, b]
+    /// @details Порог function_target_value задаётся как аналог соотношения «сигнал/шум»:
+    /// ниже него ц.ф. неотличима от численного шума замыкающих соотношений, и дальнейший поиск минимума
+    /// на отрезке лишён физического смысла.
+    /// @return nullopt — порог на границах не достигнут; иначе alpha для немедленного возврата из search
+    std::optional<double> try_resolve_step_by_target_value(double f_a, double f_b, double a, double b) const {
+        if (!std::isfinite(function_target_value)) {
+            return std::nullopt;
+        }
+        const bool a_below = f_a < function_target_value;
+        const bool b_below = f_b < function_target_value;
+        if (!a_below && !b_below) {
+            return std::nullopt;
+        }
+        double result;
+        if (a_below && b_below) {
+            result = a;
+        }
+        else {
+            result = f_a < f_b ? a : b;
+        }
+        return result;
+    }
 };
 
 
@@ -90,6 +113,10 @@ public:
         double f_0 = f_a;
         if (!std::isfinite(f_b)) {
             f_b = function(b);
+        }
+
+        if (auto boundary_alpha = parameters.try_resolve_step_by_target_value(f_a, f_b, a, b)) {
+            return { *boundary_alpha, 0 };
         }
 
         // Инициализируем текущий рекорд
@@ -284,6 +311,12 @@ public:
         }
 
         const double f_0 = f_a;
+
+        if (b_eval.in_domain) {
+            if (auto boundary_alpha = parameters.try_resolve_step_by_target_value(f_a, b_eval.value, a, b)) {
+                return { *boundary_alpha, 0 };
+            }
+        }
 
         // Текущий рекорд минимума: стартуем с a, и учитываем b только если он в области определения.
         double best_x = a;
