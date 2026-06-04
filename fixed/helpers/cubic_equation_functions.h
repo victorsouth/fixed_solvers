@@ -225,6 +225,17 @@ inline double monic_cubic_cardano_Q(double a, double b, double c)
     return cubic_detail::monic_depressed_cubic_cardano_Q(a, b, c);
 }
 
+/// @brief Единственный действительный корень при Q >= 0.
+inline double solve_monic_cubic_single_real_root(double a, double b, double c)
+{
+    const std::vector<double> roots =
+        cubic_detail::solve_monic_one_real_depressed_cardano(a, b, c);
+    if (roots.empty()) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    return roots.front();
+}
+
 /// @brief Находит положения максимума и минимума {Q_max, Q_min} кубического полинома ΔH(Q) = A + B·Q + C·Q² + D·Q³
 inline std::pair<double, double> find_cubic_extremums(const std::vector<double>& coeffs)
 {
@@ -303,5 +314,4 @@ inline std::pair<double, double> find_positive_cubic_extremums(const std::vector
     return {Q_max <= 0.0 ? std::numeric_limits<double>::quiet_NaN() : Q_max,
         Q_min <= 0.0 ? std::numeric_limits<double>::quiet_NaN() : Q_min};
 }
-
 } // namespace fixed_solvers
