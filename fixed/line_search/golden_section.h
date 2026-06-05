@@ -52,8 +52,7 @@ struct golden_section_parameters {
     }
     /// @brief Ранний выход по порогу function_target_value на границах отрезка [a, b]
     /// @details Порог function_target_value задаётся как аналог соотношения «сигнал/шум»:
-    /// ниже него ц.ф. неотличима от численного шума замыкающих соотношений, и дальнейший поиск минимума
-    /// на отрезке лишён физического смысла.
+    /// ниже него ц.ф. неотличима от численного шума замыкающих соотношений
     /// @return nullopt — порог на границах не достигнут; иначе alpha для немедленного возврата из search
     std::optional<double> try_resolve_step_by_target_value(double f_a, double f_b, double a, double b) const {
         if (!std::isfinite(function_target_value)) {
@@ -62,13 +61,16 @@ struct golden_section_parameters {
         const bool a_below = f_a < function_target_value;
         const bool b_below = f_b < function_target_value;
         if (!a_below && !b_below) {
+            // если f_a и f_b превышают порог — обработка не требуется, итерации ЗС запускаются штатно
             return std::nullopt;
         }
         double result;
         if (a_below && b_below) {
+            // если оба значения ниже порога — предельная точность уже достигнута, шаг не требуется
             result = a;
         }
         else {
+            // если одно из значений ниже порога — возвращается меньшее из двух как текущий минимум
             result = f_a < f_b ? a : b;
         }
         return result;
