@@ -13,6 +13,7 @@
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
 #include "test_golden_section_domain_discovery.h"
+#include "test_golden_section_target_value.h"
 #include "test_newton_domain_violation.h"
 #include "test_helpers.h"
 

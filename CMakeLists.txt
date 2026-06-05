@@ -24,6 +24,7 @@ find_package(Eigen3)
 set(HEADERS_LS
     fixed/line_search/divider.h
     fixed/line_search/golden_section.h
+    fixed/line_search/golden_section_domain_discovery.h
 )
 set(HEADERS_QP
     fixed/qp/qp_wrapper.h
