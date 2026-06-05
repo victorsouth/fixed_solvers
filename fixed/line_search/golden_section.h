@@ -43,8 +43,9 @@ struct golden_section_parameters {
             // достигнута сильная сходимость
             return  decrement > function_decrement_factor;
         }
-        else
+        else {
             return false;
+        }
     }
     /// @brief Проверяет достигнутое значение ц.ф.
     bool target_value_criteria(double f_current_min) const {
@@ -64,7 +65,6 @@ struct golden_section_parameters {
             // если оба значения выше порога — итерации ЗС запускаются штатно
             return std::nullopt;
         }
-        double result;
         if (a_below && b_below) {
             // если оба значения ниже порога, то находимся в ε-окрестности решения.
             // В этих условиях хорошо работает обычный Ньютон без регулировки шага.
@@ -74,10 +74,12 @@ struct golden_section_parameters {
         else {
             // Здесь остались только два варианта - только одно из двух значений меньше порога. 
             // Это меньшее значение и возвращаем.
-            if (a_below)
+            if (a_below) {
                 return a;
-            else
+            }
+            else {
                 return b;
+            }
         }
     }
 };
