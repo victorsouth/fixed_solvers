@@ -16,6 +16,7 @@
 #include <optional>
 
 #include "line_search/golden_section.h"
+#include "line_search/golden_section_domain_discovery.h"
 #include "line_search/divider.h"
 
 #include <iostream>

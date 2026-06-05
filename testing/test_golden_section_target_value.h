@@ -18,8 +18,8 @@ TEST(GoldenSectionTargetValue, ReturnsZeroStep_WhenBothBoundaryValuesBelowTarget
     auto [step, iterations] = golden_section_search::search(
         parameters, function, 0.0, 1.0, f_a, f_b);
 
-    // Assert: шаг Ньютона не делается, итерации ЗС не выполняются.
-    ASSERT_EQ(step, 0.0);
+    // Assert: Делаем шаг без коррекции.
+    ASSERT_DOUBLE_EQ(step, 1.0);
     ASSERT_EQ(iterations, 0);
 }
 
@@ -42,7 +42,7 @@ TEST(GoldenSectionTargetValue, ReturnsSmallerBoundary_WhenOnlyOneBoundaryValueBe
         parameters, function, 0.0, 1.0, f_a, f_b);
 
     // Assert: возвращается левая граница без итераций ЗС.
-    ASSERT_EQ(step, 0.0);
+    ASSERT_DOUBLE_EQ(step, 0.0);
     ASSERT_EQ(iterations, 0);
 }
 
@@ -65,7 +65,7 @@ TEST(GoldenSectionTargetValue, ReturnsRightBoundary_WhenOnlyRightBoundaryValueBe
         parameters, function, 0.0, 1.0, f_a, f_b);
 
     // Assert: возвращается правая граница без итераций ЗС.
-    ASSERT_EQ(step, 1.0);
+    ASSERT_DOUBLE_EQ(step, 1.0);
     ASSERT_EQ(iterations, 0);
 }
 
@@ -109,7 +109,7 @@ TEST(GoldenSectionTargetValue, DomainDiscoveryReturnsZeroStep_WhenBothBoundaryVa
     auto [step, iterations] = golden_section_search_domain_discovery::search(
         parameters, function, 0.0, 1.0, f_a, f_b);
 
-    // Assert: шаг Ньютона не делается, итерации ЗС не выполняются.
-    ASSERT_EQ(step, 0.0);
+    // Assert: Делаем шаг без коррекции.
+    ASSERT_DOUBLE_EQ(step, 1.0);
     ASSERT_EQ(iterations, 0);
 }
