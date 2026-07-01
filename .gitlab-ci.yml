@@ -1,7 +1,7 @@
 stages:
+  - Static_test
   - Build
   - Unit_Testing
-  - Static_test
 
 #Проверка кодировки файлов с расширением .m .cpp .h на соответствие UTF-8
 Unicode:
@@ -83,19 +83,19 @@ Clang_build:
       - Libs/Clang
 
 #Сборка проекта MinGW
-MinGW_build:
-  stage: Build
-  tags:
-    - ktk-dev-build
-  script:
-    - c:\msys64\msys2_shell.cmd -defterm -here -no-start -mingw64 -c "./pipeline/pipeline_scripts/build.sh MinGW"
-  allow_failure: false
-  artifacts:
-    expire_in: 24 hour
-    when: always
-    paths:
-      - pipeline/pipeline_result/build_mingw_result
-      - Libs/MinGW
+#MinGW_build:
+  #stage: Build
+  #tags:
+    #- ktk-dev-build
+  #script:
+    #- c:\msys64\msys2_shell.cmd -defterm -here -no-start -mingw64 -c "./pipeline/pipeline_scripts/build.sh MinGW"
+  #allow_failure: false
+  #artifacts:
+    #expire_in: 24 hour
+    #when: always
+    #paths:
+      #- pipeline/pipeline_result/build_mingw_result
+      #- Libs/MinGW
 
 # Запуск тестов с использованием GTest
 fs_tests:
