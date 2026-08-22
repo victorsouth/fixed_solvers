@@ -1,4 +1,4 @@
-﻿#define FIXED_USE_QP_SOLVER
+#define FIXED_USE_QP_SOLVER
 #include <fixed/fixed.h>
 
 
@@ -8,10 +8,14 @@
 #define _VARIADIC_MAX 10 /* for gtest */
 #include "gtest/gtest.h"
 
-
+#include "test_cubic_functions.h"
 #include "test_linear_constraints.h"
 #include "test_linear_system.h"
 #include "test_newton_raphson.h"
+#include "test_golden_section_domain_discovery.h"
+#include "test_golden_section_target_value.h"
+#include "test_newton_domain_violation.h"
+#include "test_helpers.h"
 
 #include "qp/eiquadprog.hpp"
 

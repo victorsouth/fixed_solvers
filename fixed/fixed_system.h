@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 * \file
 * \brief В данном .h файле реализовано описание систем различной
 размерности для решателя Ньютона - Рафсона
@@ -158,11 +158,17 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const Eigen::VectorXd& r, const Eigen::VectorXd& x)
+    virtual bool custom_success_criteria(const Eigen::VectorXd& r, const Eigen::VectorXd& x, const Eigen::VectorXd& p)
     {
         return false;
     }
+    /// @brief Пользовательское исследование траектории шага
+    /// @param argument Текущее значение аргумента
+    /// @param argument_increment Приращение аргумента по методу Ньютона-Рафсона
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_research(const Eigen::VectorXd& argument, const Eigen::VectorXd& argument_increment) {}
 protected:
     /// @brief Численный расчет разреженного якобиана
     sparse_matrix_type jacobian_sparse_numeric(const Eigen::VectorXd& x) {
@@ -243,11 +249,25 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const var_type& r, const var_type& x)
+    virtual bool custom_success_criteria(const var_type& r, const var_type& x, const var_type& p)
     {
         return false;
     }
+    /// @brief Пользовательское исследование траектории шага (например, для расширенной диагностики)
+    /// @param argument Текущее значение аргумента
+    /// @param argument_increment Приращение аргумента по методу Ньютона-Рафсона
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_research(const var_type& argument, const var_type& argument_increment) {}
+    /// @brief Вызывается на каждой итерации численного метода перед исследованием траектории шага
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_start() {}
+    /// @brief Вызывается для каждой точки траектории шага
+    /// @param alpha Текущий шаг вдоль направления спуска
+    /// @param x_alpha Аргумент системы при данном значении alpha
+    /// @details Базовая реализация ничего не делает. Может быть переопределена в наследниках
+    virtual void custom_line_search_sample(double alpha, const var_type& x_alpha) {}
 
 protected:
     /// @brief Численный расчет плотного якобиана
