@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 using fixed_optimizer_parameters_t = fixed_solver_parameters_t<-1>;
 using fixed_optimizer_result_t = fixed_solver_result_t<-1>;
@@ -64,8 +64,10 @@ public:
     /// @brief Специфический критерий успешного завершения расчета
     /// @param r Текущее значения невязок
     /// @param x Текущее значение аргумента
+    /// @param p Приращение аргумента на текущем шаге
     /// @return Флаг успешного завершения
-    virtual bool custom_success_criteria(const residuals_type& r, const argument_type& x)
+    virtual bool custom_success_criteria(const residuals_type& r, const argument_type& x, 
+        const argument_type& p)
     {
         return true;
     }
@@ -151,15 +153,15 @@ private:
             return function(argument + step * p);
             };
 
-        // Диапазон поиска, значения функции на границах диапазона
+        // Диапазон поиска: f(b) не передаём — при доменном ЗС вызов в b мог бы выйти за ООФ;
+        // при необходимости f(b) считает LineSearch::search внутри себя.
         double a = 0;
         double b = line_search_parameters.maximum_step;
         double function_a = directed_function(a);
-        double function_b = directed_function(b);
 
         auto [search_step, elapsed_iterations] = LineSearch::search(
             line_search_parameters,
-            directed_function, a, b, function_a, function_b);
+            directed_function, a, b, function_a);
         return search_step;
     }
 
@@ -209,8 +211,8 @@ public:
             analysis->target_function.push_back({ result->residuals_norm });
         }
 
-        bool custom_stop_criteria = function.custom_success_criteria(r, argument);
-        /*if (custom_stop_criteria) {
+        /*bool custom_stop_criteria = function.custom_success_criteria(r, argument);
+        if (custom_stop_criteria) {
             result->result_code = numerical_result_code_t::Converged;
             return;
         }*/

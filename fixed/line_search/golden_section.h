@@ -1,4 +1,17 @@
-﻿#pragma once
+#pragma once
+
+/// @brief Исключение - выход за область определения функции
+struct domain_violation {};
+
+/// @brief Режимы обработки области определения при поиске золотого сечения
+enum class domain_discovery_mode_t {
+    /// @brief Не разрешать выход за область определения
+    forbid_exit,
+    /// @brief Требовать связную область определения
+    require_connected_domain,
+    /// @brief Разрешать несвязную область определения (использовать эвристику ООФ)
+    allow_disconnected_domain
+};
 
 /// @brief Настройки поиска золотого сечения
 struct golden_section_parameters {
@@ -30,12 +43,44 @@ struct golden_section_parameters {
             // достигнута сильная сходимость
             return  decrement > function_decrement_factor;
         }
-        else
+        else {
             return false;
+        }
     }
     /// @brief Проверяет достигнутое значение ц.ф.
     bool target_value_criteria(double f_current_min) const {
         return std::isfinite(function_target_value) && (f_current_min < function_target_value);
+    }
+    /// @brief Ранний выход по порогу function_target_value на границах отрезка [a, b]
+    /// @details Порог function_target_value задаётся как аналог соотношения «сигнал/шум»:
+    /// ниже него ц.ф. неотличима от численного шума замыкающих соотношений
+    /// @return nullopt — порог на границах не достигнут; иначе alpha для немедленного возврата из search
+    std::optional<double> try_resolve_step_by_target_value(double f_a, double f_b, double a, double b) const {
+        if (!std::isfinite(function_target_value)) {
+            return std::nullopt;
+        }
+        bool a_below = f_a < function_target_value;
+        bool b_below = f_b < function_target_value;
+        if (!a_below && !b_below) {
+            // если оба значения выше порога — итерации ЗС запускаются штатно
+            return std::nullopt;
+        }
+        if (a_below && b_below) {
+            // если оба значения ниже порога, то находимся в ε-окрестности решения.
+            // В этих условиях хорошо работает обычный Ньютон без регулировки шага.
+            // Обычно b=1, возвращает единицу.
+            return b;
+        }
+        else {
+            // Здесь остались только два варианта - только одно из двух значений меньше порога. 
+            // Это меньшее значение и возвращаем.
+            if (a_below) {
+                return a;
+            }
+            else {
+                return b;
+            }
+        }
     }
 };
 
@@ -58,12 +103,14 @@ public:
     /// @brief Оптимизация методом золотого сечения
     /// @return [величина спуска; количество итераций]
     /// величина спуска = nan, если произошел сбой регулировки
+    /// @param f_b значение f(b); если не конечно (по умолчанию quiet_NaN), f(b) считается вызовом function(b).
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const golden_section_parameters& parameters,
         Function& function,
         double a, double b,
-        double f_a, double f_b
+        double f_a,
+        double f_b = std::numeric_limits<double>::quiet_NaN()
     )
     {
         auto check_convergence = [&](double f_min, double f_0) {
@@ -73,6 +120,13 @@ public:
 
         // Начальное значение ц.ф., по которому смотрим фактор снижения
         double f_0 = f_a;
+        if (!std::isfinite(f_b)) {
+            f_b = function(b);
+        }
+
+        if (auto boundary_alpha = parameters.try_resolve_step_by_target_value(f_a, f_b, a, b)) {
+            return { *boundary_alpha, 0 };
+        }
 
         // Инициализируем текущий рекорд
         auto [x_min, f_min] = f_b < f_a
@@ -170,5 +224,6 @@ public:
             };
         }
     }
+
 };
 

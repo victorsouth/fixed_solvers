@@ -1,4 +1,7 @@
-﻿cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
 # header only library
 # for install, dependencies and correct include path
 project(fixed_solvers)
@@ -7,25 +10,27 @@ set(CMAKE_CXX_STANDARD 17)#23?
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 cmake_policy(SET CMP0012 NEW)
 
-
 if(MSVC)
     add_compile_options("/MP")     # включает многопроцессорную компиляцию
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 if(MINGW)
     add_compile_options("-Wa,-mbig-obj")
 endif()
 
 find_package(Eigen3)
-find_package(Boost REQUIRED headers)
+#find_package(Boost REQUIRED headers)
 
 set(HEADERS_LS
     fixed/line_search/divider.h
     fixed/line_search/golden_section.h
+    fixed/line_search/golden_section_domain_discovery.h
 )
 set(HEADERS_QP
     fixed/qp/qp_wrapper.h
 )
 set(HEADERS_HELPERS
+    fixed/helpers/cubic_equation_functions.h
     fixed/helpers/math_helpers.h
     fixed/helpers/string_helpers.h
     fixed/helpers/ranged_functions.h
@@ -46,7 +51,7 @@ if("3.19.0" VERSION_LESS ${CMAKE_VERSION})
 else()
     add_library(${PROJECT_NAME} INTERFACE)
 endif()
-target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen Boost::headers)
+target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 target_include_directories(${PROJECT_NAME}
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -86,9 +91,14 @@ option(FIXED_SOLVERS_BUILD_TESTS "" OF)
 if(FIXED_SOLVERS_BUILD_TESTS)
 
 find_package(Threads)
-find_package(GTest REQUIRED)
+find_package(GTest CONFIG REQUIRED)
 
-add_executable(fs_tests testing/test_main.cpp testing/bisection.cpp testing/optimizer.cpp testing/newton_solver.cpp)
+add_executable(fs_tests
+    testing/test_main.cpp
+    testing/bisection.cpp
+    testing/optimizer.cpp
+    testing/newton_solver.cpp
+)
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
 install(TARGETS fs_tests DESTINATION bin)
 

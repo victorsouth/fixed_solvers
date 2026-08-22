@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 
 /// @brief Настройки поиска дробления шага
@@ -25,12 +25,14 @@ public:
     /// @brief Алгоритм регулировки шага методом дробления 
     /// @return [величина спуска; количество итераций]
     /// Величина спуска = nan, если произошел сбой регулировка
+    /// @param f_b значение f(b); если не конечно (по умолчанию quiet_NaN), f(b) считается вызовом function(b).
     template <typename Function>
     static inline std::pair<double, size_t> search(
         const divider_search_parameters& parameters,
         Function& function,
         double a, double b,
-        double f_a, double f_b
+        double f_a,
+        double f_b = std::numeric_limits<double>::quiet_NaN()
     )
     {
         bool found_better_than_initial = false;
@@ -42,7 +44,12 @@ public:
 
         // найти максимальное значение alpha, при котором расчет не разваливается
         alpha_curr = b;// parameters.maximum_step;
-        function_current = f_b;
+        if (!std::isfinite(f_b)) {
+            function_current = function(b);
+        }
+        else {
+            function_current = f_b;
+        }
 
         size_t index = 1;
 
