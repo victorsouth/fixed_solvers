@@ -99,6 +99,12 @@ inline Eigen::VectorXd invVectorXd(const Eigen::VectorXd& _v)
     return v;
 }
 
+/// @brief Конвертирует VectorXd в std::vector
+inline std::vector<double> to_std_vector(const Eigen::VectorXd& v)
+{
+    return std::vector<double>(v.data(), v.data() + v.size());
+}
+
 /// @brief Возвращает знак числа
 /// @return для отрицательных -1, для положительных +1
 template <typename T> inline int sgn(T val) {
