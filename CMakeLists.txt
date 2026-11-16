@@ -102,5 +102,9 @@ add_executable(fs_tests
 target_link_libraries(fs_tests fixed_solvers::fixed_solvers GTest::gtest)
 install(TARGETS fs_tests DESTINATION bin)
 
+enable_testing()
+include(GoogleTest)
+# PRE_TEST — для multi-config генератора Visual Studio
+gtest_discover_tests(fs_tests DISCOVERY_MODE PRE_TEST)
 
 endif()
